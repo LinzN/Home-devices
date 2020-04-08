@@ -12,9 +12,9 @@
 package de.linzn.homeDevices;
 
 
-import de.azcore.azcoreRuntime.modules.pluginModule.AZPlugin;
+import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 
-public class HomeDevicesPlugin extends AZPlugin {
+public class HomeDevicesPlugin extends STEMPlugin {
 
     public static HomeDevicesPlugin homeDevicesPlugin;
 
