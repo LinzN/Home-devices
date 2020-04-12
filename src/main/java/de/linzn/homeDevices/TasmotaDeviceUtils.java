@@ -54,19 +54,27 @@ public class TasmotaDeviceUtils {
         return sb.toString();
     }
 
-    public static void toggleDevice(String hostname) {
+    public static DeviceStatus toggleDevice(String hostname) {
         String apiString = "http://" + hostname + "/cm?cmnd=Power%20toggle";
-        readJsonFromUrl(apiString);
+        JSONObject object = readJsonFromUrl(apiString);
+        if (object == null) {
+            return DeviceStatus.OFFLINE;
+        }
+        return object.getString("POWER").equalsIgnoreCase("ON") ? DeviceStatus.ENABLED : DeviceStatus.DISABLED;
     }
 
-    public static void setDeviceStatus(String hostname, boolean status) {
+    public static DeviceStatus setDeviceStatus(String hostname, boolean status) {
         String apiString = "http://" + hostname + "/cm?cmnd=Power%20";
         if (status) {
             apiString = apiString + "on";
         } else {
             apiString = apiString + "off";
         }
-        readJsonFromUrl(apiString);
+        JSONObject object = readJsonFromUrl(apiString);
+        if (object == null) {
+            return DeviceStatus.OFFLINE;
+        }
+        return object.getString("POWER").equalsIgnoreCase("ON") ? DeviceStatus.ENABLED : DeviceStatus.DISABLED;
     }
 
 }

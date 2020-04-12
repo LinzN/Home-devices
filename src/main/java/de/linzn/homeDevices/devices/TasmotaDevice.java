@@ -42,7 +42,7 @@ public class TasmotaDevice {
 
 
     public void toggleDevice() {
-        TasmotaDeviceUtils.toggleDevice(hostname);
+        this.deviceStatus = TasmotaDeviceUtils.toggleDevice(hostname);
     }
 
     public String getDeviceName() {
@@ -58,7 +58,7 @@ public class TasmotaDevice {
     }
 
     public void setDeviceStatus(boolean status) {
-        TasmotaDeviceUtils.setDeviceStatus(hostname, status);
+        this.deviceStatus = TasmotaDeviceUtils.setDeviceStatus(hostname, status);
     }
 
 }
