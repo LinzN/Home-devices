@@ -12,12 +12,20 @@
 package de.linzn.homeDevices;
 
 
+import de.linzn.homeDevices.devices.TasmotaDevice;
+import de.stem.stemSystem.AppLogger;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import de.stem.stemSystem.utils.Color;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class HomeDevicesPlugin extends STEMPlugin {
 
     public static HomeDevicesPlugin homeDevicesPlugin;
 
+    private Map<String, TasmotaDevice> tasmotaDeviceMap;
 
     public HomeDevicesPlugin() {
         homeDevicesPlugin = this;
@@ -25,7 +33,9 @@ public class HomeDevicesPlugin extends STEMPlugin {
 
     @Override
     public void onEnable() {
+        this.tasmotaDeviceMap = new HashMap<>();
         setUpConfig();
+        loadTasmotaDevices();
     }
 
     @Override
@@ -35,5 +45,21 @@ public class HomeDevicesPlugin extends STEMPlugin {
 
     private void setUpConfig() {
         this.getDefaultConfig().save();
+    }
+
+    public TasmotaDevice getTasmotaDevice(String deviceName) {
+        return this.tasmotaDeviceMap.get(deviceName.toLowerCase());
+    }
+
+    private void loadTasmotaDevices() {
+        HashMap<String, List> hashMap = (HashMap) this.getDefaultConfig().get("tasmota");
+
+        for (String name : hashMap.keySet()) {
+            String deviceName = name;
+            String hostName = this.getDefaultConfig().getString("tasmota." + deviceName + ".hostname");
+            TasmotaDevice tasmotaDevice = new TasmotaDevice(deviceName, hostName);
+            AppLogger.debug(Color.GREEN + "Found tasmota device " + deviceName + ":" + hostName);
+            this.tasmotaDeviceMap.put(tasmotaDevice.getDeviceName(), tasmotaDevice);
+        }
     }
 }

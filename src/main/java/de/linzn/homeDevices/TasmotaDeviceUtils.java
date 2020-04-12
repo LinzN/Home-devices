@@ -9,10 +9,8 @@
  *
  */
 
-package de.linzn.homeDevices.devices;
+package de.linzn.homeDevices;
 
-import de.linzn.homeDevices.DeviceStatus;
-import de.linzn.homeDevices.HomeDevicesPlugin;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -21,14 +19,15 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
 
-public class DeLockSwitch {
+public class TasmotaDeviceUtils {
 
-    private String deviceName;
-    private String hostname;
-
-    public DeLockSwitch(String deviceName) {
-        this.deviceName = deviceName;
-        this.hostname = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("deLockSwitch." + deviceName.toLowerCase() + ".hostname");
+    public static DeviceStatus readDeviceStatus(String hostname) {
+        String apiString = "http://" + hostname + "/cm?cmnd=Power";
+        JSONObject object = readJsonFromUrl(apiString);
+        if (object == null) {
+            return DeviceStatus.OFFLINE;
+        }
+        return object.getString("POWER").equalsIgnoreCase("ON") ? DeviceStatus.ENABLED : DeviceStatus.DISABLED;
     }
 
     private static JSONObject readJsonFromUrl(String url) throws JSONException {
@@ -55,12 +54,12 @@ public class DeLockSwitch {
         return sb.toString();
     }
 
-    public void toggleDevice() {
+    public static void toggleDevice(String hostname) {
         String apiString = "http://" + hostname + "/cm?cmnd=Power%20toggle";
         readJsonFromUrl(apiString);
     }
 
-    public void setDeviceStatus(boolean status) {
+    public static void setDeviceStatus(String hostname, boolean status) {
         String apiString = "http://" + hostname + "/cm?cmnd=Power%20";
         if (status) {
             apiString = apiString + "on";
@@ -70,12 +69,4 @@ public class DeLockSwitch {
         readJsonFromUrl(apiString);
     }
 
-    public DeviceStatus getStatus() {
-        String apiString = "http://" + hostname + "/cm?cmnd=Power";
-        JSONObject object = readJsonFromUrl(apiString);
-        if (object == null) {
-            return DeviceStatus.OFFLINE;
-        }
-        return object.getString("POWER").equalsIgnoreCase("ON") ? DeviceStatus.ENABLED : DeviceStatus.DISABLED;
-    }
 }
