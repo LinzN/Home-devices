@@ -60,6 +60,15 @@ public class HomeDevicesPlugin extends STEMPlugin {
             TasmotaDevice tasmotaDevice = new TasmotaDevice(deviceName, hostName);
             AppLogger.debug(Color.GREEN + "Found tasmota device " + deviceName + ":" + hostName);
             this.tasmotaDeviceMap.put(tasmotaDevice.getDeviceName(), tasmotaDevice);
+
+            if (this.getDefaultConfig().getBoolean("tasmota." + deviceName + ".timed", false)) {
+                String timedStart = this.getDefaultConfig().getString("tasmota." + deviceName + ".timedStart");
+                String timedStop = this.getDefaultConfig().getString("tasmota." + deviceName + ".timedStop");
+                int timedOffsetMinutes = this.getDefaultConfig().getInt("tasmota." + deviceName + ".timedOffsetMinutes");
+                tasmotaDevice.setTimed(timedStart, timedStop, timedOffsetMinutes);
+                AppLogger.debug(Color.GREEN + "Timer enabled to tasmota device " + deviceName + ":" + hostName);
+                AppLogger.debug(Color.GREEN + "Between " + timedStart + " - " + timedStop + " offset " + timedOffsetMinutes);
+            }
         }
     }
 }

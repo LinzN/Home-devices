@@ -17,7 +17,8 @@ import org.json.JSONObject;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
 public class TasmotaDeviceUtils {
 
@@ -37,7 +38,7 @@ public class TasmotaDeviceUtils {
             con.setReadTimeout(1500);
 
             InputStream is = con.getInputStream();
-            BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
+            BufferedReader rd = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
             String jsonText = readAll(rd);
             return new JSONObject(jsonText);
         } catch (Exception ignored) {
@@ -75,6 +76,22 @@ public class TasmotaDeviceUtils {
             return DeviceStatus.OFFLINE;
         }
         return object.getString("POWER").equalsIgnoreCase("ON") ? DeviceStatus.ENABLED : DeviceStatus.DISABLED;
+    }
+
+    public static boolean checkLightShutdown(long lastEnabled, String timedStart, String timedStop, int timedOffsetMinutes) {
+        long currentTime = System.currentTimeMillis();
+
+        long startLong = 0;
+        long stopLong = 0;
+        // if (currentTime > startLong && currentTime < stopLong) {
+        if (lastEnabled != -1) {
+            if ((currentTime - lastEnabled) > (TimeUnit.MINUTES.toMillis(timedOffsetMinutes))) {
+                System.out.println("Offset is correct.");
+                return true;
+            }
+            //    }
+        }
+        return false;
     }
 
 }

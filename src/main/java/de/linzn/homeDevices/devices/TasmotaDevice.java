@@ -25,24 +25,34 @@ public class TasmotaDevice {
     private String deviceName;
     private String hostname;
     private DeviceStatus deviceStatus;
+    private long lastEnabled;
+
+    private boolean isTimed;
+    private String timedStart;
+    private String timedStop;
+    private int timedOffsetMinutes;
 
     public TasmotaDevice(String deviceName, String hostname) {
         this.deviceName = deviceName.toLowerCase();
         this.hostname = hostname;
-        this.deviceStatus = DeviceStatus.OFFLINE;
+        this.deviceStatus = null;
+        this.lastEnabled = -1;
+        this.isTimed = false;
+        this.timedStart = "00:00";
+        this.timedStop = "00:00";
+        this.timedOffsetMinutes = 0;
         this.statusTask();
     }
 
-    private void statusTask() {
-        STEMSystemApp.getInstance().getScheduler().runRepeatScheduler(HomeDevicesPlugin.homeDevicesPlugin, () -> {
-            deviceStatus = TasmotaDeviceUtils.readDeviceStatus(hostname);
-            AppLogger.debug(Color.GREEN + "Device status " + deviceName + " " + deviceStatus.name());
-        }, 5, 2, TimeUnit.SECONDS);
+    public void setTimed(String timedStart, String timedStop, int timedOffsetMinutes) {
+        this.isTimed = true;
+        this.timedStart = timedStart;
+        this.timedStop = timedStop;
+        this.timedOffsetMinutes = timedOffsetMinutes;
     }
 
-
     public void toggleDevice() {
-        this.deviceStatus = TasmotaDeviceUtils.toggleDevice(hostname);
+        update_status(TasmotaDeviceUtils.toggleDevice(hostname));
     }
 
     public String getDeviceName() {
@@ -58,7 +68,42 @@ public class TasmotaDevice {
     }
 
     public void setDeviceStatus(boolean status) {
-        this.deviceStatus = TasmotaDeviceUtils.setDeviceStatus(hostname, status);
+        update_status(TasmotaDeviceUtils.setDeviceStatus(hostname, status));
+    }
+
+    private void update_status(DeviceStatus newDeviceStatus) {
+        if (this.deviceStatus != null) {
+            if (this.deviceStatus == DeviceStatus.DISABLED && newDeviceStatus == DeviceStatus.ENABLED) {
+                this.lastEnabled = System.currentTimeMillis();
+            } else if (newDeviceStatus == DeviceStatus.DISABLED) {
+                this.lastEnabled = -1;
+            }
+        } else {
+            if (newDeviceStatus == DeviceStatus.ENABLED) {
+                this.lastEnabled = System.currentTimeMillis();
+            }
+        }
+        this.deviceStatus = newDeviceStatus;
+    }
+
+
+    private void statusTask() {
+        STEMSystemApp.getInstance().getScheduler().runRepeatScheduler(HomeDevicesPlugin.homeDevicesPlugin, () -> {
+
+            update_status(TasmotaDeviceUtils.readDeviceStatus(hostname));
+
+            AppLogger.debug(Color.GREEN + "Device status " + deviceName + " " + deviceStatus.name());
+
+            if (isTimed) {
+                if (TasmotaDeviceUtils.checkLightShutdown(lastEnabled, timedStart, timedStop, timedOffsetMinutes)) {
+                    if (deviceStatus == DeviceStatus.ENABLED) {
+                        AppLogger.debug(Color.YELLOW + "AutoOFF light " + deviceName);
+                        setDeviceStatus(false);
+                    }
+                    lastEnabled = -1;
+                }
+            }
+        }, 5, 2, TimeUnit.SECONDS);
     }
 
 }
