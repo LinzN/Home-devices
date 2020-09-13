@@ -13,9 +13,8 @@ package de.linzn.homeDevices;
 
 
 import de.linzn.homeDevices.devices.TasmotaDevice;
-import de.stem.stemSystem.AppLogger;
+import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
-import de.stem.stemSystem.utils.Color;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +26,8 @@ public class HomeDevicesPlugin extends STEMPlugin {
 
     private Map<String, TasmotaDevice> tasmotaDeviceMap;
 
+    private Map<DeviceCategory, Boolean> autoMode;
+
     public HomeDevicesPlugin() {
         homeDevicesPlugin = this;
     }
@@ -34,7 +35,9 @@ public class HomeDevicesPlugin extends STEMPlugin {
     @Override
     public void onEnable() {
         this.tasmotaDeviceMap = new HashMap<>();
+        this.autoMode = new HashMap<>();
         setUpConfig();
+        loadAutoMode();
         loadTasmotaDevices();
     }
 
@@ -51,14 +54,33 @@ public class HomeDevicesPlugin extends STEMPlugin {
         return this.tasmotaDeviceMap.get(deviceName.toLowerCase());
     }
 
+    public boolean isAutoMode(DeviceCategory deviceCategory) {
+        return this.autoMode.get(deviceCategory);
+    }
+
+    public boolean setAutoMode(DeviceCategory deviceCategory, boolean value) {
+        this.autoMode.put(deviceCategory, value);
+        return isAutoMode(deviceCategory);
+    }
+
+    private void loadAutoMode() {
+        for (DeviceCategory deviceCategory : DeviceCategory.values()) {
+            boolean value = this.getDefaultConfig().getBoolean("defaultAutomode." + deviceCategory.name(), false);
+            STEMSystemApp.LOGGER.DEBUG("Found automode" + deviceCategory.name() + ":" + value);
+            this.autoMode.put(deviceCategory, value);
+        }
+    }
+
     private void loadTasmotaDevices() {
+
         HashMap<String, List> hashMap = (HashMap) this.getDefaultConfig().get("tasmota");
 
         for (String name : hashMap.keySet()) {
             String deviceName = name;
             String hostName = this.getDefaultConfig().getString("tasmota." + deviceName + ".hostname");
-            TasmotaDevice tasmotaDevice = new TasmotaDevice(deviceName, hostName);
-            AppLogger.debug(Color.GREEN + "Found tasmota device " + deviceName + ":" + hostName);
+            DeviceCategory deviceCategory = DeviceCategory.valueOf(this.getDefaultConfig().getString("tasmota." + deviceName + ".category", DeviceCategory.OTHER.name()));
+            TasmotaDevice tasmotaDevice = new TasmotaDevice(deviceName, hostName, deviceCategory);
+            STEMSystemApp.LOGGER.DEBUG("Found tasmota device " + deviceName + ":" + hostName + " category: " + deviceCategory.name());
             this.tasmotaDeviceMap.put(tasmotaDevice.getDeviceName(), tasmotaDevice);
 
             if (this.getDefaultConfig().getBoolean("tasmota." + deviceName + ".timed", false)) {
@@ -66,8 +88,8 @@ public class HomeDevicesPlugin extends STEMPlugin {
                 String timedStop = this.getDefaultConfig().getString("tasmota." + deviceName + ".timedStop");
                 int timedOffsetMinutes = this.getDefaultConfig().getInt("tasmota." + deviceName + ".timedOffsetMinutes");
                 tasmotaDevice.setTimed(timedStart, timedStop, timedOffsetMinutes);
-                AppLogger.debug(Color.GREEN + "Timer enabled to tasmota device " + deviceName + ":" + hostName);
-                AppLogger.debug(Color.GREEN + "Between " + timedStart + " - " + timedStop + " offset " + timedOffsetMinutes);
+                STEMSystemApp.LOGGER.DEBUG("Timer enabled to tasmota device " + deviceName + ":" + hostName);
+                STEMSystemApp.LOGGER.DEBUG("Between " + timedStart + " - " + timedStop + " offset " + timedOffsetMinutes);
             }
         }
     }

@@ -11,19 +11,19 @@
 
 package de.linzn.homeDevices.devices;
 
+import de.linzn.homeDevices.DeviceCategory;
 import de.linzn.homeDevices.DeviceStatus;
 import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.TasmotaDeviceUtils;
-import de.stem.stemSystem.AppLogger;
 import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.utils.Color;
 
 import java.util.concurrent.TimeUnit;
 
 public class TasmotaDevice {
 
-    private String deviceName;
-    private String hostname;
+    private final String deviceName;
+    private final DeviceCategory deviceCategorie;
+    private final String hostname;
     private DeviceStatus deviceStatus;
     private long lastEnabled;
 
@@ -32,8 +32,9 @@ public class TasmotaDevice {
     private String timedStop;
     private int timedOffsetMinutes;
 
-    public TasmotaDevice(String deviceName, String hostname) {
+    public TasmotaDevice(String deviceName, String hostname, DeviceCategory deviceCategorie) {
         this.deviceName = deviceName.toLowerCase();
+        this.deviceCategorie = deviceCategorie;
         this.hostname = hostname;
         this.deviceStatus = null;
         this.lastEnabled = -1;
@@ -92,15 +93,16 @@ public class TasmotaDevice {
 
             update_status(TasmotaDeviceUtils.readDeviceStatus(hostname));
 
-            AppLogger.debug(Color.GREEN + "Device status " + deviceName + " " + deviceStatus.name());
-
-            if (isTimed) {
-                if (TasmotaDeviceUtils.checkLightShutdown(lastEnabled, timedStart, timedStop, timedOffsetMinutes)) {
-                    if (deviceStatus == DeviceStatus.ENABLED) {
-                        AppLogger.debug(Color.YELLOW + "AutoOFF light " + deviceName);
-                        setDeviceStatus(false);
+            STEMSystemApp.LOGGER.DEBUG("Device status " + deviceName + " " + deviceStatus.name());
+            if (HomeDevicesPlugin.homeDevicesPlugin.isAutoMode(this.deviceCategorie)) {
+                if (isTimed) {
+                    if (TasmotaDeviceUtils.checkLightShutdown(lastEnabled, timedStart, timedStop, timedOffsetMinutes)) {
+                        if (deviceStatus == DeviceStatus.ENABLED) {
+                            STEMSystemApp.LOGGER.DEBUG("AutoOFF " + this.deviceCategorie.name() + " " + deviceName);
+                            setDeviceStatus(false);
+                        }
+                        lastEnabled = -1;
                     }
-                    lastEnabled = -1;
                 }
             }
         }, 5, 2, TimeUnit.SECONDS);

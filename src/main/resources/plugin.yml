@@ -1,4 +1,4 @@
 main: de.linzn.homeDevices.HomeDevicesPlugin
 name: home-devices
 version: ${project.version}
-depend: []
+depend: [ ]
