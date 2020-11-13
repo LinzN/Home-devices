@@ -13,6 +13,11 @@ package de.linzn.homeDevices;
 
 
 import de.linzn.homeDevices.devices.TasmotaDevice;
+import de.linzn.homeDevices.restfulapi.get.GET_AutoMode;
+import de.linzn.homeDevices.restfulapi.get.GET_DeviceStatus;
+import de.linzn.homeDevices.restfulapi.push.POST_ChangeAutoMode;
+import de.linzn.homeDevices.restfulapi.push.POST_ChangeDevice;
+import de.linzn.restfulapi.RestFulApiPlugin;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 
@@ -39,6 +44,11 @@ public class HomeDevicesPlugin extends STEMPlugin {
         setUpConfig();
         loadAutoMode();
         loadTasmotaDevices();
+        RestFulApiPlugin.restFulApiPlugin.registerIGetJSONClass(new GET_AutoMode(this));
+        RestFulApiPlugin.restFulApiPlugin.registerIGetJSONClass(new GET_DeviceStatus(this));
+
+        RestFulApiPlugin.restFulApiPlugin.registerIPostJSONClass(new POST_ChangeAutoMode(this));
+        RestFulApiPlugin.restFulApiPlugin.registerIPostJSONClass(new POST_ChangeDevice(this));
     }
 
     @Override
