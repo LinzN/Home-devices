@@ -13,12 +13,12 @@ package de.linzn.homeDevices.restfulapi.get;
 
 import de.linzn.homeDevices.DeviceCategory;
 import de.linzn.homeDevices.HomeDevicesPlugin;
-import de.linzn.restfulapi.api.jsonapi.get.IGetJSON;
+import de.linzn.restfulapi.api.jsonapi.IRequest;
+import de.linzn.restfulapi.api.jsonapi.RequestData;
 import org.json.JSONObject;
 
-import java.util.List;
 
-public class GET_AutoMode implements IGetJSON {
+public class GET_AutoMode implements IRequest {
 
     private final HomeDevicesPlugin homeDevicesPlugin;
 
@@ -27,7 +27,7 @@ public class GET_AutoMode implements IGetJSON {
     }
 
     @Override
-    public Object getRequestData(List<String> inputList) {
+    public Object proceedRequestData(RequestData requestData) {
         JSONObject jsonObject = new JSONObject();
 
         for (DeviceCategory deviceCategory : DeviceCategory.values()) {
@@ -38,8 +38,8 @@ public class GET_AutoMode implements IGetJSON {
     }
 
     @Override
-    public Object getGenericData() {
-        return getRequestData(null);
+    public Object genericData() {
+        return proceedRequestData(null);
     }
 
     @Override

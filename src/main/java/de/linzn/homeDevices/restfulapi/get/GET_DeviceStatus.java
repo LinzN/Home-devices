@@ -14,12 +14,11 @@ package de.linzn.homeDevices.restfulapi.get;
 import de.linzn.homeDevices.DeviceStatus;
 import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.TasmotaDevice;
-import de.linzn.restfulapi.api.jsonapi.get.IGetJSON;
+import de.linzn.restfulapi.api.jsonapi.IRequest;
+import de.linzn.restfulapi.api.jsonapi.RequestData;
 import org.json.JSONObject;
 
-import java.util.List;
-
-public class GET_DeviceStatus implements IGetJSON {
+public class GET_DeviceStatus implements IRequest {
 
     private final HomeDevicesPlugin homeDevicesPlugin;
 
@@ -28,17 +27,12 @@ public class GET_DeviceStatus implements IGetJSON {
     }
 
     @Override
-    public Object getRequestData(List<String> inputList) {
-        String deviceName = inputList.get(1);
+    public Object proceedRequestData(RequestData requestData) {
+        String deviceName = requestData.getSubChannels().get(0);
         TasmotaDevice tasmotaDevice = this.homeDevicesPlugin.getTasmotaDevice(deviceName);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("status", tasmotaDevice.getDeviceStatus() == DeviceStatus.ENABLED);
         return jsonObject;
-    }
-
-    @Override
-    public Object getGenericData() {
-        return null;
     }
 
     @Override

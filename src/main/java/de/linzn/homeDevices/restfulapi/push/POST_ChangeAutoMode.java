@@ -13,14 +13,13 @@ package de.linzn.homeDevices.restfulapi.push;
 
 import de.linzn.homeDevices.DeviceCategory;
 import de.linzn.homeDevices.HomeDevicesPlugin;
-import de.linzn.restfulapi.api.jsonapi.post.IPostJSON;
+import de.linzn.restfulapi.api.jsonapi.IRequest;
+import de.linzn.restfulapi.api.jsonapi.RequestData;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.utils.Color;
 import org.json.JSONObject;
 
-import java.util.List;
-
-public class POST_ChangeAutoMode implements IPostJSON {
+public class POST_ChangeAutoMode implements IRequest {
 
     private final HomeDevicesPlugin homeDevicesPlugin;
 
@@ -29,11 +28,11 @@ public class POST_ChangeAutoMode implements IPostJSON {
     }
 
     @Override
-    public Object postDataRequest(List<String> inputList) {
+    public Object proceedRequestData(RequestData requestData) {
         JSONObject jsonObject = new JSONObject();
 
-        DeviceCategory deviceCategory = DeviceCategory.valueOf(inputList.get(1).toUpperCase());
-        boolean value = Boolean.parseBoolean(inputList.get(2).toLowerCase());
+        DeviceCategory deviceCategory = DeviceCategory.valueOf(requestData.getSubChannels().get(0).toUpperCase());
+        boolean value = Boolean.parseBoolean(requestData.getSubChannels().get(1).toLowerCase());
         STEMSystemApp.LOGGER.INFO(Color.GREEN + "[RestFul API] Post Request: ChangeAutoMode::" + deviceCategory.name() + ":::" + value);
         boolean newValue = this.homeDevicesPlugin.setAutoMode(deviceCategory, value);
         jsonObject.put("status", newValue);
