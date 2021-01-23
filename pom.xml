@@ -19,6 +19,10 @@
             <id>enigmar-repo</id>
             <url>https://repository.enigmar.de/</url>
         </repository>
+        <repository>
+            <id>Eclipse Paho Repo</id>
+            <url>https://repo.eclipse.org/content/repositories/paho-releases/</url>
+        </repository>
     </repositories>
     <build>
         <finalName>${project.name}</finalName>
@@ -67,6 +71,11 @@
             <groupId>de.stem.plugins</groupId>
             <artifactId>restful-api</artifactId>
             <version>0.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+            <version>1.2.0</version>
         </dependency>
     </dependencies>
     <properties>

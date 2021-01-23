@@ -12,7 +12,7 @@
 package de.linzn.homeDevices;
 
 
-import de.linzn.homeDevices.devices.TasmotaDevice;
+import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
 import de.linzn.homeDevices.restfulapi.get.GET_AutoMode;
 import de.linzn.homeDevices.restfulapi.get.GET_DeviceStatus;
 import de.linzn.homeDevices.restfulapi.push.POST_ChangeAutoMode;
@@ -29,7 +29,7 @@ public class HomeDevicesPlugin extends STEMPlugin {
 
     public static HomeDevicesPlugin homeDevicesPlugin;
 
-    private Map<String, TasmotaDevice> tasmotaDeviceMap;
+    private Map<String, TasmotaMQTTDevice> tasmotaDeviceMap;
 
     private Map<DeviceCategory, Boolean> autoMode;
 
@@ -60,7 +60,7 @@ public class HomeDevicesPlugin extends STEMPlugin {
         this.getDefaultConfig().save();
     }
 
-    public TasmotaDevice getTasmotaDevice(String deviceName) {
+    public TasmotaMQTTDevice getTasmotaDevice(String deviceName) {
         return this.tasmotaDeviceMap.get(deviceName.toLowerCase());
     }
 
@@ -85,22 +85,10 @@ public class HomeDevicesPlugin extends STEMPlugin {
 
         HashMap<String, List> hashMap = (HashMap) this.getDefaultConfig().get("tasmota");
 
-        for (String name : hashMap.keySet()) {
-            String deviceName = name;
-            String hostName = this.getDefaultConfig().getString("tasmota." + deviceName + ".hostname");
-            DeviceCategory deviceCategory = DeviceCategory.valueOf(this.getDefaultConfig().getString("tasmota." + deviceName + ".category", DeviceCategory.OTHER.name()));
-            TasmotaDevice tasmotaDevice = new TasmotaDevice(deviceName, hostName, deviceCategory);
-            STEMSystemApp.LOGGER.DEBUG("Found tasmota device " + deviceName + ":" + hostName + " category: " + deviceCategory.name());
-            this.tasmotaDeviceMap.put(tasmotaDevice.getDeviceName(), tasmotaDevice);
-
-            if (this.getDefaultConfig().getBoolean("tasmota." + deviceName + ".timed", false)) {
-                String timedStart = this.getDefaultConfig().getString("tasmota." + deviceName + ".timedStart");
-                String timedStop = this.getDefaultConfig().getString("tasmota." + deviceName + ".timedStop");
-                int timedOffsetMinutes = this.getDefaultConfig().getInt("tasmota." + deviceName + ".timedOffsetMinutes");
-                tasmotaDevice.setTimed(timedStart, timedStop, timedOffsetMinutes);
-                STEMSystemApp.LOGGER.DEBUG("Timer enabled to tasmota device " + deviceName + ":" + hostName);
-                STEMSystemApp.LOGGER.DEBUG("Between " + timedStart + " - " + timedStop + " offset " + timedOffsetMinutes);
-            }
+        for (String deviceId : hashMap.keySet()) {
+            DeviceCategory deviceCategory = DeviceCategory.valueOf(this.getDefaultConfig().getString("tasmota." + deviceId + ".category", DeviceCategory.OTHER.name()));
+            TasmotaMQTTDevice tasmotaMQTTDevice = new TasmotaMQTTDevice(deviceId, deviceCategory);
+            this.tasmotaDeviceMap.put(tasmotaMQTTDevice.getDeviceId(), tasmotaMQTTDevice);
         }
     }
 }

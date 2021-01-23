@@ -12,11 +12,9 @@
 package de.linzn.homeDevices.restfulapi.push;
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
-import de.linzn.homeDevices.devices.TasmotaDevice;
+import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
 import de.linzn.restfulapi.api.jsonapi.IRequest;
 import de.linzn.restfulapi.api.jsonapi.RequestData;
-import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.utils.Color;
 import org.json.JSONObject;
 
 public class POST_ChangeDevice implements IRequest {
@@ -32,17 +30,16 @@ public class POST_ChangeDevice implements IRequest {
         JSONObject jsonObject = new JSONObject();
 
         String deviceName = requestData.getSubChannels().get(0);
-        STEMSystemApp.LOGGER.INFO(Color.GREEN + "[Restful API] Post Request: DeviceControl::" + deviceName);
 
-        TasmotaDevice tasmotaDevice = this.homeDevicesPlugin.getTasmotaDevice(deviceName);
+        TasmotaMQTTDevice tasmotaDevice = this.homeDevicesPlugin.getTasmotaDevice(deviceName);
         boolean newStatus;
         if (requestData.getSubChannels().size() < 2) {
             tasmotaDevice.toggleDevice();
-            newStatus = false; /* todo fix this with return value*/
+            newStatus = tasmotaDevice.getDeviceStatus(); /* todo fix this with return value*/
         } else {
             boolean setStatus = Boolean.parseBoolean(requestData.getSubChannels().get(1));
-            tasmotaDevice.setDeviceStatus(setStatus);
-            newStatus = setStatus; /* todo fix this with return value*/
+            tasmotaDevice.switchDevice(setStatus);
+            newStatus = tasmotaDevice.getDeviceStatus(); /* todo fix this with return value*/
         }
 
         jsonObject.put("status", newStatus);
