@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020. Niklas Linz - All Rights Reserved
+ * Copyright (C) 2021. Niklas Linz - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the LGPLv3 license, which unfortunately won't be
  * written for another century.
@@ -34,7 +34,7 @@ public class POST_ChangeAutoMode implements IRequest {
         DeviceCategory deviceCategory = DeviceCategory.valueOf(requestData.getSubChannels().get(0).toUpperCase());
         boolean value = Boolean.parseBoolean(requestData.getSubChannels().get(1).toLowerCase());
         STEMSystemApp.LOGGER.INFO(Color.GREEN + "[RestFul API] Post Request: ChangeAutoMode::" + deviceCategory.name() + ":::" + value);
-        boolean newValue = this.homeDevicesPlugin.setAutoMode(deviceCategory, value);
+        boolean newValue = this.homeDevicesPlugin.setCategoryInAutoMode(deviceCategory, value);
         jsonObject.put("status", newValue);
 
         return jsonObject;

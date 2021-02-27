@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020. Niklas Linz - All Rights Reserved
+ * Copyright (C) 2021. Niklas Linz - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the LGPLv3 license, which unfortunately won't be
  * written for another century.
@@ -31,7 +31,7 @@ public class GET_AutoMode implements IRequest {
         JSONObject jsonObject = new JSONObject();
 
         for (DeviceCategory deviceCategory : DeviceCategory.values()) {
-            boolean status = this.homeDevicesPlugin.isAutoMode(deviceCategory);
+            boolean status = this.homeDevicesPlugin.isCategoryInAutoMode(deviceCategory);
             jsonObject.put(deviceCategory.name(), status);
         }
         return jsonObject;

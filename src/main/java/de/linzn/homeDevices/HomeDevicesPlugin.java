@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020. Niklas Linz - All Rights Reserved
+ * Copyright (C) 2021. Niklas Linz - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the LGPLv3 license, which unfortunately won't be
  * written for another century.
@@ -31,7 +31,7 @@ public class HomeDevicesPlugin extends STEMPlugin {
 
     private Map<String, TasmotaMQTTDevice> tasmotaDeviceMap;
 
-    private Map<DeviceCategory, Boolean> autoMode;
+    private Map<DeviceCategory, Boolean> activeCategoryAutoModes;
 
     public HomeDevicesPlugin() {
         homeDevicesPlugin = this;
@@ -40,9 +40,9 @@ public class HomeDevicesPlugin extends STEMPlugin {
     @Override
     public void onEnable() {
         this.tasmotaDeviceMap = new HashMap<>();
-        this.autoMode = new HashMap<>();
+        this.activeCategoryAutoModes = new HashMap<>();
         setUpConfig();
-        loadAutoMode();
+        loadCategoryAutoModes();
         loadTasmotaDevices();
         RestFulApiPlugin.restFulApiPlugin.registerIGetJSONClass(new GET_AutoMode(this));
         RestFulApiPlugin.restFulApiPlugin.registerIGetJSONClass(new GET_DeviceStatus(this));
@@ -64,30 +64,29 @@ public class HomeDevicesPlugin extends STEMPlugin {
         return this.tasmotaDeviceMap.get(deviceName.toLowerCase());
     }
 
-    public boolean isAutoMode(DeviceCategory deviceCategory) {
-        return this.autoMode.get(deviceCategory);
+    public boolean isCategoryInAutoMode(DeviceCategory deviceCategory) {
+        return this.activeCategoryAutoModes.get(deviceCategory);
     }
 
-    public boolean setAutoMode(DeviceCategory deviceCategory, boolean value) {
-        this.autoMode.put(deviceCategory, value);
-        return isAutoMode(deviceCategory);
+    public boolean setCategoryInAutoMode(DeviceCategory deviceCategory, boolean value) {
+        this.activeCategoryAutoModes.put(deviceCategory, value);
+        return isCategoryInAutoMode(deviceCategory);
     }
 
-    private void loadAutoMode() {
+    private void loadCategoryAutoModes() {
         for (DeviceCategory deviceCategory : DeviceCategory.values()) {
-            boolean value = this.getDefaultConfig().getBoolean("defaultAutomode." + deviceCategory.name(), false);
-            STEMSystemApp.LOGGER.DEBUG("Found automode" + deviceCategory.name() + ":" + value);
-            this.autoMode.put(deviceCategory, value);
+            boolean value = this.getDefaultConfig().getBoolean("category." + deviceCategory.name() + ".autoSwitchEnabled");
+            STEMSystemApp.LOGGER.DEBUG("Load categoryAutoMode for " + deviceCategory.name() + ":" + value);
+            this.activeCategoryAutoModes.put(deviceCategory, value);
         }
     }
 
     private void loadTasmotaDevices() {
-
         HashMap<String, List> hashMap = (HashMap) this.getDefaultConfig().get("tasmota");
 
         for (String deviceId : hashMap.keySet()) {
             DeviceCategory deviceCategory = DeviceCategory.valueOf(this.getDefaultConfig().getString("tasmota." + deviceId + ".category", DeviceCategory.OTHER.name()));
-            TasmotaMQTTDevice tasmotaMQTTDevice = new TasmotaMQTTDevice(deviceId, deviceCategory);
+            TasmotaMQTTDevice tasmotaMQTTDevice = new TasmotaMQTTDevice(homeDevicesPlugin, deviceId, deviceCategory);
             this.tasmotaDeviceMap.put(tasmotaMQTTDevice.getDeviceId(), tasmotaMQTTDevice);
         }
     }
