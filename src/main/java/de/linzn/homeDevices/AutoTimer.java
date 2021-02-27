@@ -49,7 +49,11 @@ public class AutoTimer {
     }
 
     public boolean canSwitchOff(long lastSwitch) {
-        return isInTimeRange() && (lastSwitch + autoSwitchOffTimer < new Date().getTime());
+        if (this.autoSwitchEnabled) {
+            return isInTimeRange() && (lastSwitch + autoSwitchOffTimer < new Date().getTime());
+        } else {
+            return false;
+        }
     }
 
     private boolean isInTimeRange() {
