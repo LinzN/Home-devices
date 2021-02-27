@@ -70,13 +70,14 @@ public class HomeDevicesPlugin extends STEMPlugin {
 
     public boolean setCategoryInAutoMode(DeviceCategory deviceCategory, boolean value) {
         this.activeCategoryAutoModes.put(deviceCategory, value);
+        STEMSystemApp.LOGGER.INFO("Update DeviceCategory autoMode: " + deviceCategory + " status: " + value);
         return isCategoryInAutoMode(deviceCategory);
     }
 
     private void loadCategoryAutoModes() {
         for (DeviceCategory deviceCategory : DeviceCategory.values()) {
             boolean value = this.getDefaultConfig().getBoolean("category." + deviceCategory.name() + ".autoSwitchEnabled");
-            STEMSystemApp.LOGGER.DEBUG("Load categoryAutoMode for " + deviceCategory.name() + ":" + value);
+            STEMSystemApp.LOGGER.INFO("Load categoryAutoMode for " + deviceCategory.name() + ":" + value);
             this.activeCategoryAutoModes.put(deviceCategory, value);
         }
     }
