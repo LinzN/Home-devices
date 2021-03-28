@@ -37,12 +37,12 @@ public class POST_ChangeDevice implements IRequest {
         if (requestData.getSubChannels().size() < 2) {
             tasmotaDevice.toggleDevice();
             newStatus = tasmotaDevice.getDeviceStatus();
-            STEMSystemApp.LOGGER.INFO("[REST] Request device toggle " + deviceName);
+            STEMSystemApp.LOGGER.INFO("[REST] Request device toggle " + deviceName + "#->#" + requestData.getInetSocketAddress().getAddress().getHostName());
         } else {
             boolean setStatus = Boolean.parseBoolean(requestData.getSubChannels().get(1));
             tasmotaDevice.switchDevice(setStatus);
             newStatus = tasmotaDevice.getDeviceStatus();
-            STEMSystemApp.LOGGER.INFO("[REST] Request device switch " + deviceName + ":::" + setStatus);
+            STEMSystemApp.LOGGER.INFO("[REST] Request device switch " + deviceName + ":::" + setStatus + "#->#" + requestData.getInetSocketAddress().getAddress().getHostName());
         }
         jsonObject.put("status", newStatus);
 
