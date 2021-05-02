@@ -28,27 +28,40 @@ public class TasmotaMQTTDevice implements IMqttMessageListener {
 
     private final HomeDevicesPlugin homeDevicesPlugin;
 
-    private final String deviceId;
+    private final String configName;
+    private final String deviceHardAddress;
+    private final String description;
     private final DeviceCategory deviceCategory;
     private final MqttModule mqttModule;
     private AtomicBoolean deviceStatus;
     private final AutoTimer autoTimer;
     private Date lastSwitch;
 
-    public TasmotaMQTTDevice(HomeDevicesPlugin homeDevicesPlugin, String deviceId, DeviceCategory deviceCategory) {
+    public TasmotaMQTTDevice(HomeDevicesPlugin homeDevicesPlugin, String configName) {
         this.homeDevicesPlugin = homeDevicesPlugin;
-        this.deviceId = deviceId.toLowerCase();
-        this.deviceCategory = deviceCategory;
+        this.configName = configName.toLowerCase();
+        this.deviceHardAddress = homeDevicesPlugin.getDefaultConfig().getString("tasmota." + configName + ".deviceHardAddress", configName.toLowerCase());
+        this.deviceCategory = DeviceCategory.valueOf(homeDevicesPlugin.getDefaultConfig().getString("tasmota." + configName + ".category", DeviceCategory.OTHER.name()));
+        this.description = homeDevicesPlugin.getDefaultConfig().getString("tasmota." + configName + ".description", "No description");
         this.mqttModule = STEMSystemApp.getInstance().getMqttModule();
-        this.mqttModule.subscribe("stat/" + this.deviceId + "/RESULT", this);
+        this.mqttModule.subscribe("stat/" + this.deviceHardAddress + "/RESULT", this);
         this.autoTimer = new AutoTimer(this);
-        STEMSystemApp.LOGGER.INFO("Register new mqtt tasmota device with id: " + this.deviceId + " and category: " + this.deviceCategory.name());
+        STEMSystemApp.LOGGER.INFO("Register new mqtt tasmota device with configName: " + this.configName + ", hardId: " + this.deviceHardAddress + " and category: " + this.deviceCategory.name());
+        STEMSystemApp.LOGGER.INFO("Description: " + description);
         STEMSystemApp.getInstance().getScheduler().runTask(HomeDevicesPlugin.homeDevicesPlugin, this::request_initial_status);
         STEMSystemApp.getInstance().getScheduler().runRepeatScheduler(HomeDevicesPlugin.homeDevicesPlugin, this::checkAutoSwitchOff, 10, 3, TimeUnit.SECONDS);
     }
 
-    public String getDeviceId() {
-        return deviceId;
+    public String getConfigName() {
+        return configName;
+    }
+
+    public String getDeviceHardAddress() {
+        return this.deviceHardAddress;
+    }
+
+    public String getDescription() {
+        return this.description;
     }
 
     public boolean getDeviceStatus() {
@@ -67,23 +80,23 @@ public class TasmotaMQTTDevice implements IMqttMessageListener {
         } else {
             mqttMessage.setPayload("OFF".getBytes());
         }
-        this.mqttModule.publish("cmnd/" + this.deviceId + "/Power", mqttMessage);
+        this.mqttModule.publish("cmnd/" + this.deviceHardAddress + "/Power", mqttMessage);
     }
 
     public void toggleDevice() {
         MqttMessage mqttMessage = new MqttMessage();
         mqttMessage.setQos(2);
         mqttMessage.setPayload("TOGGLE".getBytes());
-        this.mqttModule.publish("cmnd/" + this.deviceId + "/Power", mqttMessage);
+        this.mqttModule.publish("cmnd/" + this.deviceHardAddress + "/Power", mqttMessage);
     }
 
     private void update_status(boolean newStatus) {
         if (this.deviceStatus == null) {
             this.deviceStatus = new AtomicBoolean(newStatus);
-            STEMSystemApp.LOGGER.INFO("MQTT initialization device: " + this.deviceId + " status: " + this.deviceStatus);
+            STEMSystemApp.LOGGER.INFO("MQTT initialization hardId: " + this.deviceHardAddress + " configName: " + this.configName + " status: " + this.deviceStatus);
         } else {
             this.deviceStatus.set(newStatus);
-            STEMSystemApp.LOGGER.INFO("Update Device: " + this.deviceId + " status: " + this.deviceStatus);
+            STEMSystemApp.LOGGER.INFO("Update hardId: " + this.deviceHardAddress + " configName: " + this.configName + " status: " + this.deviceStatus);
         }
         this.lastSwitch = new Date();
     }
@@ -92,8 +105,8 @@ public class TasmotaMQTTDevice implements IMqttMessageListener {
         while (this.deviceStatus == null) {
             MqttMessage mqttMessage = new MqttMessage();
             mqttMessage.setQos(2);
-            this.mqttModule.publish("cmnd/" + this.deviceId + "/Power", mqttMessage);
-            STEMSystemApp.LOGGER.INFO("MQTT initialization request for device: " + this.deviceId);
+            this.mqttModule.publish("cmnd/" + this.deviceHardAddress + "/Power", mqttMessage);
+            STEMSystemApp.LOGGER.INFO("MQTT initialization request for hardId: " + this.deviceHardAddress + " configName: " + this.configName);
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ignored) {
@@ -114,7 +127,7 @@ public class TasmotaMQTTDevice implements IMqttMessageListener {
         if (this.homeDevicesPlugin.isCategoryInAutoMode(this.deviceCategory)) {
             if (this.deviceStatus != null && this.deviceStatus.get()) {
                 if (this.autoTimer.canSwitchOff(this.lastSwitch.getTime())) {
-                    STEMSystemApp.LOGGER.INFO("Auto-switch off device: " + this.deviceId + " after: " + this.autoTimer.getAutoSwitchOffTimerInSeconds() + " seconds!");
+                    STEMSystemApp.LOGGER.INFO("Auto-switch off hardId: " + this.deviceHardAddress + " configName: " + this.configName + " after: " + this.autoTimer.getAutoSwitchOffTimerInSeconds() + " seconds!");
                     this.switchDevice(false);
                 }
             }

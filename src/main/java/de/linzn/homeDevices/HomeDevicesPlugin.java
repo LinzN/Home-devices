@@ -85,10 +85,9 @@ public class HomeDevicesPlugin extends STEMPlugin {
     private void loadTasmotaDevices() {
         HashMap<String, List> hashMap = (HashMap) this.getDefaultConfig().get("tasmota");
 
-        for (String deviceId : hashMap.keySet()) {
-            DeviceCategory deviceCategory = DeviceCategory.valueOf(this.getDefaultConfig().getString("tasmota." + deviceId + ".category", DeviceCategory.OTHER.name()));
-            TasmotaMQTTDevice tasmotaMQTTDevice = new TasmotaMQTTDevice(homeDevicesPlugin, deviceId, deviceCategory);
-            this.tasmotaDeviceMap.put(tasmotaMQTTDevice.getDeviceId(), tasmotaMQTTDevice);
+        for (String configName : hashMap.keySet()) {
+            TasmotaMQTTDevice tasmotaMQTTDevice = new TasmotaMQTTDevice(homeDevicesPlugin, configName);
+            this.tasmotaDeviceMap.put(tasmotaMQTTDevice.getConfigName(), tasmotaMQTTDevice);
         }
     }
 }
