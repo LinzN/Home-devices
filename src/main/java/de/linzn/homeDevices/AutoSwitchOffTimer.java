@@ -18,28 +18,28 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
-public class AutoTimer {
+public class AutoSwitchOffTimer {
     private final long autoSwitchOffTimer;
     private final boolean autoSwitchEnabled;
 
     private final LocalTime startTime;
     private final LocalTime stopTime;
 
-    public AutoTimer(TasmotaMQTTDevice tasmotaMQTTDevice) {
+    public AutoSwitchOffTimer(TasmotaMQTTDevice tasmotaMQTTDevice) {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH-mm");
 
-        if (HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().contains("tasmota." + tasmotaMQTTDevice.getConfigName() + ".autoModeSettings")) {
-            this.autoSwitchEnabled = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getBoolean("tasmota." + tasmotaMQTTDevice.getConfigName() + ".autoModeSettings.autoSwitchEnabled");
-            this.autoSwitchOffTimer = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getInt("tasmota." + tasmotaMQTTDevice.getConfigName() + ".autoModeSettings.autoSwitchOffAfterSeconds") * 1000L;
-            this.startTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("tasmota." + tasmotaMQTTDevice.getConfigName() + ".autoModeSettings.startTime"), dateTimeFormatter);
-            this.stopTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("tasmota." + tasmotaMQTTDevice.getConfigName() + ".autoModeSettings.stopTime"), dateTimeFormatter);
-            STEMSystemApp.LOGGER.INFO("Load specific autoSwitch settings for hardId " + tasmotaMQTTDevice.getDeviceHardAddress() + " configName " + tasmotaMQTTDevice.getConfigName());
+        if (HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().contains("tasmota." + tasmotaMQTTDevice.getConfigName() + ".autoModeSwitchOffSettings")) {
+            this.autoSwitchEnabled = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getBoolean("tasmota." + tasmotaMQTTDevice.getConfigName() + ".autoModeSwitchOffSettings.autoSwitchOffEnabled");
+            this.autoSwitchOffTimer = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getInt("tasmota." + tasmotaMQTTDevice.getConfigName() + ".autoModeSwitchOffSettings.autoSwitchOffAfterSeconds") * 1000L;
+            this.startTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("tasmota." + tasmotaMQTTDevice.getConfigName() + ".autoModeSwitchOffSettings.startTime"), dateTimeFormatter);
+            this.stopTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("tasmota." + tasmotaMQTTDevice.getConfigName() + ".autoModeSwitchOffSettings.stopTime"), dateTimeFormatter);
+            STEMSystemApp.LOGGER.INFO("Load specific autoSwitchOff settings for hardId " + tasmotaMQTTDevice.getDeviceHardAddress() + " configName " + tasmotaMQTTDevice.getConfigName());
         } else {
-            this.autoSwitchEnabled = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getBoolean("category." + tasmotaMQTTDevice.getDeviceCategory().name() + ".autoSwitchEnabled");
+            this.autoSwitchEnabled = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getBoolean("category." + tasmotaMQTTDevice.getDeviceCategory().name() + ".autoSwitchOffEnabled");
             this.autoSwitchOffTimer = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getInt("category." + tasmotaMQTTDevice.getDeviceCategory().name() + ".autoSwitchOffAfterSeconds") * 1000L;
             this.startTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("category." + tasmotaMQTTDevice.getDeviceCategory().name() + ".startTime"), dateTimeFormatter);
             this.stopTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("category." + tasmotaMQTTDevice.getDeviceCategory().name() + ".stopTime"), dateTimeFormatter);
-            STEMSystemApp.LOGGER.INFO("No autoSwitch settings found for hardId " + tasmotaMQTTDevice.getDeviceHardAddress() + " configName  " + tasmotaMQTTDevice.getConfigName());
+            STEMSystemApp.LOGGER.INFO("No autoSwitchOff settings found for hardId " + tasmotaMQTTDevice.getDeviceHardAddress() + " configName  " + tasmotaMQTTDevice.getConfigName());
             STEMSystemApp.LOGGER.INFO("Load default settings from category " + tasmotaMQTTDevice.getDeviceCategory().name());
         }
 

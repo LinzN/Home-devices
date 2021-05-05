@@ -76,7 +76,7 @@ public class HomeDevicesPlugin extends STEMPlugin {
 
     private void loadCategoryAutoModes() {
         for (DeviceCategory deviceCategory : DeviceCategory.values()) {
-            boolean value = this.getDefaultConfig().getBoolean("category." + deviceCategory.name() + ".autoSwitchEnabled");
+            boolean value = this.getDefaultConfig().getBoolean("category." + deviceCategory.name() + ".autoSwitchOffEnabled");
             STEMSystemApp.LOGGER.INFO("Load categoryAutoMode for " + deviceCategory.name() + ":" + value);
             this.activeCategoryAutoModes.put(deviceCategory, value);
         }

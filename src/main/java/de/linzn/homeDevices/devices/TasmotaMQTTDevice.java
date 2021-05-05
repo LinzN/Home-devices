@@ -11,7 +11,7 @@
 
 package de.linzn.homeDevices.devices;
 
-import de.linzn.homeDevices.AutoTimer;
+import de.linzn.homeDevices.AutoSwitchOffTimer;
 import de.linzn.homeDevices.DeviceCategory;
 import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.stem.stemSystem.STEMSystemApp;
@@ -34,7 +34,7 @@ public class TasmotaMQTTDevice implements IMqttMessageListener {
     private final DeviceCategory deviceCategory;
     private final MqttModule mqttModule;
     private AtomicBoolean deviceStatus;
-    private final AutoTimer autoTimer;
+    private final AutoSwitchOffTimer autoSwitchOffTimer;
     private Date lastSwitch;
 
     public TasmotaMQTTDevice(HomeDevicesPlugin homeDevicesPlugin, String configName) {
@@ -45,7 +45,7 @@ public class TasmotaMQTTDevice implements IMqttMessageListener {
         this.description = homeDevicesPlugin.getDefaultConfig().getString("tasmota." + configName + ".description", "No description");
         this.mqttModule = STEMSystemApp.getInstance().getMqttModule();
         this.mqttModule.subscribe("stat/" + this.deviceHardAddress + "/RESULT", this);
-        this.autoTimer = new AutoTimer(this);
+        this.autoSwitchOffTimer = new AutoSwitchOffTimer(this);
         STEMSystemApp.LOGGER.INFO("Register new mqtt tasmota device with configName: " + this.configName + ", hardId: " + this.deviceHardAddress + " and category: " + this.deviceCategory.name());
         STEMSystemApp.LOGGER.INFO("Description: " + description);
         STEMSystemApp.getInstance().getScheduler().runTask(HomeDevicesPlugin.homeDevicesPlugin, this::request_initial_status);
@@ -126,8 +126,8 @@ public class TasmotaMQTTDevice implements IMqttMessageListener {
     private void checkAutoSwitchOff() {
         if (this.homeDevicesPlugin.isCategoryInAutoMode(this.deviceCategory)) {
             if (this.deviceStatus != null && this.deviceStatus.get()) {
-                if (this.autoTimer.canSwitchOff(this.lastSwitch.getTime())) {
-                    STEMSystemApp.LOGGER.INFO("Auto-switch off hardId: " + this.deviceHardAddress + " configName: " + this.configName + " after: " + this.autoTimer.getAutoSwitchOffTimerInSeconds() + " seconds!");
+                if (this.autoSwitchOffTimer.canSwitchOff(this.lastSwitch.getTime())) {
+                    STEMSystemApp.LOGGER.INFO("Auto-switch off hardId: " + this.deviceHardAddress + " configName: " + this.configName + " after: " + this.autoSwitchOffTimer.getAutoSwitchOffTimerInSeconds() + " seconds!");
                     this.switchDevice(false);
                 }
             }
