@@ -18,7 +18,9 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
-public class AutoSwitchOffTimer {
+public class AutoSwitchOffTimer implements Runnable {
+
+    private final TasmotaMQTTDevice tasmotaMQTTDevice;
     private final long autoSwitchOffTimer;
     private final boolean autoSwitchEnabled;
 
@@ -26,6 +28,7 @@ public class AutoSwitchOffTimer {
     private final LocalTime stopTime;
 
     public AutoSwitchOffTimer(TasmotaMQTTDevice tasmotaMQTTDevice) {
+        this.tasmotaMQTTDevice = tasmotaMQTTDevice;
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH-mm");
 
         if (HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().contains("tasmota." + tasmotaMQTTDevice.getConfigName() + ".autoModeSwitchOffSettings")) {
@@ -33,22 +36,22 @@ public class AutoSwitchOffTimer {
             this.autoSwitchOffTimer = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getInt("tasmota." + tasmotaMQTTDevice.getConfigName() + ".autoModeSwitchOffSettings.autoSwitchOffAfterSeconds") * 1000L;
             this.startTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("tasmota." + tasmotaMQTTDevice.getConfigName() + ".autoModeSwitchOffSettings.startTime"), dateTimeFormatter);
             this.stopTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("tasmota." + tasmotaMQTTDevice.getConfigName() + ".autoModeSwitchOffSettings.stopTime"), dateTimeFormatter);
-            STEMSystemApp.LOGGER.INFO("Load specific autoSwitchOff settings for hardId " + tasmotaMQTTDevice.getDeviceHardAddress() + " configName " + tasmotaMQTTDevice.getConfigName());
+            STEMSystemApp.LOGGER.CONFIG("Load specific autoSwitchOff settings for hardId " + tasmotaMQTTDevice.getDeviceHardAddress() + " configName " + tasmotaMQTTDevice.getConfigName());
         } else {
             this.autoSwitchEnabled = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getBoolean("category." + tasmotaMQTTDevice.getDeviceCategory().name() + ".autoSwitchOffEnabled");
             this.autoSwitchOffTimer = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getInt("category." + tasmotaMQTTDevice.getDeviceCategory().name() + ".autoSwitchOffAfterSeconds") * 1000L;
             this.startTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("category." + tasmotaMQTTDevice.getDeviceCategory().name() + ".startTime"), dateTimeFormatter);
             this.stopTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("category." + tasmotaMQTTDevice.getDeviceCategory().name() + ".stopTime"), dateTimeFormatter);
-            STEMSystemApp.LOGGER.INFO("No autoSwitchOff settings found for hardId " + tasmotaMQTTDevice.getDeviceHardAddress() + " configName  " + tasmotaMQTTDevice.getConfigName());
-            STEMSystemApp.LOGGER.INFO("Load default settings from category " + tasmotaMQTTDevice.getDeviceCategory().name());
+            STEMSystemApp.LOGGER.CONFIG("No autoSwitchOff settings found for hardId " + tasmotaMQTTDevice.getDeviceHardAddress() + " configName  " + tasmotaMQTTDevice.getConfigName());
+            STEMSystemApp.LOGGER.CONFIG("Load default settings from category " + tasmotaMQTTDevice.getDeviceCategory().name());
         }
 
-        if (this.startTime.equals(this.stopTime)) {
-            STEMSystemApp.LOGGER.INFO("Start and stop are the same LocalTime! This is useless!");
+        if (this.autoSwitchEnabled && this.startTime.equals(this.stopTime)) {
+            STEMSystemApp.LOGGER.ERROR("Start and stop are the same LocalTime! This is useless!");
         }
     }
 
-    public boolean canSwitchOff(long lastSwitch) {
+    private boolean canSwitchOff(long lastSwitch) {
         if (this.autoSwitchEnabled) {
             return isInTimeRange() && (lastSwitch + autoSwitchOffTimer < new Date().getTime());
         } else {
@@ -64,15 +67,19 @@ public class AutoSwitchOffTimer {
         }
     }
 
-    public int getAutoSwitchOffTimerInSeconds() {
+    private int getAutoSwitchOffTimerInSeconds() {
         return (int) (autoSwitchOffTimer / 1000);
     }
 
-    public long getAutoSwitchOffTimer() {
-        return autoSwitchOffTimer;
-    }
-
-    public boolean isAutoSwitchEnabled() {
-        return autoSwitchEnabled;
+    @Override
+    public void run() {
+        if (HomeDevicesPlugin.homeDevicesPlugin.isCategoryInAutoSwitchOffMode(this.tasmotaMQTTDevice.getDeviceCategory())) {
+            if (this.tasmotaMQTTDevice.deviceStatus != null && this.tasmotaMQTTDevice.deviceStatus.get()) {
+                if (this.canSwitchOff(this.tasmotaMQTTDevice.lastSwitch.getTime())) {
+                    STEMSystemApp.LOGGER.INFO("Auto-switch off hardId: " + this.tasmotaMQTTDevice.deviceHardAddress + " configName: " + this.tasmotaMQTTDevice.configName + " after: " + this.getAutoSwitchOffTimerInSeconds() + " seconds!");
+                    this.tasmotaMQTTDevice.switchDevice(false);
+                }
+            }
+        }
     }
 }

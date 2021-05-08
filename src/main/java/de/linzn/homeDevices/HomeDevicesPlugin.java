@@ -64,20 +64,20 @@ public class HomeDevicesPlugin extends STEMPlugin {
         return this.tasmotaDeviceMap.get(deviceName.toLowerCase());
     }
 
-    public boolean isCategoryInAutoMode(DeviceCategory deviceCategory) {
+    public boolean isCategoryInAutoSwitchOffMode(DeviceCategory deviceCategory) {
         return this.activeCategoryAutoModes.get(deviceCategory);
     }
 
     public boolean setCategoryInAutoMode(DeviceCategory deviceCategory, boolean value) {
         this.activeCategoryAutoModes.put(deviceCategory, value);
         STEMSystemApp.LOGGER.INFO("Update DeviceCategory autoMode: " + deviceCategory + " status: " + value);
-        return isCategoryInAutoMode(deviceCategory);
+        return isCategoryInAutoSwitchOffMode(deviceCategory);
     }
 
     private void loadCategoryAutoModes() {
         for (DeviceCategory deviceCategory : DeviceCategory.values()) {
             boolean value = this.getDefaultConfig().getBoolean("category." + deviceCategory.name() + ".autoSwitchOffEnabled");
-            STEMSystemApp.LOGGER.INFO("Load categoryAutoMode for " + deviceCategory.name() + ":" + value);
+            STEMSystemApp.LOGGER.CONFIG("Load categoryAutoMode for " + deviceCategory.name() + ":" + value);
             this.activeCategoryAutoModes.put(deviceCategory, value);
         }
     }

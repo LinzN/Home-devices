@@ -11,6 +11,7 @@
 
 package de.linzn.homeDevices.devices;
 
+import de.linzn.homeDevices.AutoStartStopTimer;
 import de.linzn.homeDevices.AutoSwitchOffTimer;
 import de.linzn.homeDevices.DeviceCategory;
 import de.linzn.homeDevices.HomeDevicesPlugin;
@@ -26,16 +27,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TasmotaMQTTDevice implements IMqttMessageListener {
 
+    public final String configName;
+    public final String deviceHardAddress;
+    public final String description;
+    public final DeviceCategory deviceCategory;
     private final HomeDevicesPlugin homeDevicesPlugin;
-
-    private final String configName;
-    private final String deviceHardAddress;
-    private final String description;
-    private final DeviceCategory deviceCategory;
     private final MqttModule mqttModule;
-    private AtomicBoolean deviceStatus;
     private final AutoSwitchOffTimer autoSwitchOffTimer;
-    private Date lastSwitch;
+    private final AutoStartStopTimer autoStartStopTimer;
+    public AtomicBoolean deviceStatus;
+    public Date lastSwitch;
 
     public TasmotaMQTTDevice(HomeDevicesPlugin homeDevicesPlugin, String configName) {
         this.homeDevicesPlugin = homeDevicesPlugin;
@@ -46,10 +47,12 @@ public class TasmotaMQTTDevice implements IMqttMessageListener {
         this.mqttModule = STEMSystemApp.getInstance().getMqttModule();
         this.mqttModule.subscribe("stat/" + this.deviceHardAddress + "/RESULT", this);
         this.autoSwitchOffTimer = new AutoSwitchOffTimer(this);
-        STEMSystemApp.LOGGER.INFO("Register new mqtt tasmota device with configName: " + this.configName + ", hardId: " + this.deviceHardAddress + " and category: " + this.deviceCategory.name());
-        STEMSystemApp.LOGGER.INFO("Description: " + description);
+        this.autoStartStopTimer = new AutoStartStopTimer(this);
+        STEMSystemApp.LOGGER.CONFIG("Register new mqtt tasmota device with configName: " + this.configName + ", hardId: " + this.deviceHardAddress + " and category: " + this.deviceCategory.name());
+        STEMSystemApp.LOGGER.CONFIG("Description: " + description);
         STEMSystemApp.getInstance().getScheduler().runTask(HomeDevicesPlugin.homeDevicesPlugin, this::request_initial_status);
-        STEMSystemApp.getInstance().getScheduler().runRepeatScheduler(HomeDevicesPlugin.homeDevicesPlugin, this::checkAutoSwitchOff, 10, 3, TimeUnit.SECONDS);
+        STEMSystemApp.getInstance().getScheduler().runRepeatScheduler(HomeDevicesPlugin.homeDevicesPlugin, autoSwitchOffTimer, 10, 3, TimeUnit.SECONDS);
+        STEMSystemApp.getInstance().getScheduler().runTaskLater(HomeDevicesPlugin.homeDevicesPlugin, autoStartStopTimer, 2, TimeUnit.SECONDS);
     }
 
     public String getConfigName() {
@@ -121,17 +124,6 @@ public class TasmotaMQTTDevice implements IMqttMessageListener {
         JSONObject jsonPayload = new JSONObject(payload);
         boolean status = jsonPayload.getString("POWER").equalsIgnoreCase("ON");
         this.update_status(status);
-    }
-
-    private void checkAutoSwitchOff() {
-        if (this.homeDevicesPlugin.isCategoryInAutoMode(this.deviceCategory)) {
-            if (this.deviceStatus != null && this.deviceStatus.get()) {
-                if (this.autoSwitchOffTimer.canSwitchOff(this.lastSwitch.getTime())) {
-                    STEMSystemApp.LOGGER.INFO("Auto-switch off hardId: " + this.deviceHardAddress + " configName: " + this.configName + " after: " + this.autoSwitchOffTimer.getAutoSwitchOffTimerInSeconds() + " seconds!");
-                    this.switchDevice(false);
-                }
-            }
-        }
     }
 
 }
