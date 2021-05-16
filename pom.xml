@@ -70,10 +70,12 @@
 
                         <configuration>
                             <outputDirectory>target/export-lib</outputDirectory>
-                            <excludeGroupIds>de.linzn, de.stem, de.stem.plugins, org.yaml, org.json, org.eclipse,
+                            <excludeGroupIds>de.stem, de.stem.plugins, org.yaml, org.json, org.eclipse,
                                 org.xerial, org.slf4j, com.google.*, com.google, org.codehaus.mojo,
                                 org.checkerframework, mysql
                             </excludeGroupIds>
+                            <excludeArtifactIds>openJL, simplyDatabase, simplyLogger, simplyConfiguration, zSocket
+                            </excludeArtifactIds>
                         </configuration>
                     </execution>
                 </executions>
@@ -92,11 +94,6 @@
             <groupId>de.stem.plugins</groupId>
             <artifactId>restful-api</artifactId>
             <version>0.0.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.paho</groupId>
-            <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
-            <version>1.2.0</version>
         </dependency>
     </dependencies>
     <properties>
