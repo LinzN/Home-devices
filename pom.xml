@@ -57,6 +57,27 @@
                     <finalName>${project.name}</finalName>
                 </configuration>
             </plugin>
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+
+                        <configuration>
+                            <outputDirectory>target/export-lib</outputDirectory>
+                            <excludeGroupIds>de.linzn, de.stem, de.stem.plugins, org.yaml, org.json, org.eclipse,
+                                org.xerial, org.slf4j, com.google.*, com.google, org.codehaus.mojo,
+                                org.checkerframework, mysql
+                            </excludeGroupIds>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
     <version>0.0.1</version>
