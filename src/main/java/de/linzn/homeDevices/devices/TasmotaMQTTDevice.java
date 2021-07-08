@@ -15,6 +15,7 @@ import de.linzn.homeDevices.AutoStartStopTimer;
 import de.linzn.homeDevices.AutoSwitchOffTimer;
 import de.linzn.homeDevices.DeviceCategory;
 import de.linzn.homeDevices.HomeDevicesPlugin;
+import de.linzn.homeDevices.stemLink.DeviceWrapperListener;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.mqttModule.MqttModule;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
@@ -102,6 +103,7 @@ public class TasmotaMQTTDevice implements IMqttMessageListener {
             STEMSystemApp.LOGGER.INFO("Update hardId: " + this.deviceHardAddress + " configName: " + this.configName + " status: " + this.deviceStatus);
         }
         this.lastSwitch = new Date();
+        DeviceWrapperListener.updateStatus(this.configName, this.deviceStatus.get());
     }
 
     private void request_initial_status() {

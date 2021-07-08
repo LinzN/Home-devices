@@ -74,7 +74,7 @@
                                 org.xerial, org.slf4j, com.google.*, com.google, org.codehaus.mojo,
                                 org.checkerframework, mysql
                             </excludeGroupIds>
-                            <excludeArtifactIds>openJL, simplyDatabase, simplyLogger, simplyConfiguration, zSocket
+                            <excludeArtifactIds>openJL, simplyDatabase, simplyLogger, simplyConfiguration, stemLink
                             </excludeArtifactIds>
                         </configuration>
                     </execution>
