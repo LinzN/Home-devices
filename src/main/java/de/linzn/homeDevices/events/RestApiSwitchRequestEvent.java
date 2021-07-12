@@ -11,20 +11,20 @@
 
 package de.linzn.homeDevices.events;
 
-import de.linzn.homeDevices.DeviceCategory;
+import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
 import de.stem.stemSystem.modules.eventModule.StemEvent;
 
-public class AutoModeRestApiChangeRequestEvent implements StemEvent {
+public class RestApiSwitchRequestEvent implements StemEvent {
 
-    private final DeviceCategory deviceCategory;
-    private final boolean oldValue;
-    private final boolean newValue;
+    private final TasmotaMQTTDevice tasmotaMQTTDevice;
     private boolean isCanceled;
 
-    public AutoModeRestApiChangeRequestEvent(DeviceCategory deviceCategory, boolean oldValue, boolean newValue) {
-        this.deviceCategory = deviceCategory;
-        this.newValue = newValue;
-        this.oldValue = oldValue;
+    public RestApiSwitchRequestEvent(TasmotaMQTTDevice tasmotaMQTTDevice) {
+        this.tasmotaMQTTDevice = tasmotaMQTTDevice;
+    }
+
+    public TasmotaMQTTDevice getTasmotaMQTTDevice() {
+        return tasmotaMQTTDevice;
     }
 
     @Override
@@ -40,17 +40,5 @@ public class AutoModeRestApiChangeRequestEvent implements StemEvent {
     @Override
     public void cancel() {
         this.isCanceled = true;
-    }
-
-    public DeviceCategory getDeviceCategory() {
-        return deviceCategory;
-    }
-
-    public boolean isOldValue() {
-        return oldValue;
-    }
-
-    public boolean isNewValue() {
-        return newValue;
     }
 }

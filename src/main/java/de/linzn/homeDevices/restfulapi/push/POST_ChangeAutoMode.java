@@ -13,7 +13,7 @@ package de.linzn.homeDevices.restfulapi.push;
 
 import de.linzn.homeDevices.DeviceCategory;
 import de.linzn.homeDevices.HomeDevicesPlugin;
-import de.linzn.homeDevices.events.AutoModeRestApiChangeRequestEvent;
+import de.linzn.homeDevices.events.RestApiAutoModeChangeRequestEvent;
 import de.linzn.restfulapi.api.jsonapi.IRequest;
 import de.linzn.restfulapi.api.jsonapi.RequestData;
 import de.stem.stemSystem.STEMSystemApp;
@@ -35,10 +35,10 @@ public class POST_ChangeAutoMode implements IRequest {
         boolean value = Boolean.parseBoolean(requestData.getSubChannels().get(1).toLowerCase());
         boolean oldValue = this.homeDevicesPlugin.isCategoryInAutoSwitchOffMode(deviceCategory);
 
-        AutoModeRestApiChangeRequestEvent autoModeRestApiChangeRequestEvent = new AutoModeRestApiChangeRequestEvent(deviceCategory, oldValue, value);
-        STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(autoModeRestApiChangeRequestEvent);
+        RestApiAutoModeChangeRequestEvent restApiAutoModeChangeRequestEvent = new RestApiAutoModeChangeRequestEvent(deviceCategory, oldValue, value);
+        STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(restApiAutoModeChangeRequestEvent);
 
-        if (!autoModeRestApiChangeRequestEvent.isCanceled()) {
+        if (!restApiAutoModeChangeRequestEvent.isCanceled()) {
             STEMSystemApp.LOGGER.INFO("[REST] Request update deviceCategory autoMode " + deviceCategory.name() + ":::" + value + "#->#" + requestData.getInetSocketAddress().getAddress().getHostName());
             boolean newValue = this.homeDevicesPlugin.setCategoryInAutoMode(deviceCategory, value);
             jsonObject.put("status", newValue);

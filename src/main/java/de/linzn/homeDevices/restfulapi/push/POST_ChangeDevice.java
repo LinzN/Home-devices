@@ -13,7 +13,7 @@ package de.linzn.homeDevices.restfulapi.push;
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
-import de.linzn.homeDevices.events.TasmotaRestApiSwitchRequestEvent;
+import de.linzn.homeDevices.events.RestApiSwitchRequestEvent;
 import de.linzn.restfulapi.api.jsonapi.IRequest;
 import de.linzn.restfulapi.api.jsonapi.RequestData;
 import de.stem.stemSystem.STEMSystemApp;
@@ -34,10 +34,10 @@ public class POST_ChangeDevice implements IRequest {
         String deviceName = requestData.getSubChannels().get(0);
         TasmotaMQTTDevice tasmotaDevice = this.homeDevicesPlugin.getTasmotaDevice(deviceName);
 
-        TasmotaRestApiSwitchRequestEvent tasmotaRestApiSwitchRequestEvent = new TasmotaRestApiSwitchRequestEvent(tasmotaDevice);
-        STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(tasmotaRestApiSwitchRequestEvent);
+        RestApiSwitchRequestEvent restApiSwitchRequestEvent = new RestApiSwitchRequestEvent(tasmotaDevice);
+        STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(restApiSwitchRequestEvent);
 
-        if (!tasmotaRestApiSwitchRequestEvent.isCanceled()) {
+        if (!restApiSwitchRequestEvent.isCanceled()) {
             boolean newStatus;
 
             if (requestData.getSubChannels().size() < 2) {

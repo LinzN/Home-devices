@@ -15,11 +15,11 @@ package de.linzn.homeDevices.events;
 import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
 import de.stem.stemSystem.modules.eventModule.StemEvent;
 
-public class TasmotaUpdateEvent implements StemEvent {
+public class MQTTUpdateDeviceEvent implements StemEvent {
     private final TasmotaMQTTDevice tasmotaMQTTDevice;
     private final boolean newStatus;
 
-    public TasmotaUpdateEvent(final TasmotaMQTTDevice tasmotaMQTTDevice, final boolean newStatus) {
+    public MQTTUpdateDeviceEvent(final TasmotaMQTTDevice tasmotaMQTTDevice, final boolean newStatus) {
         this.tasmotaMQTTDevice = tasmotaMQTTDevice;
         this.newStatus = newStatus;
     }
