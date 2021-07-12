@@ -15,6 +15,10 @@ import de.linzn.homeDevices.AutoStartStopTimer;
 import de.linzn.homeDevices.AutoSwitchOffTimer;
 import de.linzn.homeDevices.DeviceCategory;
 import de.linzn.homeDevices.HomeDevicesPlugin;
+import de.linzn.homeDevices.events.TasmotaMQTTUpdateEvent;
+import de.linzn.homeDevices.events.TasmotaSwitchEvent;
+import de.linzn.homeDevices.events.TasmotaToggleEvent;
+import de.linzn.homeDevices.events.TasmotaUpdateEvent;
 import de.linzn.homeDevices.stemLink.DeviceWrapperListener;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.mqttModule.MqttModule;
@@ -77,21 +81,31 @@ public class TasmotaMQTTDevice implements IMqttMessageListener {
     }
 
     public void switchDevice(boolean status) {
-        MqttMessage mqttMessage = new MqttMessage();
-        mqttMessage.setQos(2);
-        if (status) {
-            mqttMessage.setPayload("ON".getBytes());
-        } else {
-            mqttMessage.setPayload("OFF".getBytes());
+        TasmotaSwitchEvent tasmotaSwitchEvent = new TasmotaSwitchEvent(this);
+        STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(tasmotaSwitchEvent);
+
+        if (!tasmotaSwitchEvent.isCanceled()) {
+            MqttMessage mqttMessage = new MqttMessage();
+            mqttMessage.setQos(2);
+            if (status) {
+                mqttMessage.setPayload("ON".getBytes());
+            } else {
+                mqttMessage.setPayload("OFF".getBytes());
+            }
+            this.mqttModule.publish("cmnd/" + this.deviceHardAddress + "/Power", mqttMessage);
         }
-        this.mqttModule.publish("cmnd/" + this.deviceHardAddress + "/Power", mqttMessage);
     }
 
     public void toggleDevice() {
-        MqttMessage mqttMessage = new MqttMessage();
-        mqttMessage.setQos(2);
-        mqttMessage.setPayload("TOGGLE".getBytes());
-        this.mqttModule.publish("cmnd/" + this.deviceHardAddress + "/Power", mqttMessage);
+        TasmotaToggleEvent tasmotaToggleEvent = new TasmotaToggleEvent(this);
+        STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(tasmotaToggleEvent);
+
+        if (!tasmotaToggleEvent.isCanceled()) {
+            MqttMessage mqttMessage = new MqttMessage();
+            mqttMessage.setQos(2);
+            mqttMessage.setPayload("TOGGLE".getBytes());
+            this.mqttModule.publish("cmnd/" + this.deviceHardAddress + "/Power", mqttMessage);
+        }
     }
 
     private void update_status(boolean newStatus) {
@@ -103,6 +117,9 @@ public class TasmotaMQTTDevice implements IMqttMessageListener {
             STEMSystemApp.LOGGER.INFO("Update hardId: " + this.deviceHardAddress + " configName: " + this.configName + " status: " + this.deviceStatus);
         }
         this.lastSwitch = new Date();
+        TasmotaUpdateEvent tasmotaUpdateEvent = new TasmotaUpdateEvent(this, newStatus);
+        STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(tasmotaUpdateEvent);
+
         DeviceWrapperListener.updateStatus(this.configName, this.deviceStatus.get());
     }
 
@@ -125,6 +142,8 @@ public class TasmotaMQTTDevice implements IMqttMessageListener {
         String payload = new String(mqttMessage.getPayload());
         JSONObject jsonPayload = new JSONObject(payload);
         boolean status = jsonPayload.getString("POWER").equalsIgnoreCase("ON");
+        final TasmotaMQTTUpdateEvent tasmotaMQTTUpdateEvent = new TasmotaMQTTUpdateEvent(this, status);
+        STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(tasmotaMQTTUpdateEvent);
         this.update_status(status);
     }
 
