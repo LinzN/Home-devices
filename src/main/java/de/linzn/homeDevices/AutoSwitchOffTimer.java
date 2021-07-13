@@ -12,6 +12,7 @@
 package de.linzn.homeDevices;
 
 import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
+import de.linzn.homeDevices.events.AutoSwitchOffTimerEvent;
 import de.stem.stemSystem.STEMSystemApp;
 
 import java.time.LocalTime;
@@ -76,8 +77,12 @@ public class AutoSwitchOffTimer implements Runnable {
         if (HomeDevicesPlugin.homeDevicesPlugin.isCategoryInAutoSwitchOffMode(this.tasmotaMQTTDevice.getDeviceCategory())) {
             if (this.tasmotaMQTTDevice.deviceStatus != null && this.tasmotaMQTTDevice.deviceStatus.get()) {
                 if (this.canSwitchOff(this.tasmotaMQTTDevice.lastSwitch.getTime())) {
-                    STEMSystemApp.LOGGER.INFO("Auto-switch off hardId: " + this.tasmotaMQTTDevice.deviceHardAddress + " configName: " + this.tasmotaMQTTDevice.configName + " after: " + this.getAutoSwitchOffTimerInSeconds() + " seconds!");
-                    this.tasmotaMQTTDevice.switchDevice(false);
+                    AutoSwitchOffTimerEvent autoSwitchOffTimerEvent = new AutoSwitchOffTimerEvent(this.tasmotaMQTTDevice, startTime, stopTime, this.tasmotaMQTTDevice.lastSwitch);
+                    STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(autoSwitchOffTimerEvent);
+                    if (!autoSwitchOffTimerEvent.isCanceled()) {
+                        STEMSystemApp.LOGGER.INFO("Auto-switch off hardId: " + this.tasmotaMQTTDevice.deviceHardAddress + " configName: " + this.tasmotaMQTTDevice.configName + " after: " + this.getAutoSwitchOffTimerInSeconds() + " seconds!");
+                        this.tasmotaMQTTDevice.switchDevice(false);
+                    }
                 }
             }
         }

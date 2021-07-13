@@ -12,6 +12,7 @@
 package de.linzn.homeDevices;
 
 import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
+import de.linzn.homeDevices.events.AutoStartStopTimerEvent;
 import de.stem.stemSystem.STEMSystemApp;
 
 import java.time.LocalTime;
@@ -83,11 +84,15 @@ public class AutoStartStopTimer implements Runnable {
                     SwitchTimer first = this.timerList.getFirst();
                     LocalTime offSetTime = first.localTime.plus(offSet, ChronoUnit.MILLIS);
                     if (first.localTime.isBefore(LocalTime.now()) && offSetTime.isAfter(LocalTime.now())) {
+                        AutoStartStopTimerEvent autoStartStopTimerEvent = new AutoStartStopTimerEvent(this.tasmotaMQTTDevice, first);
+                        STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(autoStartStopTimerEvent);
                         first = this.timerList.removeFirst();
-                        /* switch device */
-                        STEMSystemApp.LOGGER.INFO("Timer switch hardId: " + this.tasmotaMQTTDevice.deviceHardAddress + " configName: " + this.tasmotaMQTTDevice.configName + " status: " + first.status);
-                        this.tasmotaMQTTDevice.switchDevice(first.status);
-                        /* switch device */
+                        if (!autoStartStopTimerEvent.isCanceled()) {
+                            /* switch device */
+                            STEMSystemApp.LOGGER.INFO("Timer switch hardId: " + this.tasmotaMQTTDevice.deviceHardAddress + " configName: " + this.tasmotaMQTTDevice.configName + " status: " + first.status);
+                            this.tasmotaMQTTDevice.switchDevice(first.status);
+                            /* switch device */
+                        }
                         this.timerList.addLast(first);
                     }
                 }
@@ -98,12 +103,12 @@ public class AutoStartStopTimer implements Runnable {
         }
     }
 
-    private static class SwitchTimer {
+    public static class SwitchTimer {
 
         public LocalTime localTime;
         public boolean status;
 
-        public SwitchTimer(LocalTime localTime, boolean status) {
+        private SwitchTimer(LocalTime localTime, boolean status) {
             this.localTime = localTime;
             this.status = status;
         }
