@@ -13,32 +13,17 @@ package de.linzn.homeDevices.events;
 
 import de.linzn.homeDevices.AutoStartStopTimer;
 import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
-import de.stem.stemSystem.modules.eventModule.StemEvent;
+import de.stem.stemSystem.modules.eventModule.CancelableEvent;
 
-public class AutoStartStopTimerEvent implements StemEvent {
+
+public class AutoStartStopTimerEvent extends CancelableEvent {
 
     private final TasmotaMQTTDevice tasmotaMQTTDevice;
     private final AutoStartStopTimer.SwitchTimer timer;
-    private boolean isCanceled;
 
     public AutoStartStopTimerEvent(TasmotaMQTTDevice tasmotaMQTTDevice, AutoStartStopTimer.SwitchTimer timer) {
         this.tasmotaMQTTDevice = tasmotaMQTTDevice;
         this.timer = timer;
-    }
-
-    @Override
-    public boolean isCancelable() {
-        return true;
-    }
-
-    @Override
-    public boolean isCanceled() {
-        return isCanceled;
-    }
-
-    @Override
-    public void cancel() {
-        this.isCanceled = true;
     }
 
     public AutoStartStopTimer.SwitchTimer getTimer() {

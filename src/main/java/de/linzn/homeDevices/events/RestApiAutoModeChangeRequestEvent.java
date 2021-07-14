@@ -12,34 +12,18 @@
 package de.linzn.homeDevices.events;
 
 import de.linzn.homeDevices.DeviceCategory;
-import de.stem.stemSystem.modules.eventModule.StemEvent;
+import de.stem.stemSystem.modules.eventModule.CancelableEvent;
 
-public class RestApiAutoModeChangeRequestEvent implements StemEvent {
+public class RestApiAutoModeChangeRequestEvent extends CancelableEvent {
 
     private final DeviceCategory deviceCategory;
     private final boolean oldValue;
     private final boolean newValue;
-    private boolean isCanceled;
 
     public RestApiAutoModeChangeRequestEvent(DeviceCategory deviceCategory, boolean oldValue, boolean newValue) {
         this.deviceCategory = deviceCategory;
         this.newValue = newValue;
         this.oldValue = oldValue;
-    }
-
-    @Override
-    public boolean isCancelable() {
-        return true;
-    }
-
-    @Override
-    public boolean isCanceled() {
-        return isCanceled;
-    }
-
-    @Override
-    public void cancel() {
-        this.isCanceled = true;
     }
 
     public DeviceCategory getDeviceCategory() {

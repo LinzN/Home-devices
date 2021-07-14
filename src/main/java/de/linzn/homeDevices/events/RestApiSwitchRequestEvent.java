@@ -12,12 +12,11 @@
 package de.linzn.homeDevices.events;
 
 import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
-import de.stem.stemSystem.modules.eventModule.StemEvent;
+import de.stem.stemSystem.modules.eventModule.CancelableEvent;
 
-public class RestApiSwitchRequestEvent implements StemEvent {
+public class RestApiSwitchRequestEvent extends CancelableEvent {
 
     private final TasmotaMQTTDevice tasmotaMQTTDevice;
-    private boolean isCanceled;
 
     public RestApiSwitchRequestEvent(TasmotaMQTTDevice tasmotaMQTTDevice) {
         this.tasmotaMQTTDevice = tasmotaMQTTDevice;
@@ -27,18 +26,4 @@ public class RestApiSwitchRequestEvent implements StemEvent {
         return tasmotaMQTTDevice;
     }
 
-    @Override
-    public boolean isCancelable() {
-        return true;
-    }
-
-    @Override
-    public boolean isCanceled() {
-        return isCanceled;
-    }
-
-    @Override
-    public void cancel() {
-        this.isCanceled = true;
-    }
 }

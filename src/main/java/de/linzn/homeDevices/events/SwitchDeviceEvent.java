@@ -13,33 +13,18 @@ package de.linzn.homeDevices.events;
 
 
 import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
-import de.stem.stemSystem.modules.eventModule.StemEvent;
+import de.stem.stemSystem.modules.eventModule.CancelableEvent;
 
-public class SwitchDeviceEvent implements StemEvent {
+public class SwitchDeviceEvent extends CancelableEvent {
     private final TasmotaMQTTDevice tasmotaMQTTDevice;
-    private boolean isCanceled;
+
 
     public SwitchDeviceEvent(final TasmotaMQTTDevice tasmotaMQTTDevice) {
         this.tasmotaMQTTDevice = tasmotaMQTTDevice;
-        this.isCanceled = false;
     }
 
     public TasmotaMQTTDevice getTasmotaMQTTDevice() {
         return tasmotaMQTTDevice;
     }
 
-    @Override
-    public boolean isCancelable() {
-        return true;
-    }
-
-    @Override
-    public boolean isCanceled() {
-        return isCanceled;
-    }
-
-    @Override
-    public void cancel() {
-        this.isCanceled = true;
-    }
 }
