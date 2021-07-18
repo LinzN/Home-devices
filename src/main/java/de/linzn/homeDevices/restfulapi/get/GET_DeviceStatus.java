@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020. Niklas Linz - All Rights Reserved
+ * Copyright (C) 2021. Niklas Linz - All Rights Reserved
  * You may use, distribute and modify this code under the
  * terms of the LGPLv3 license, which unfortunately won't be
  * written for another century.
@@ -30,7 +30,11 @@ public class GET_DeviceStatus implements IRequest {
         String deviceName = requestData.getSubChannels().get(0);
         TasmotaMQTTDevice tasmotaDevice = this.homeDevicesPlugin.getTasmotaDevice(deviceName);
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("status", tasmotaDevice.getDeviceStatus());
+        if (tasmotaDevice.deviceStatus != null) {
+            jsonObject.put("status", tasmotaDevice.getDeviceStatus());
+        } else {
+            jsonObject.put("error", 404);
+        }
         return jsonObject;
     }
 
