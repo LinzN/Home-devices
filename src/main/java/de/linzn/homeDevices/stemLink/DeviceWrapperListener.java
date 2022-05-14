@@ -13,7 +13,7 @@ package de.linzn.homeDevices.stemLink;
 
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
-import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
+import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
 import de.linzn.stemLink.components.events.ReceiveDataEvent;
 import de.linzn.stemLink.components.events.handler.EventHandler;
 import de.stem.stemSystem.STEMSystemApp;
@@ -43,7 +43,7 @@ public class DeviceWrapperListener {
         STEMSystemApp.LOGGER.INFO("Publish device update [" + configName + "] to STEMLINK network");
     }
 
-    @EventHandler(channel = "tasmota_device")
+    @EventHandler(channel = "switchable_device")
     public void onReceiveEvent(ReceiveDataEvent event) {
         DataInputStream in = new DataInputStream(new ByteArrayInputStream(event.getDataInBytes()));
         try {
@@ -53,11 +53,11 @@ public class DeviceWrapperListener {
 
             if (action.equalsIgnoreCase("switch_status")) {
                 boolean value = in.readBoolean();
-                TasmotaMQTTDevice tasmotaMQTTDevice = homeDevicesPlugin.getTasmotaDevice(configName);
-                tasmotaMQTTDevice.switchDevice(value);
+                SwitchableMQTTDevice switchableMQTTDevice = homeDevicesPlugin.getSwitchableMQTTDevice(configName);
+                switchableMQTTDevice.switchDevice(value);
             } else if (action.equalsIgnoreCase("toggle_status")) {
-                TasmotaMQTTDevice tasmotaMQTTDevice = homeDevicesPlugin.getTasmotaDevice(configName);
-                tasmotaMQTTDevice.toggleDevice();
+                SwitchableMQTTDevice switchableMQTTDevice = homeDevicesPlugin.getSwitchableMQTTDevice(configName);
+                switchableMQTTDevice.toggleDevice();
             }
 
         } catch (IOException e) {

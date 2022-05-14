@@ -12,17 +12,17 @@
 package de.linzn.homeDevices.events;
 
 import de.linzn.homeDevices.AutoStartStopTimer;
-import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
+import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
 import de.stem.stemSystem.modules.eventModule.CancelableEvent;
 
 
 public class AutoStartStopTimerEvent extends CancelableEvent {
 
-    private final TasmotaMQTTDevice tasmotaMQTTDevice;
+    private final SwitchableMQTTDevice switchableMQTTDevice;
     private final AutoStartStopTimer.SwitchTimer timer;
 
-    public AutoStartStopTimerEvent(TasmotaMQTTDevice tasmotaMQTTDevice, AutoStartStopTimer.SwitchTimer timer) {
-        this.tasmotaMQTTDevice = tasmotaMQTTDevice;
+    public AutoStartStopTimerEvent(SwitchableMQTTDevice switchableMQTTDevice, AutoStartStopTimer.SwitchTimer timer) {
+        this.switchableMQTTDevice = switchableMQTTDevice;
         this.timer = timer;
     }
 
@@ -30,7 +30,7 @@ public class AutoStartStopTimerEvent extends CancelableEvent {
         return timer;
     }
 
-    public TasmotaMQTTDevice getTasmotaMQTTDevice() {
-        return tasmotaMQTTDevice;
+    public SwitchableMQTTDevice getSwitchableMQTTDevice() {
+        return switchableMQTTDevice;
     }
 }

@@ -12,7 +12,7 @@
 package de.linzn.homeDevices.restfulapi.push;
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
-import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
+import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
 import de.linzn.homeDevices.events.RestApiSwitchRequestEvent;
 import de.linzn.restfulapi.api.jsonapi.IRequest;
 import de.linzn.restfulapi.api.jsonapi.RequestData;
@@ -32,23 +32,23 @@ public class POST_ChangeDevice implements IRequest {
         JSONObject jsonObject = new JSONObject();
 
         String deviceName = requestData.getSubChannels().get(0);
-        TasmotaMQTTDevice tasmotaDevice = this.homeDevicesPlugin.getTasmotaDevice(deviceName);
+        SwitchableMQTTDevice switchableMQTTDevice = this.homeDevicesPlugin.getSwitchableMQTTDevice(deviceName);
 
-        RestApiSwitchRequestEvent restApiSwitchRequestEvent = new RestApiSwitchRequestEvent(tasmotaDevice);
+        RestApiSwitchRequestEvent restApiSwitchRequestEvent = new RestApiSwitchRequestEvent(switchableMQTTDevice);
         STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(restApiSwitchRequestEvent);
 
         if (!restApiSwitchRequestEvent.isCanceled()) {
             boolean newStatus;
 
             if (requestData.getSubChannels().size() < 2) {
-                tasmotaDevice.toggleDevice();
-                newStatus = tasmotaDevice.getDeviceStatus();
+                switchableMQTTDevice.toggleDevice();
+                newStatus = switchableMQTTDevice.getDeviceStatus();
                 STEMSystemApp.LOGGER.INFO("[REST] Request device toggle " + deviceName + "#->#" + requestData.getInetSocketAddress().getAddress().getHostName());
 
             } else {
                 boolean setStatus = Boolean.parseBoolean(requestData.getSubChannels().get(1));
-                tasmotaDevice.switchDevice(setStatus);
-                newStatus = tasmotaDevice.getDeviceStatus();
+                switchableMQTTDevice.switchDevice(setStatus);
+                newStatus = switchableMQTTDevice.getDeviceStatus();
                 STEMSystemApp.LOGGER.INFO("[REST] Request device switch " + deviceName + ":::" + setStatus + "#->#" + requestData.getInetSocketAddress().getAddress().getHostName());
             }
 

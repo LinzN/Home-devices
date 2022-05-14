@@ -12,20 +12,20 @@
 package de.linzn.homeDevices.events;
 
 
-import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
+import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
 import de.stem.stemSystem.modules.eventModule.StemEvent;
 
 public class MQTTUpdateDeviceEvent implements StemEvent {
-    private final TasmotaMQTTDevice tasmotaMQTTDevice;
+    private final SwitchableMQTTDevice switchableMQTTDevice;
     private final boolean newStatus;
 
-    public MQTTUpdateDeviceEvent(final TasmotaMQTTDevice tasmotaMQTTDevice, final boolean newStatus) {
-        this.tasmotaMQTTDevice = tasmotaMQTTDevice;
+    public MQTTUpdateDeviceEvent(final SwitchableMQTTDevice switchableMQTTDevice, final boolean newStatus) {
+        this.switchableMQTTDevice = switchableMQTTDevice;
         this.newStatus = newStatus;
     }
 
-    public TasmotaMQTTDevice getTasmotaMQTTDevice() {
-        return tasmotaMQTTDevice;
+    public SwitchableMQTTDevice getSwitchableMQTTDevice() {
+        return switchableMQTTDevice;
     }
 
     public boolean getNewStatus() {

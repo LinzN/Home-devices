@@ -12,12 +12,12 @@
 package de.linzn.homeDevices.events;
 
 
-import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
+import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
 
 public class ToggleDeviceDeviceEvent extends SwitchDeviceEvent {
 
-    public ToggleDeviceDeviceEvent(final TasmotaMQTTDevice tasmotaMQTTDevice) {
-        super(tasmotaMQTTDevice);
+    public ToggleDeviceDeviceEvent(final SwitchableMQTTDevice switchableMQTTDevice) {
+        super(switchableMQTTDevice);
     }
 
 }

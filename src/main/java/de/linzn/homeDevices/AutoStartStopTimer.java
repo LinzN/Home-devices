@@ -11,7 +11,7 @@
 
 package de.linzn.homeDevices;
 
-import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
+import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
 import de.linzn.homeDevices.events.AutoStartStopTimerEvent;
 import de.stem.stemSystem.STEMSystemApp;
 
@@ -24,14 +24,14 @@ import java.util.Map;
 
 public class AutoStartStopTimer implements Runnable {
 
-    private final TasmotaMQTTDevice tasmotaMQTTDevice;
+    private final SwitchableMQTTDevice switchableMQTTDevice;
     private final LinkedList<SwitchTimer> timerList;
     private final long offSet = 200;
     private boolean isEnabled;
 
 
-    public AutoStartStopTimer(TasmotaMQTTDevice tasmotaMQTTDevice) {
-        this.tasmotaMQTTDevice = tasmotaMQTTDevice;
+    public AutoStartStopTimer(SwitchableMQTTDevice switchableMQTTDevice) {
+        this.switchableMQTTDevice = switchableMQTTDevice;
         this.timerList = new LinkedList<>();
         this.loadTimer();
         this.resortTimerForCurrentTime();
@@ -41,14 +41,14 @@ public class AutoStartStopTimer implements Runnable {
     private void loadTimer() {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH-mm-ss.SSS");
 
-        if (HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().contains("tasmota." + this.tasmotaMQTTDevice.getConfigName() + ".autoStartStopTimer")) {
+        if (HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().contains("switches." + this.switchableMQTTDevice.getConfigName() + ".autoStartStopTimer")) {
             isEnabled = true;
-            Map<String, Map> objectMap = (LinkedHashMap<String, Map>) HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().get("tasmota." + this.tasmotaMQTTDevice.getConfigName() + ".autoStartStopTimer");
+            Map<String, Map> objectMap = (LinkedHashMap<String, Map>) HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().get("switches." + this.switchableMQTTDevice.getConfigName() + ".autoStartStopTimer");
 
             for (String key : objectMap.keySet()) {
-                LocalTime localTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("tasmota." + this.tasmotaMQTTDevice.getConfigName() + ".autoStartStopTimer." + key + ".time"), dateTimeFormatter);
-                boolean value = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getBoolean("tasmota." + this.tasmotaMQTTDevice.getConfigName() + ".autoStartStopTimer." + key + ".value");
-                STEMSystemApp.LOGGER.CONFIG("Add timer for hardId: " + this.tasmotaMQTTDevice.deviceHardAddress + " configName: " + this.tasmotaMQTTDevice.configName + " time: " + localTime.toString() + " value: " + value);
+                LocalTime localTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("switches." + this.switchableMQTTDevice.getConfigName() + ".autoStartStopTimer." + key + ".time"), dateTimeFormatter);
+                boolean value = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getBoolean("switches." + this.switchableMQTTDevice.getConfigName() + ".autoStartStopTimer." + key + ".value");
+                STEMSystemApp.LOGGER.CONFIG("Add timer for hardId: " + this.switchableMQTTDevice.deviceHardAddress + " configName: " + this.switchableMQTTDevice.configName + " time: " + localTime.toString() + " value: " + value);
                 this.timerList.add(new SwitchTimer(localTime, value));
             }
 
@@ -80,17 +80,17 @@ public class AutoStartStopTimer implements Runnable {
     public void run() {
         while (true) {
             try {
-                if (isEnabled && this.tasmotaMQTTDevice.deviceStatus != null) {
+                if (isEnabled && this.switchableMQTTDevice.deviceStatus != null) {
                     SwitchTimer first = this.timerList.getFirst();
                     LocalTime offSetTime = first.localTime.plus(offSet, ChronoUnit.MILLIS);
                     if (first.localTime.isBefore(LocalTime.now()) && offSetTime.isAfter(LocalTime.now())) {
-                        AutoStartStopTimerEvent autoStartStopTimerEvent = new AutoStartStopTimerEvent(this.tasmotaMQTTDevice, first);
+                        AutoStartStopTimerEvent autoStartStopTimerEvent = new AutoStartStopTimerEvent(this.switchableMQTTDevice, first);
                         STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(autoStartStopTimerEvent);
                         first = this.timerList.removeFirst();
                         if (!autoStartStopTimerEvent.isCanceled()) {
                             /* switch device */
-                            STEMSystemApp.LOGGER.INFO("Timer switch hardId: " + this.tasmotaMQTTDevice.deviceHardAddress + " configName: " + this.tasmotaMQTTDevice.configName + " status: " + first.status);
-                            this.tasmotaMQTTDevice.switchDevice(first.status);
+                            STEMSystemApp.LOGGER.INFO("Timer switch hardId: " + this.switchableMQTTDevice.deviceHardAddress + " configName: " + this.switchableMQTTDevice.configName + " status: " + first.status);
+                            this.switchableMQTTDevice.switchDevice(first.status);
                             /* switch device */
                         }
                         this.timerList.addLast(first);

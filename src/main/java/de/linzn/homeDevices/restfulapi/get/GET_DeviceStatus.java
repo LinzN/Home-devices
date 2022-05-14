@@ -12,7 +12,7 @@
 package de.linzn.homeDevices.restfulapi.get;
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
-import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
+import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
 import de.linzn.restfulapi.api.jsonapi.IRequest;
 import de.linzn.restfulapi.api.jsonapi.RequestData;
 import org.json.JSONObject;
@@ -28,10 +28,10 @@ public class GET_DeviceStatus implements IRequest {
     @Override
     public Object proceedRequestData(RequestData requestData) {
         String deviceName = requestData.getSubChannels().get(0);
-        TasmotaMQTTDevice tasmotaDevice = this.homeDevicesPlugin.getTasmotaDevice(deviceName);
+        SwitchableMQTTDevice switchableMQTTDevice = this.homeDevicesPlugin.getSwitchableMQTTDevice(deviceName);
         JSONObject jsonObject = new JSONObject();
-        if (tasmotaDevice.deviceStatus != null) {
-            jsonObject.put("status", tasmotaDevice.getDeviceStatus());
+        if (switchableMQTTDevice != null && switchableMQTTDevice.deviceStatus != null) {
+            jsonObject.put("status", switchableMQTTDevice.getDeviceStatus());
         } else {
             jsonObject.put("error", 404);
         }

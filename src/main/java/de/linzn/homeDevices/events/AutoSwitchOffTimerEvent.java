@@ -11,7 +11,7 @@
 
 package de.linzn.homeDevices.events;
 
-import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
+import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
 import de.stem.stemSystem.modules.eventModule.CancelableEvent;
 
 import java.time.LocalTime;
@@ -19,20 +19,20 @@ import java.util.Date;
 
 public class AutoSwitchOffTimerEvent extends CancelableEvent {
 
-    private final TasmotaMQTTDevice tasmotaMQTTDevice;
+    private final SwitchableMQTTDevice switchableMQTTDevice;
     private final LocalTime startTime;
     private final LocalTime stopTime;
     private final Date lastSwitch;
 
-    public AutoSwitchOffTimerEvent(TasmotaMQTTDevice tasmotaMQTTDevice, LocalTime startTime, LocalTime stopTime, Date lastSwitch) {
-        this.tasmotaMQTTDevice = tasmotaMQTTDevice;
+    public AutoSwitchOffTimerEvent(SwitchableMQTTDevice switchableMQTTDevice, LocalTime startTime, LocalTime stopTime, Date lastSwitch) {
+        this.switchableMQTTDevice = switchableMQTTDevice;
         this.startTime = startTime;
         this.stopTime = stopTime;
         this.lastSwitch = lastSwitch;
     }
 
-    public TasmotaMQTTDevice getTasmotaMQTTDevice() {
-        return tasmotaMQTTDevice;
+    public SwitchableMQTTDevice getSwitchableMQTTDevice() {
+        return switchableMQTTDevice;
     }
 
     public LocalTime getStartTime() {

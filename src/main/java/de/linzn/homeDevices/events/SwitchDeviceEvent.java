@@ -12,19 +12,19 @@
 package de.linzn.homeDevices.events;
 
 
-import de.linzn.homeDevices.devices.TasmotaMQTTDevice;
+import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
 import de.stem.stemSystem.modules.eventModule.CancelableEvent;
 
 public class SwitchDeviceEvent extends CancelableEvent {
-    private final TasmotaMQTTDevice tasmotaMQTTDevice;
+    private final SwitchableMQTTDevice switchableMQTTDevice;
 
 
-    public SwitchDeviceEvent(final TasmotaMQTTDevice tasmotaMQTTDevice) {
-        this.tasmotaMQTTDevice = tasmotaMQTTDevice;
+    public SwitchDeviceEvent(final SwitchableMQTTDevice switchableMQTTDevice) {
+        this.switchableMQTTDevice = switchableMQTTDevice;
     }
 
-    public TasmotaMQTTDevice getTasmotaMQTTDevice() {
-        return tasmotaMQTTDevice;
+    public SwitchableMQTTDevice getSwitchableMQTTDevice() {
+        return switchableMQTTDevice;
     }
 
 }
