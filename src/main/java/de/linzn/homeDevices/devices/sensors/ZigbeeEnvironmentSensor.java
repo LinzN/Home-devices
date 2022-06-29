@@ -10,50 +10,31 @@ public class ZigbeeEnvironmentSensor extends EnvironmentSensor {
     private final String zigbeeGatewayMqttName;
 
     public ZigbeeEnvironmentSensor(HomeDevicesPlugin homeDevicesPlugin, String deviceHardAddress, String description, String configName, String zigbeeGatewayMqttName) {
-        super(homeDevicesPlugin, deviceHardAddress, description, configName, DeviceBrand.ZIGBEE, "tele/" + zigbeeGatewayMqttName + "/" + deviceHardAddress + "/SENSOR");
+        super(homeDevicesPlugin, deviceHardAddress, description, configName, DeviceBrand.ZIGBEE, zigbeeGatewayMqttName + "/" + deviceHardAddress);
         this.zigbeeGatewayMqttName = zigbeeGatewayMqttName;
     }
 
     @Override
     public void request_initial_status() {
-        while (!this.hasData()) {
-            MqttMessage mqttMessage = new MqttMessage();
-            mqttMessage.setPayload(("0x" + this.getDeviceHardAddress()).getBytes());
-            mqttMessage.setQos(2);
-            this.mqttModule.publish("cmnd/" + zigbeeGatewayMqttName + "/ZbInfo", mqttMessage);
-            STEMSystemApp.LOGGER.INFO("MQTT initialization request for sensor: " + this.deviceHardAddress + " configName: " + this.configName);
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException ignored) {
-            }
-        }
+        STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " is not supported!");
+        this.update_humidity(0);
+        this.update_batteryPercentage(0);
+        this.update_temperature(0);
     }
 
     @Override
     public void messageArrived(String s, MqttMessage mqttMessage) {
         String payload = new String(mqttMessage.getPayload());
         JSONObject jsonPayload = new JSONObject(payload);
-        String key;
-        JSONObject sensor = null;
 
-        if (jsonPayload.has("ZbReceived")) {
-            key = (String) jsonPayload.getJSONObject("ZbReceived").names().get(0);
-            sensor = jsonPayload.getJSONObject("ZbReceived").getJSONObject(key);
-        } else if (jsonPayload.has("ZbInfo")) {
-            key = (String) jsonPayload.getJSONObject("ZbInfo").names().get(0);
-            sensor = jsonPayload.getJSONObject("ZbInfo").getJSONObject(key);
+        if (jsonPayload.has("temperature")) {
+            this.update_temperature(jsonPayload.getDouble("temperature"));
         }
-
-        if (sensor != null) {
-            if (sensor.has("Temperature")) {
-                this.update_temperature(sensor.getDouble("Temperature"));
-            }
-            if (sensor.has("Humidity")) {
-                this.update_humidity(sensor.getDouble("Humidity"));
-            }
-            if (sensor.has("BatteryPercentage")) {
-                this.update_batteryPercentage(sensor.getDouble("BatteryPercentage"));
-            }
+        if (jsonPayload.has("humidity")) {
+            this.update_humidity(jsonPayload.getDouble("humidity"));
+        }
+        if (jsonPayload.has("battery")) {
+            this.update_batteryPercentage(jsonPayload.getDouble("battery"));
         }
     }
 }

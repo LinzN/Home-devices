@@ -14,7 +14,7 @@ public class ZigbeeSwitchDevice extends SwitchableMQTTDevice {
     private String zigbeeGatewayMqttName;
 
     public ZigbeeSwitchDevice(HomeDevicesPlugin homeDevicesPlugin, String configName, String deviceHardAddress, DeviceCategory deviceCategory, String description, String zigbeeGatewayMqttName) {
-        super(homeDevicesPlugin, deviceHardAddress, description, deviceCategory, configName.toLowerCase(), DeviceBrand.ZIGBEE, "tele/" + zigbeeGatewayMqttName + "/" + deviceHardAddress + "/SENSOR");
+        super(homeDevicesPlugin, deviceHardAddress, description, deviceCategory, configName.toLowerCase(), DeviceBrand.ZIGBEE, zigbeeGatewayMqttName + "/" + deviceHardAddress);
         this.zigbeeGatewayMqttName = zigbeeGatewayMqttName;
     }
 
@@ -27,13 +27,14 @@ public class ZigbeeSwitchDevice extends SwitchableMQTTDevice {
         if (!deviceSwitchEvent.isCanceled()) {
             MqttMessage mqttMessage = new MqttMessage();
             mqttMessage.setQos(2);
-            mqttMessage.setPayload(("0x" + this.deviceHardAddress).getBytes());
+            JSONObject state = new JSONObject();
             if (status) {
-                mqttMessage.setPayload(("{\"Device\":\"0x" + this.deviceHardAddress + "\",\"Send\":{\"Power\":1}}").getBytes());
+                state.put("state", "ON");
             } else {
-                mqttMessage.setPayload(("{\"Device\":\"0x" + this.deviceHardAddress + "\",\"Send\":{\"Power\":0}}").getBytes());
+                state.put("state", "OFF");
             }
-            this.mqttModule.publish("cmnd/" + zigbeeGatewayMqttName + "/ZbSend", mqttMessage);
+            mqttMessage.setPayload(state.toString().getBytes());
+            this.mqttModule.publish(zigbeeGatewayMqttName + "/" + deviceHardAddress + "/set", mqttMessage);
         }
     }
 
@@ -45,18 +46,22 @@ public class ZigbeeSwitchDevice extends SwitchableMQTTDevice {
         if (!toggleDeviceEvent.isCanceled()) {
             MqttMessage mqttMessage = new MqttMessage();
             mqttMessage.setQos(2);
-            mqttMessage.setPayload(("{\"Device\":\"0x" + this.deviceHardAddress + "\",\"Send\":{\"Power\":2}}").getBytes());
-            this.mqttModule.publish("cmnd/" + zigbeeGatewayMqttName + "/ZbSend", mqttMessage);
+            JSONObject state = new JSONObject();
+            state.put("state", "TOGGLE");
+            mqttMessage.setPayload(state.toString().getBytes());
+            this.mqttModule.publish(zigbeeGatewayMqttName + "/" + deviceHardAddress + "/set", mqttMessage);
         }
     }
 
     @Override
     protected void request_initial_status() {
         while (this.deviceStatus == null) {
+            JSONObject state = new JSONObject();
+            state.put("state", "");
             MqttMessage mqttMessage = new MqttMessage();
-            mqttMessage.setPayload(("0x" + this.deviceHardAddress).getBytes());
+            mqttMessage.setPayload(state.toString().getBytes());
             mqttMessage.setQos(2);
-            this.mqttModule.publish("cmnd/" + zigbeeGatewayMqttName + "/ZbInfo", mqttMessage);
+            this.mqttModule.publish(zigbeeGatewayMqttName + "/" + deviceHardAddress + "/get", mqttMessage);
             STEMSystemApp.LOGGER.INFO("MQTT initialization request for device: " + this.deviceHardAddress);
             try {
                 Thread.sleep(1000);
@@ -69,22 +74,9 @@ public class ZigbeeSwitchDevice extends SwitchableMQTTDevice {
     public void messageArrived(String s, MqttMessage mqttMessage) {
         String payload = new String(mqttMessage.getPayload());
         JSONObject jsonPayload = new JSONObject(payload);
-        String key = null;
-        JSONObject deviceData = null;
 
-        if (jsonPayload.has("ZbReceived")) {
-            key = (String) jsonPayload.getJSONObject("ZbReceived").names().get(0);
-            deviceData = jsonPayload.getJSONObject("ZbReceived").getJSONObject(key);
-        } else if (jsonPayload.has("ZbInfo")) {
-            key = (String) jsonPayload.getJSONObject("ZbInfo").names().get(0);
-            deviceData = jsonPayload.getJSONObject("ZbInfo").getJSONObject(key);
+        if (jsonPayload.has("state")) {
+            this.update_status(jsonPayload.getString("state").equalsIgnoreCase("ON"));
         }
-
-        if (deviceData != null) {
-            if (deviceData.has("Power")) {
-                this.update_status(deviceData.getInt("Power") == 1);
-            }
-        }
-
     }
 }
