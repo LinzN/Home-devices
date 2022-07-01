@@ -13,6 +13,7 @@ package de.linzn.homeDevices;
 
 
 import de.linzn.homeDevices.devices.other.DoorRingDevice;
+import de.linzn.homeDevices.devices.other.ZigbeeThermostatDevice;
 import de.linzn.homeDevices.devices.sensors.MqttSensor;
 import de.linzn.homeDevices.devices.sensors.ZigbeeEnvironmentSensor;
 import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
@@ -37,6 +38,7 @@ public class HomeDevicesPlugin extends STEMPlugin {
 
     private Map<String, SwitchableMQTTDevice> switchableMQTTDeviceMap;
     private Map<String, MqttSensor> mqttSensorMap;
+    private Map<String, ZigbeeThermostatDevice> zigbeeThermostatDeviceMap;
 
     private Map<DeviceCategory, Boolean> activeCategoryAutoModes;
 
@@ -50,12 +52,13 @@ public class HomeDevicesPlugin extends STEMPlugin {
     public void onEnable() {
         this.switchableMQTTDeviceMap = new HashMap<>();
         this.mqttSensorMap = new HashMap<>();
-        //this.zigbeeMQTTEnvSensorMap = new HashMap<>();
+        this.zigbeeThermostatDeviceMap = new HashMap<>();
         this.activeCategoryAutoModes = new HashMap<>();
         setUpConfig();
         loadCategoryAutoModes();
         loadSwitchableDevices();
         loadSensors();
+        loadThermostats();
         loadDoorRing();
         RestFulApiPlugin.restFulApiPlugin.registerIGetJSONClass(new GET_AutoMode(this));
         RestFulApiPlugin.restFulApiPlugin.registerIGetJSONClass(new GET_DeviceStatus(this));
@@ -146,6 +149,26 @@ public class HomeDevicesPlugin extends STEMPlugin {
 
             if (mqttSensor != null) {
                 this.mqttSensorMap.put(mqttSensor.getConfigName(), mqttSensor);
+            }
+        }
+    }
+
+    private void loadThermostats() {
+        HashMap<String, List> hashMap = (HashMap) this.getDefaultConfig().get("thermostats", new HashMap<String, List>());
+        for (String configName : hashMap.keySet()) {
+            String deviceHardAddress = this.getDefaultConfig().getString("thermostats." + configName + ".deviceHardAddress", configName.toLowerCase());
+            String description = this.getDefaultConfig().getString("thermostats." + configName + ".description", "No description");
+            DeviceBrand deviceBrand = DeviceBrand.valueOf(this.getDefaultConfig().getString("thermostats." + configName + ".deviceBrand"));
+            ZigbeeThermostatDevice zigbeeThermostatDevice = null;
+
+            if (deviceBrand == DeviceBrand.ZIGBEE) {
+                String zigbeeGatewayMqttName = this.getDefaultConfig().getString("thermostats." + configName + ".zigbeeGatewayMqttName", "sonoff_switch");
+                zigbeeThermostatDevice = new ZigbeeThermostatDevice(homeDevicesPlugin, deviceHardAddress, description, configName, zigbeeGatewayMqttName);
+
+            }
+
+            if (zigbeeThermostatDevice != null) {
+                this.zigbeeThermostatDeviceMap.put(zigbeeThermostatDevice.getConfigName(), zigbeeThermostatDevice);
             }
         }
     }
