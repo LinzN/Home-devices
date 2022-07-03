@@ -1,20 +1,21 @@
 package de.linzn.homeDevices.devices.switches;
 
-import de.linzn.homeDevices.DeviceBrand;
-import de.linzn.homeDevices.DeviceCategory;
-import de.linzn.homeDevices.HomeDevicesPlugin;
+import de.linzn.homeDevices.devices.enums.DeviceTechnology;
+import de.linzn.homeDevices.devices.enums.SwitchCategory;
+import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.homeDevices.events.MQTTUpdateDeviceEvent;
 import de.linzn.homeDevices.events.SwitchDeviceEvent;
 import de.linzn.homeDevices.events.ToggleDeviceDeviceEvent;
 import de.stem.stemSystem.STEMSystemApp;
+import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
-public class TasmotaSwitchDevice extends SwitchableMQTTDevice {
+public class TasmotaSwitchDevice extends MqttSwitch {
 
 
-    public TasmotaSwitchDevice(HomeDevicesPlugin homeDevicesPlugin, String configName, String deviceHardAddress, DeviceCategory deviceCategory, String description) {
-        super(homeDevicesPlugin, deviceHardAddress, description, deviceCategory, configName.toLowerCase(), DeviceBrand.TASMOTA, "stat/" + deviceHardAddress + "/RESULT");
+    public TasmotaSwitchDevice(STEMPlugin stemPlugin, String configName, String deviceHardAddress, SwitchCategory switchCategory, String description) {
+        super(stemPlugin, deviceHardAddress, description, switchCategory, configName.toLowerCase(), DeviceTechnology.TASMOTA, "stat/" + deviceHardAddress + "/RESULT");
     }
 
 
@@ -50,7 +51,7 @@ public class TasmotaSwitchDevice extends SwitchableMQTTDevice {
 
     @Override
     protected void request_initial_status() {
-        while (this.deviceStatus == null) {
+        while (!this.hasData()) {
             MqttMessage mqttMessage = new MqttMessage();
             mqttMessage.setQos(2);
             this.mqttModule.publish("cmnd/" + this.deviceHardAddress + "/Power", mqttMessage);

@@ -11,7 +11,7 @@
 
 package de.linzn.homeDevices.events;
 
-import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
+import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.stem.stemSystem.modules.eventModule.CancelableEvent;
 
 import java.time.LocalTime;
@@ -19,20 +19,20 @@ import java.util.Date;
 
 public class AutoSwitchOffTimerEvent extends CancelableEvent {
 
-    private final SwitchableMQTTDevice switchableMQTTDevice;
+    private final MqttSwitch mqttSwitch;
     private final LocalTime startTime;
     private final LocalTime stopTime;
     private final Date lastSwitch;
 
-    public AutoSwitchOffTimerEvent(SwitchableMQTTDevice switchableMQTTDevice, LocalTime startTime, LocalTime stopTime, Date lastSwitch) {
-        this.switchableMQTTDevice = switchableMQTTDevice;
+    public AutoSwitchOffTimerEvent(MqttSwitch mqttSwitch, LocalTime startTime, LocalTime stopTime, Date lastSwitch) {
+        this.mqttSwitch = mqttSwitch;
         this.startTime = startTime;
         this.stopTime = stopTime;
         this.lastSwitch = lastSwitch;
     }
 
-    public SwitchableMQTTDevice getSwitchableMQTTDevice() {
-        return switchableMQTTDevice;
+    public MqttSwitch getSwitchableMQTTDevice() {
+        return mqttSwitch;
     }
 
     public LocalTime getStartTime() {

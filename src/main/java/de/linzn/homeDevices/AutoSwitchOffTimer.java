@@ -11,7 +11,7 @@
 
 package de.linzn.homeDevices;
 
-import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
+import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.homeDevices.events.AutoSwitchOffTimerEvent;
 import de.stem.stemSystem.STEMSystemApp;
 
@@ -21,30 +21,31 @@ import java.util.Date;
 
 public class AutoSwitchOffTimer implements Runnable {
 
-    private final SwitchableMQTTDevice switchableMQTTDevice;
+    private final MqttSwitch mqttSwitch;
     private final long autoSwitchOffTimer;
     private final boolean autoSwitchEnabled;
 
     private final LocalTime startTime;
     private final LocalTime stopTime;
 
-    public AutoSwitchOffTimer(SwitchableMQTTDevice switchableMQTTDevice) {
-        this.switchableMQTTDevice = switchableMQTTDevice;
+    public AutoSwitchOffTimer(MqttSwitch mqttSwitch) {
+        this.mqttSwitch = mqttSwitch;
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH-mm");
 
-        if (HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().contains("switches." + switchableMQTTDevice.getConfigName() + ".autoModeSwitchOffSettings")) {
-            this.autoSwitchEnabled = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getBoolean("switches." + switchableMQTTDevice.getConfigName() + ".autoModeSwitchOffSettings.autoSwitchOffEnabled");
-            this.autoSwitchOffTimer = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getInt("switches." + switchableMQTTDevice.getConfigName() + ".autoModeSwitchOffSettings.autoSwitchOffAfterSeconds") * 1000L;
-            this.startTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("switches." + switchableMQTTDevice.getConfigName() + ".autoModeSwitchOffSettings.startTime"), dateTimeFormatter);
-            this.stopTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("switches." + switchableMQTTDevice.getConfigName() + ".autoModeSwitchOffSettings.stopTime"), dateTimeFormatter);
-            STEMSystemApp.LOGGER.CONFIG("Load specific autoSwitchOff settings for hardId " + switchableMQTTDevice.getDeviceHardAddress() + " configName " + switchableMQTTDevice.getConfigName());
+        String configPath = "mqttDevices." + mqttSwitch.getConfigName() + ".options";
+        if (HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().contains(configPath + ".autoModeSwitchOffSettings")) {
+            this.autoSwitchEnabled = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getBoolean(configPath + ".autoModeSwitchOffSettings.autoSwitchOffEnabled");
+            this.autoSwitchOffTimer = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getInt(configPath + ".autoModeSwitchOffSettings.autoSwitchOffAfterSeconds") * 1000L;
+            this.startTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString(configPath + ".autoModeSwitchOffSettings.startTime"), dateTimeFormatter);
+            this.stopTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString(configPath + ".autoModeSwitchOffSettings.stopTime"), dateTimeFormatter);
+            STEMSystemApp.LOGGER.CONFIG("Load specific autoSwitchOff settings for hardId " + mqttSwitch.getDeviceHardAddress() + " configName " + mqttSwitch.getConfigName());
         } else {
-            this.autoSwitchEnabled = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getBoolean("category." + switchableMQTTDevice.getDeviceCategory().name() + ".autoSwitchOffEnabled");
-            this.autoSwitchOffTimer = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getInt("category." + switchableMQTTDevice.getDeviceCategory().name() + ".autoSwitchOffAfterSeconds") * 1000L;
-            this.startTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("category." + switchableMQTTDevice.getDeviceCategory().name() + ".startTime"), dateTimeFormatter);
-            this.stopTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("category." + switchableMQTTDevice.getDeviceCategory().name() + ".stopTime"), dateTimeFormatter);
-            STEMSystemApp.LOGGER.CONFIG("No autoSwitchOff settings found for hardId " + switchableMQTTDevice.getDeviceHardAddress() + " configName  " + switchableMQTTDevice.getConfigName());
-            STEMSystemApp.LOGGER.CONFIG("Load default settings from category " + switchableMQTTDevice.getDeviceCategory().name());
+            this.autoSwitchEnabled = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getBoolean("category." + mqttSwitch.getSwitchCategory().name() + ".autoSwitchOffEnabled");
+            this.autoSwitchOffTimer = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getInt("category." + mqttSwitch.getSwitchCategory().name() + ".autoSwitchOffAfterSeconds") * 1000L;
+            this.startTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("category." + mqttSwitch.getSwitchCategory().name() + ".startTime"), dateTimeFormatter);
+            this.stopTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("category." + mqttSwitch.getSwitchCategory().name() + ".stopTime"), dateTimeFormatter);
+            STEMSystemApp.LOGGER.CONFIG("No autoSwitchOff settings found for hardId " + mqttSwitch.getDeviceHardAddress() + " configName  " + mqttSwitch.getConfigName());
+            STEMSystemApp.LOGGER.CONFIG("Load default settings from category " + mqttSwitch.getSwitchCategory().name());
         }
 
         if (this.autoSwitchEnabled && this.startTime.equals(this.stopTime)) {
@@ -74,14 +75,14 @@ public class AutoSwitchOffTimer implements Runnable {
 
     @Override
     public void run() {
-        if (HomeDevicesPlugin.homeDevicesPlugin.isCategoryInAutoSwitchOffMode(this.switchableMQTTDevice.getDeviceCategory())) {
-            if (this.switchableMQTTDevice.deviceStatus != null && this.switchableMQTTDevice.deviceStatus.get()) {
-                if (this.canSwitchOff(this.switchableMQTTDevice.lastSwitch.getTime())) {
-                    AutoSwitchOffTimerEvent autoSwitchOffTimerEvent = new AutoSwitchOffTimerEvent(this.switchableMQTTDevice, startTime, stopTime, this.switchableMQTTDevice.lastSwitch);
+        if (HomeDevicesPlugin.homeDevicesPlugin.isCategoryInAutoSwitchOffMode(this.mqttSwitch.getSwitchCategory())) {
+            if (this.mqttSwitch.deviceStatus != null && this.mqttSwitch.deviceStatus.get()) {
+                if (this.canSwitchOff(this.mqttSwitch.lastSwitch.getTime())) {
+                    AutoSwitchOffTimerEvent autoSwitchOffTimerEvent = new AutoSwitchOffTimerEvent(this.mqttSwitch, startTime, stopTime, this.mqttSwitch.lastSwitch);
                     STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(autoSwitchOffTimerEvent);
                     if (!autoSwitchOffTimerEvent.isCanceled()) {
-                        STEMSystemApp.LOGGER.INFO("Auto-switch off hardId: " + this.switchableMQTTDevice.deviceHardAddress + " configName: " + this.switchableMQTTDevice.configName + " after: " + this.getAutoSwitchOffTimerInSeconds() + " seconds!");
-                        this.switchableMQTTDevice.switchDevice(false);
+                        STEMSystemApp.LOGGER.INFO("Auto-switch off hardId: " + this.mqttSwitch.deviceHardAddress + " configName: " + this.mqttSwitch.configName + " after: " + this.getAutoSwitchOffTimerInSeconds() + " seconds!");
+                        this.mqttSwitch.switchDevice(false);
                     }
                 }
             }

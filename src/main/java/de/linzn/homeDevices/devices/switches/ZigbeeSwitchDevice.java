@@ -1,20 +1,21 @@
 package de.linzn.homeDevices.devices.switches;
 
-import de.linzn.homeDevices.DeviceBrand;
-import de.linzn.homeDevices.DeviceCategory;
-import de.linzn.homeDevices.HomeDevicesPlugin;
+import de.linzn.homeDevices.devices.enums.DeviceTechnology;
+import de.linzn.homeDevices.devices.enums.SwitchCategory;
+import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.homeDevices.events.SwitchDeviceEvent;
 import de.linzn.homeDevices.events.ToggleDeviceDeviceEvent;
 import de.stem.stemSystem.STEMSystemApp;
+import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
-public class ZigbeeSwitchDevice extends SwitchableMQTTDevice {
+public class ZigbeeSwitchDevice extends MqttSwitch {
 
-    private String zigbeeGatewayMqttName;
+    private final String zigbeeGatewayMqttName;
 
-    public ZigbeeSwitchDevice(HomeDevicesPlugin homeDevicesPlugin, String configName, String deviceHardAddress, DeviceCategory deviceCategory, String description, String zigbeeGatewayMqttName) {
-        super(homeDevicesPlugin, deviceHardAddress, description, deviceCategory, configName.toLowerCase(), DeviceBrand.ZIGBEE, zigbeeGatewayMqttName + "/" + deviceHardAddress);
+    public ZigbeeSwitchDevice(STEMPlugin stemPlugin, String configName, String deviceHardAddress, SwitchCategory switchCategory, String description, String zigbeeGatewayMqttName) {
+        super(stemPlugin, deviceHardAddress, description, switchCategory, configName.toLowerCase(), DeviceTechnology.ZIGBEE, zigbeeGatewayMqttName + "/" + deviceHardAddress);
         this.zigbeeGatewayMqttName = zigbeeGatewayMqttName;
     }
 

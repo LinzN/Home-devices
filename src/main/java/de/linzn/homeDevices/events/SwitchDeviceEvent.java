@@ -12,19 +12,19 @@
 package de.linzn.homeDevices.events;
 
 
-import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
+import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.stem.stemSystem.modules.eventModule.CancelableEvent;
 
 public class SwitchDeviceEvent extends CancelableEvent {
-    private final SwitchableMQTTDevice switchableMQTTDevice;
+    private final MqttSwitch mqttSwitch;
 
 
-    public SwitchDeviceEvent(final SwitchableMQTTDevice switchableMQTTDevice) {
-        this.switchableMQTTDevice = switchableMQTTDevice;
+    public SwitchDeviceEvent(final MqttSwitch mqttSwitch) {
+        this.mqttSwitch = mqttSwitch;
     }
 
-    public SwitchableMQTTDevice getSwitchableMQTTDevice() {
-        return switchableMQTTDevice;
+    public MqttSwitch getSwitchableMQTTDevice() {
+        return mqttSwitch;
     }
 
 }

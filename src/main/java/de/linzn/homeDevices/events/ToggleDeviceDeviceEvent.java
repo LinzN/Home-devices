@@ -12,12 +12,12 @@
 package de.linzn.homeDevices.events;
 
 
-import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
+import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 
 public class ToggleDeviceDeviceEvent extends SwitchDeviceEvent {
 
-    public ToggleDeviceDeviceEvent(final SwitchableMQTTDevice switchableMQTTDevice) {
-        super(switchableMQTTDevice);
+    public ToggleDeviceDeviceEvent(final MqttSwitch mqttSwitch) {
+        super(mqttSwitch);
     }
 
 }

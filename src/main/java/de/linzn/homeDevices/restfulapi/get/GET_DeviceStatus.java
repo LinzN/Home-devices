@@ -12,7 +12,7 @@
 package de.linzn.homeDevices.restfulapi.get;
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
-import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
+import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.restfulapi.api.jsonapi.IRequest;
 import de.linzn.restfulapi.api.jsonapi.RequestData;
 import org.json.JSONObject;
@@ -28,10 +28,10 @@ public class GET_DeviceStatus implements IRequest {
     @Override
     public Object proceedRequestData(RequestData requestData) {
         String deviceName = requestData.getSubChannels().get(0);
-        SwitchableMQTTDevice switchableMQTTDevice = this.homeDevicesPlugin.getSwitchableMQTTDevice(deviceName);
+        MqttSwitch mqttSwitch = (MqttSwitch) this.homeDevicesPlugin.getDeviceManager().getMqttDevice(deviceName);
         JSONObject jsonObject = new JSONObject();
-        if (switchableMQTTDevice != null && switchableMQTTDevice.deviceStatus != null) {
-            jsonObject.put("status", switchableMQTTDevice.getDeviceStatus());
+        if (mqttSwitch != null && mqttSwitch.deviceStatus != null) {
+            jsonObject.put("status", mqttSwitch.getDeviceStatus());
         } else {
             jsonObject.put("error", 404);
         }

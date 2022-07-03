@@ -1,22 +1,17 @@
 package de.linzn.homeDevices.devices.other;
 
 import com.google.common.util.concurrent.AtomicDouble;
-import de.linzn.homeDevices.HomeDevicesPlugin;
+import de.linzn.homeDevices.devices.enums.DeviceTechnology;
+import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.mqttModule.MqttModule;
-import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
+import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ZigbeeThermostatDevice implements IMqttMessageListener {
-    private HomeDevicesPlugin homeDevicesPlugin;
-    private String deviceHardAddress;
-    private String description;
-    private String configName;
-    private String zigbeeGatewayMqttName;
-    protected MqttModule mqttModule;
+public class ZigbeeThermostatDevice extends MqttDevice {
+    private final String zigbeeGatewayMqttName;
 
     private AtomicDouble currentTemperature;
     private AtomicBoolean isBatteryLow;
@@ -24,19 +19,14 @@ public class ZigbeeThermostatDevice implements IMqttMessageListener {
     private AtomicBoolean awayMode;
 
 
-    public ZigbeeThermostatDevice(HomeDevicesPlugin homeDevicesPlugin, String deviceHardAddress, String description, String configName, String zigbeeGatewayMqttName) {
-        this.homeDevicesPlugin = homeDevicesPlugin;
-        this.deviceHardAddress = deviceHardAddress;
-        this.description = description;
-        this.configName = configName;
-        this.mqttModule = STEMSystemApp.getInstance().getMqttModule();
-        this.mqttModule.subscribe(zigbeeGatewayMqttName + "/" + deviceHardAddress, this);
-        STEMSystemApp.getInstance().getScheduler().runTask(HomeDevicesPlugin.homeDevicesPlugin, this::request_initial_status);
+    public ZigbeeThermostatDevice(STEMPlugin stemPlugin, String deviceHardAddress, String description, String configName, String zigbeeGatewayMqttName) {
+        super(stemPlugin, deviceHardAddress, description, configName, DeviceTechnology.ZIGBEE, zigbeeGatewayMqttName + "/" + deviceHardAddress);
+        this.zigbeeGatewayMqttName = zigbeeGatewayMqttName;
     }
 
+    @Override
     public void request_initial_status() {
         STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " is not fully supported!");
-        requestTemperature();
     }
 
     public void setTemperature(double value) {
@@ -98,7 +88,7 @@ public class ZigbeeThermostatDevice implements IMqttMessageListener {
     }
 
     @Override
-    public void messageArrived(String s, MqttMessage mqttMessage) throws Exception {
+    public void messageArrived(String s, MqttMessage mqttMessage) {
         String payload = new String(mqttMessage.getPayload());
         JSONObject jsonPayload = new JSONObject(payload);
         if (jsonPayload.has("current_heating_setpoint")) {
@@ -115,14 +105,7 @@ public class ZigbeeThermostatDevice implements IMqttMessageListener {
         }
     }
 
-    public String getConfigName() {
-        return this.configName;
-    }
-
-    public String getDeviceHardAddress() {
-        return deviceHardAddress;
-    }
-
+    @Override
     public boolean hasData() {
         return this.currentTemperature != null;
     }

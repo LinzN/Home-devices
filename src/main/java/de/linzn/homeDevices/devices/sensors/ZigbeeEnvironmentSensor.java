@@ -1,16 +1,17 @@
 package de.linzn.homeDevices.devices.sensors;
 
-import de.linzn.homeDevices.DeviceBrand;
-import de.linzn.homeDevices.HomeDevicesPlugin;
+import de.linzn.homeDevices.devices.enums.DeviceTechnology;
+import de.linzn.homeDevices.devices.interfaces.EnvironmentSensor;
 import de.stem.stemSystem.STEMSystemApp;
+import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
 public class ZigbeeEnvironmentSensor extends EnvironmentSensor {
     private final String zigbeeGatewayMqttName;
 
-    public ZigbeeEnvironmentSensor(HomeDevicesPlugin homeDevicesPlugin, String deviceHardAddress, String description, String configName, String zigbeeGatewayMqttName) {
-        super(homeDevicesPlugin, deviceHardAddress, description, configName, DeviceBrand.ZIGBEE, zigbeeGatewayMqttName + "/" + deviceHardAddress);
+    public ZigbeeEnvironmentSensor(STEMPlugin stemPlugin, String deviceHardAddress, String description, String configName, String zigbeeGatewayMqttName) {
+        super(stemPlugin, deviceHardAddress, description, configName, DeviceTechnology.ZIGBEE, zigbeeGatewayMqttName + "/" + deviceHardAddress);
         this.zigbeeGatewayMqttName = zigbeeGatewayMqttName;
     }
 

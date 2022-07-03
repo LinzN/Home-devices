@@ -12,17 +12,17 @@
 package de.linzn.homeDevices.events;
 
 import de.linzn.homeDevices.AutoStartStopTimer;
-import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
+import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.stem.stemSystem.modules.eventModule.CancelableEvent;
 
 
 public class AutoStartStopTimerEvent extends CancelableEvent {
 
-    private final SwitchableMQTTDevice switchableMQTTDevice;
+    private final MqttSwitch mqttSwitch;
     private final AutoStartStopTimer.SwitchTimer timer;
 
-    public AutoStartStopTimerEvent(SwitchableMQTTDevice switchableMQTTDevice, AutoStartStopTimer.SwitchTimer timer) {
-        this.switchableMQTTDevice = switchableMQTTDevice;
+    public AutoStartStopTimerEvent(MqttSwitch mqttSwitch, AutoStartStopTimer.SwitchTimer timer) {
+        this.mqttSwitch = mqttSwitch;
         this.timer = timer;
     }
 
@@ -30,7 +30,7 @@ public class AutoStartStopTimerEvent extends CancelableEvent {
         return timer;
     }
 
-    public SwitchableMQTTDevice getSwitchableMQTTDevice() {
-        return switchableMQTTDevice;
+    public MqttSwitch getSwitchableMQTTDevice() {
+        return mqttSwitch;
     }
 }

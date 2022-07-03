@@ -1,35 +1,35 @@
-package de.linzn.homeDevices.devices.sensors;
+package de.linzn.homeDevices.devices.interfaces;
 
-import de.linzn.homeDevices.DeviceBrand;
 import de.linzn.homeDevices.HomeDevicesPlugin;
-import de.linzn.homeDevices.SensorCategory;
+import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.mqttModule.MqttModule;
+import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
-public abstract class MqttSensor implements IMqttMessageListener {
+public abstract class MqttDevice implements IMqttMessageListener {
 
     public final String description;
     public final String configName;
     public final String deviceHardAddress;
-    public final SensorCategory sensorCategory;
-    public final DeviceBrand deviceBrand;
-    private final HomeDevicesPlugin homeDevicesPlugin;
+    public final DeviceTechnology deviceTechnology;
+    private final STEMPlugin stemPlugin;
     private final String topic;
     protected MqttModule mqttModule;
 
-    public MqttSensor(HomeDevicesPlugin homeDevicesPlugin, String deviceHardAddress, String description, SensorCategory sensorCategory, String configName, DeviceBrand deviceBrand, String mqttTopic) {
-        this.homeDevicesPlugin = homeDevicesPlugin;
-        this.deviceBrand = deviceBrand;
+    public MqttDevice(STEMPlugin stemPlugin, String deviceHardAddress, String description, String configName, DeviceTechnology deviceTechnology, String mqttTopic) {
+        this.stemPlugin = stemPlugin;
+        this.deviceTechnology = deviceTechnology;
         this.configName = configName.toLowerCase();
         this.deviceHardAddress = deviceHardAddress;
-        this.sensorCategory = sensorCategory;
         this.description = description;
         this.topic = mqttTopic;
         this.mqttModule = STEMSystemApp.getInstance().getMqttModule();
         this.mqttModule.subscribe(topic, this);
         STEMSystemApp.getInstance().getScheduler().runTask(HomeDevicesPlugin.homeDevicesPlugin, this::request_initial_status);
+        STEMSystemApp.LOGGER.CONFIG("Register new mqtt " + this.deviceTechnology.name() + " device with configName: " + this.configName + ", hardId: " + this.deviceHardAddress);
+        STEMSystemApp.LOGGER.CONFIG("Description: " + description);
     }
 
     public String getConfigName() {
@@ -40,10 +40,23 @@ public abstract class MqttSensor implements IMqttMessageListener {
         return deviceHardAddress;
     }
 
-    public abstract void request_initial_status();
+    public DeviceTechnology getDeviceTechnology() {
+        return this.deviceTechnology;
+    }
+
+    public String getDescription() {
+        return this.description;
+    }
+
+    public STEMPlugin getHomeDevicesPlugin() {
+        return stemPlugin;
+    }
+
+    protected abstract void request_initial_status();
 
     @Override
     public abstract void messageArrived(String s, MqttMessage mqttMessage);
 
     public abstract boolean hasData();
+
 }

@@ -13,7 +13,7 @@ package de.linzn.homeDevices.stemLink;
 
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
-import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
+import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.stemLink.components.events.ReceiveDataEvent;
 import de.linzn.stemLink.components.events.handler.EventHandler;
 import de.stem.stemSystem.STEMSystemApp;
@@ -50,14 +50,13 @@ public class DeviceWrapperListener {
             String configName = in.readUTF();
 
             String action = in.readUTF();
+            MqttSwitch mqttSwitch = (MqttSwitch) homeDevicesPlugin.getDeviceManager().getMqttDevice(configName);
 
             if (action.equalsIgnoreCase("switch_status")) {
                 boolean value = in.readBoolean();
-                SwitchableMQTTDevice switchableMQTTDevice = homeDevicesPlugin.getSwitchableMQTTDevice(configName);
-                switchableMQTTDevice.switchDevice(value);
+                mqttSwitch.switchDevice(value);
             } else if (action.equalsIgnoreCase("toggle_status")) {
-                SwitchableMQTTDevice switchableMQTTDevice = homeDevicesPlugin.getSwitchableMQTTDevice(configName);
-                switchableMQTTDevice.toggleDevice();
+                mqttSwitch.toggleDevice();
             }
 
         } catch (IOException e) {

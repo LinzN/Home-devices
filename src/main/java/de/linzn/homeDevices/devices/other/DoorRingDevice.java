@@ -12,29 +12,31 @@
 package de.linzn.homeDevices.devices.other;
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
+import de.linzn.homeDevices.devices.enums.DeviceTechnology;
+import de.linzn.homeDevices.devices.enums.SwitchCategory;
+import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.events.MQTTDoorRingEvent;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.mqttModule.MqttModule;
 import de.stem.stemSystem.modules.notificationModule.NotificationPriority;
+import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class DoorRingDevice implements IMqttMessageListener {
+public class DoorRingDevice extends MqttDevice {
 
-    public final String deviceHardAddress;
-    private final HomeDevicesPlugin homeDevicesPlugin;
-    private final MqttModule mqttModule;
     public AtomicBoolean deviceLock = new AtomicBoolean(false);
 
-    public DoorRingDevice(HomeDevicesPlugin homeDevicesPlugin) {
-        this.homeDevicesPlugin = homeDevicesPlugin;
-        this.deviceHardAddress = homeDevicesPlugin.getDefaultConfig().getString("doorRing.deviceHardAddress", "tasmota_xxxxxx");
-        this.mqttModule = STEMSystemApp.getInstance().getMqttModule();
-        this.mqttModule.subscribe("stat/" + this.deviceHardAddress + "/RESULT", this);
-        STEMSystemApp.LOGGER.CONFIG("Register doorRing device with hardId: " + this.deviceHardAddress);
+    public DoorRingDevice(STEMPlugin stemPlugin, String configName, String deviceHardAddress, String description) {
+        super(stemPlugin, deviceHardAddress, description, configName, DeviceTechnology.TASMOTA, "stat/" + deviceHardAddress + "/RESULT");
+    }
+
+    @Override
+    protected void request_initial_status() {
+        STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " is not supported supported!");
     }
 
     @Override
@@ -50,6 +52,11 @@ public class DoorRingDevice implements IMqttMessageListener {
             STEMSystemApp.getInstance().getNotificationModule().pushNotification("Door Ring activated", NotificationPriority.ASAP);
         }
         this.deviceLock.set(status);
+    }
+
+    @Override
+    public boolean hasData() {
+        return true;
     }
 
 }

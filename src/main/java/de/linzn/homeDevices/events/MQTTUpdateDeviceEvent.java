@@ -12,20 +12,20 @@
 package de.linzn.homeDevices.events;
 
 
-import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
+import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.stem.stemSystem.modules.eventModule.StemEvent;
 
 public class MQTTUpdateDeviceEvent implements StemEvent {
-    private final SwitchableMQTTDevice switchableMQTTDevice;
+    private final MqttSwitch mqttSwitch;
     private final boolean newStatus;
 
-    public MQTTUpdateDeviceEvent(final SwitchableMQTTDevice switchableMQTTDevice, final boolean newStatus) {
-        this.switchableMQTTDevice = switchableMQTTDevice;
+    public MQTTUpdateDeviceEvent(final MqttSwitch mqttSwitch, final boolean newStatus) {
+        this.mqttSwitch = mqttSwitch;
         this.newStatus = newStatus;
     }
 
-    public SwitchableMQTTDevice getSwitchableMQTTDevice() {
-        return switchableMQTTDevice;
+    public MqttSwitch getSwitchableMQTTDevice() {
+        return mqttSwitch;
     }
 
     public boolean getNewStatus() {

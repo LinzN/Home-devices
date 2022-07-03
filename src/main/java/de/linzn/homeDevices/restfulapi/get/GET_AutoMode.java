@@ -11,8 +11,8 @@
 
 package de.linzn.homeDevices.restfulapi.get;
 
-import de.linzn.homeDevices.DeviceCategory;
 import de.linzn.homeDevices.HomeDevicesPlugin;
+import de.linzn.homeDevices.devices.enums.SwitchCategory;
 import de.linzn.restfulapi.api.jsonapi.IRequest;
 import de.linzn.restfulapi.api.jsonapi.RequestData;
 import org.json.JSONObject;
@@ -30,9 +30,9 @@ public class GET_AutoMode implements IRequest {
     public Object proceedRequestData(RequestData requestData) {
         JSONObject jsonObject = new JSONObject();
 
-        for (DeviceCategory deviceCategory : DeviceCategory.values()) {
-            boolean status = this.homeDevicesPlugin.isCategoryInAutoSwitchOffMode(deviceCategory);
-            jsonObject.put(deviceCategory.name(), status);
+        for (SwitchCategory switchCategory : SwitchCategory.values()) {
+            boolean status = this.homeDevicesPlugin.isCategoryInAutoSwitchOffMode(switchCategory);
+            jsonObject.put(switchCategory.name(), status);
         }
         return jsonObject;
     }

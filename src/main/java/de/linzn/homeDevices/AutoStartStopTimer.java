@@ -11,7 +11,7 @@
 
 package de.linzn.homeDevices;
 
-import de.linzn.homeDevices.devices.switches.SwitchableMQTTDevice;
+import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.homeDevices.events.AutoStartStopTimerEvent;
 import de.stem.stemSystem.STEMSystemApp;
 
@@ -24,14 +24,14 @@ import java.util.Map;
 
 public class AutoStartStopTimer implements Runnable {
 
-    private final SwitchableMQTTDevice switchableMQTTDevice;
+    private final MqttSwitch mqttSwitch;
     private final LinkedList<SwitchTimer> timerList;
     private final long offSet = 200;
     private boolean isEnabled;
 
 
-    public AutoStartStopTimer(SwitchableMQTTDevice switchableMQTTDevice) {
-        this.switchableMQTTDevice = switchableMQTTDevice;
+    public AutoStartStopTimer(MqttSwitch mqttSwitch) {
+        this.mqttSwitch = mqttSwitch;
         this.timerList = new LinkedList<>();
         this.loadTimer();
         this.resortTimerForCurrentTime();
@@ -40,15 +40,15 @@ public class AutoStartStopTimer implements Runnable {
 
     private void loadTimer() {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH-mm-ss.SSS");
-
-        if (HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().contains("switches." + this.switchableMQTTDevice.getConfigName() + ".autoStartStopTimer")) {
+        String configPath = "mqttDevices." + mqttSwitch.getConfigName() + ".options";
+        if (HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().contains("mqttDevices." + this.mqttSwitch.getConfigName() + ".autoStartStopTimer")) {
             isEnabled = true;
-            Map<String, Map> objectMap = (LinkedHashMap<String, Map>) HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().get("switches." + this.switchableMQTTDevice.getConfigName() + ".autoStartStopTimer");
+            Map<String, Map> objectMap = (LinkedHashMap<String, Map>) HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().get("switches." + this.mqttSwitch.getConfigName() + ".autoStartStopTimer");
 
             for (String key : objectMap.keySet()) {
-                LocalTime localTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString("switches." + this.switchableMQTTDevice.getConfigName() + ".autoStartStopTimer." + key + ".time"), dateTimeFormatter);
-                boolean value = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getBoolean("switches." + this.switchableMQTTDevice.getConfigName() + ".autoStartStopTimer." + key + ".value");
-                STEMSystemApp.LOGGER.CONFIG("Add timer for hardId: " + this.switchableMQTTDevice.deviceHardAddress + " configName: " + this.switchableMQTTDevice.configName + " time: " + localTime.toString() + " value: " + value);
+                LocalTime localTime = LocalTime.parse(HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getString(configPath + ".autoStartStopTimer." + key + ".time"), dateTimeFormatter);
+                boolean value = HomeDevicesPlugin.homeDevicesPlugin.getDefaultConfig().getBoolean(configPath + ".autoStartStopTimer." + key + ".value");
+                STEMSystemApp.LOGGER.CONFIG("Add timer for hardId: " + this.mqttSwitch.deviceHardAddress + " configName: " + this.mqttSwitch.configName + " time: " + localTime.toString() + " value: " + value);
                 this.timerList.add(new SwitchTimer(localTime, value));
             }
 
@@ -80,17 +80,17 @@ public class AutoStartStopTimer implements Runnable {
     public void run() {
         while (true) {
             try {
-                if (isEnabled && this.switchableMQTTDevice.deviceStatus != null) {
+                if (isEnabled && this.mqttSwitch.deviceStatus != null) {
                     SwitchTimer first = this.timerList.getFirst();
                     LocalTime offSetTime = first.localTime.plus(offSet, ChronoUnit.MILLIS);
                     if (first.localTime.isBefore(LocalTime.now()) && offSetTime.isAfter(LocalTime.now())) {
-                        AutoStartStopTimerEvent autoStartStopTimerEvent = new AutoStartStopTimerEvent(this.switchableMQTTDevice, first);
+                        AutoStartStopTimerEvent autoStartStopTimerEvent = new AutoStartStopTimerEvent(this.mqttSwitch, first);
                         STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(autoStartStopTimerEvent);
                         first = this.timerList.removeFirst();
                         if (!autoStartStopTimerEvent.isCanceled()) {
                             /* switch device */
-                            STEMSystemApp.LOGGER.INFO("Timer switch hardId: " + this.switchableMQTTDevice.deviceHardAddress + " configName: " + this.switchableMQTTDevice.configName + " status: " + first.status);
-                            this.switchableMQTTDevice.switchDevice(first.status);
+                            STEMSystemApp.LOGGER.INFO("Timer switch hardId: " + this.mqttSwitch.deviceHardAddress + " configName: " + this.mqttSwitch.configName + " status: " + first.status);
+                            this.mqttSwitch.switchDevice(first.status);
                             /* switch device */
                         }
                         this.timerList.addLast(first);

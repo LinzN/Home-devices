@@ -11,23 +11,23 @@
 
 package de.linzn.homeDevices.events;
 
-import de.linzn.homeDevices.DeviceCategory;
+import de.linzn.homeDevices.devices.enums.SwitchCategory;
 import de.stem.stemSystem.modules.eventModule.CancelableEvent;
 
 public class RestApiAutoModeChangeRequestEvent extends CancelableEvent {
 
-    private final DeviceCategory deviceCategory;
+    private final SwitchCategory switchCategory;
     private final boolean oldValue;
     private final boolean newValue;
 
-    public RestApiAutoModeChangeRequestEvent(DeviceCategory deviceCategory, boolean oldValue, boolean newValue) {
-        this.deviceCategory = deviceCategory;
+    public RestApiAutoModeChangeRequestEvent(SwitchCategory switchCategory, boolean oldValue, boolean newValue) {
+        this.switchCategory = switchCategory;
         this.newValue = newValue;
         this.oldValue = oldValue;
     }
 
-    public DeviceCategory getDeviceCategory() {
-        return deviceCategory;
+    public SwitchCategory getDeviceCategory() {
+        return switchCategory;
     }
 
     public boolean isOldValue() {
