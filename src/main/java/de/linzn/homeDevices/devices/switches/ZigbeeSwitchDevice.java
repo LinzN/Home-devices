@@ -1,6 +1,7 @@
 package de.linzn.homeDevices.devices.switches;
 
 import de.linzn.homeDevices.devices.enums.DeviceTechnology;
+import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.enums.SwitchCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.homeDevices.events.SwitchDeviceEvent;
@@ -56,14 +57,14 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
 
     @Override
     protected void request_initial_status() {
-        while (this.deviceStatus == null) {
+        while (!this.hasData()) {
             JSONObject state = new JSONObject();
             state.put("state", "");
             MqttMessage mqttMessage = new MqttMessage();
             mqttMessage.setPayload(state.toString().getBytes());
             mqttMessage.setQos(2);
             this.mqttModule.publish(zigbeeGatewayMqttName + "/" + deviceHardAddress + "/get", mqttMessage);
-            STEMSystemApp.LOGGER.INFO("MQTT initialization request for device: " + this.deviceHardAddress);
+            STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.SWITCH.name() + ", " + this.deviceTechnology.name() + ")");
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ignored) {

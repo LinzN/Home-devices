@@ -1,6 +1,7 @@
 package de.linzn.homeDevices.devices.switches;
 
 import de.linzn.homeDevices.devices.enums.DeviceTechnology;
+import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.enums.SwitchCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.homeDevices.events.MQTTUpdateDeviceEvent;
@@ -55,7 +56,7 @@ public class TasmotaSwitchDevice extends MqttSwitch {
             MqttMessage mqttMessage = new MqttMessage();
             mqttMessage.setQos(2);
             this.mqttModule.publish("cmnd/" + this.deviceHardAddress + "/Power", mqttMessage);
-            STEMSystemApp.LOGGER.INFO("MQTT initialization request for hardId: " + this.deviceHardAddress + " configName: " + this.configName);
+            STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.SWITCH.name() + ", " + this.deviceTechnology.name() + ")");
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ignored) {

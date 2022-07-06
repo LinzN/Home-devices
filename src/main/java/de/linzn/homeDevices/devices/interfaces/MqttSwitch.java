@@ -26,6 +26,7 @@ public abstract class MqttSwitch extends MqttDevice {
     protected MqttSwitch(STEMPlugin stemPlugin, String deviceHardAddress, String description, SwitchCategory switchCategory, String configName, DeviceTechnology deviceTechnology, String mqttTopic) {
         super(stemPlugin, deviceHardAddress, description, configName, deviceTechnology, mqttTopic);
         this.switchCategory = switchCategory;
+        STEMSystemApp.LOGGER.CONFIG("SwitchCategory: " + switchCategory.name());
         this.autoSwitchOffTimer = new AutoSwitchOffTimer(this);
         this.autoStartStopTimer = new AutoStartStopTimer(this);
         STEMSystemApp.getInstance().getScheduler().runRepeatScheduler(HomeDevicesPlugin.homeDevicesPlugin, autoSwitchOffTimer, 10, 3, TimeUnit.SECONDS);
@@ -33,17 +34,12 @@ public abstract class MqttSwitch extends MqttDevice {
     }
 
     protected void update_status(boolean newStatus) {
-        if (this.deviceStatus == null) {
-            this.deviceStatus = new AtomicBoolean(newStatus);
-            STEMSystemApp.LOGGER.INFO("MQTT initialization hardId: " + this.deviceHardAddress + " configName: " + this.configName + " deviceBrand: " + this.deviceTechnology.name() + " status: " + this.deviceStatus);
-        } else {
-            this.deviceStatus.set(newStatus);
-            STEMSystemApp.LOGGER.INFO("Update hardId: " + this.deviceHardAddress + " configName: " + this.configName + " deviceBrand: " + this.deviceTechnology.name() + " status: " + this.deviceStatus);
-        }
+        STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + configName + " DeviceHardAddress: " + deviceHardAddress);
+        this.deviceStatus = new AtomicBoolean(newStatus);
         this.lastSwitch = new Date();
         DeviceUpdateEvent deviceUpdateEvent = new DeviceUpdateEvent(this, newStatus);
         STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(deviceUpdateEvent);
-
+        STEMSystemApp.LOGGER.INFO("DATA: [status:" + newStatus + "]");
         DeviceWrapperListener.updateStatus(this.configName, this.deviceStatus.get());
     }
 

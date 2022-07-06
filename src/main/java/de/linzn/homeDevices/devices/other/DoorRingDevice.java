@@ -11,16 +11,13 @@
 
 package de.linzn.homeDevices.devices.other;
 
-import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.enums.DeviceTechnology;
-import de.linzn.homeDevices.devices.enums.SwitchCategory;
+import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.events.MQTTDoorRingEvent;
 import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.mqttModule.MqttModule;
 import de.stem.stemSystem.modules.notificationModule.NotificationPriority;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
-import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
@@ -36,7 +33,7 @@ public class DoorRingDevice extends MqttDevice {
 
     @Override
     protected void request_initial_status() {
-        STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " is not supported supported!");
+        STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.DOORRING.name() + ") is not supported!");
     }
 
     @Override
@@ -46,9 +43,11 @@ public class DoorRingDevice extends MqttDevice {
         boolean status = jsonPayload.getString("POWER").equalsIgnoreCase("ON");
 
         if (!this.deviceLock.get() && status) {
+            STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + configName + " DeviceHardAddress: " + deviceHardAddress);
             final MQTTDoorRingEvent mqttDoorRingEvent = new MQTTDoorRingEvent(this);
             STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(mqttDoorRingEvent);
-            STEMSystemApp.LOGGER.INFO("Door ring");
+            STEMSystemApp.LOGGER.INFO("DATA: [doorring:" + status + "]");
+
             STEMSystemApp.getInstance().getNotificationModule().pushNotification("Door Ring activated", NotificationPriority.ASAP);
         }
         this.deviceLock.set(status);

@@ -5,6 +5,7 @@ import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.linzn.homeDevices.devices.enums.SensorCategory;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import org.json.JSONObject;
 
 public abstract class EnvironmentSensor extends MqttSensor {
 
@@ -16,35 +17,12 @@ public abstract class EnvironmentSensor extends MqttSensor {
         super(stemPlugin, deviceHardAddress, description, SensorCategory.ENVIRONMENT, configName, deviceTechnology, mqttTopic);
     }
 
-
-    protected void update_temperature(double temperature) {
-        if (this.temperature == null) {
-            STEMSystemApp.LOGGER.INFO("MQTT initialization sensor hardId: " + this.deviceHardAddress + " configName: " + this.configName + " deviceBrand: " + this.deviceTechnology.name() + " temperature: " + temperature);
-            this.temperature = new AtomicDouble(temperature);
-        } else {
-            STEMSystemApp.LOGGER.INFO("Update sensor hardId: " + this.deviceHardAddress + " configName: " + this.configName + " deviceBrand: " + this.deviceTechnology.name() + " temperature: " + temperature);
-            this.temperature.set(temperature);
-        }
-    }
-
-    protected void update_humidity(double humidity) {
-        if (this.humidity == null) {
-            STEMSystemApp.LOGGER.INFO("MQTT initialization sensor hardId: " + this.deviceHardAddress + " configName: " + this.configName + " deviceBrand: " + this.deviceTechnology.name() + " humidity: " + humidity);
-            this.humidity = new AtomicDouble(humidity);
-        } else {
-            STEMSystemApp.LOGGER.INFO("Update sensor hardId: " + this.deviceHardAddress + " configName: " + this.configName + " deviceBrand: " + this.deviceTechnology.name() + " humidity: " + humidity);
-            this.humidity.set(humidity);
-        }
-    }
-
-    protected void update_batteryPercentage(double battery) {
-        if (this.battery == null) {
-            STEMSystemApp.LOGGER.INFO("MQTT initialization sensor hardId: " + this.deviceHardAddress + " configName: " + this.configName + " deviceBrand: " + this.deviceTechnology.name() + " battery: " + battery);
-            this.battery = new AtomicDouble(battery);
-        } else {
-            STEMSystemApp.LOGGER.INFO("Update sensor hardId: " + this.deviceHardAddress + " configName: " + this.configName + " deviceBrand: " + this.deviceTechnology.name() + " battery: " + battery);
-            this.battery.set(battery);
-        }
+    protected void update_data(JSONObject jsonObject) {
+        STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + configName + " DeviceHardAddress: " + deviceHardAddress);
+        this.temperature = new AtomicDouble(jsonObject.getDouble("temperature"));
+        this.humidity = new AtomicDouble(jsonObject.getDouble("humidity"));
+        this.battery = new AtomicDouble(jsonObject.getDouble("battery"));
+        STEMSystemApp.LOGGER.INFO("DATA: [temperature:" + this.temperature + "], [humidity:" + this.humidity + "], [battery:" + battery + "]");
     }
 
     public AtomicDouble getTemperature() {

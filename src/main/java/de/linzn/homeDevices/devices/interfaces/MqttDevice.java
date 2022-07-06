@@ -28,8 +28,10 @@ public abstract class MqttDevice implements IMqttMessageListener {
         this.mqttModule = STEMSystemApp.getInstance().getMqttModule();
         this.mqttModule.subscribe(topic, this);
         STEMSystemApp.getInstance().getScheduler().runTask(HomeDevicesPlugin.homeDevicesPlugin, this::request_initial_status);
-        STEMSystemApp.LOGGER.CONFIG("Register new mqtt " + this.deviceTechnology.name() + " device with configName: " + this.configName + ", hardId: " + this.deviceHardAddress);
+        STEMSystemApp.LOGGER.CONFIG("Register mqttDevice:" + this.configName);
         STEMSystemApp.LOGGER.CONFIG("Description: " + description);
+        STEMSystemApp.LOGGER.CONFIG("DeviceTechnology: " + deviceTechnology.name());
+        STEMSystemApp.LOGGER.CONFIG("DeviceHardAddress: " + deviceHardAddress);
     }
 
     public String getConfigName() {

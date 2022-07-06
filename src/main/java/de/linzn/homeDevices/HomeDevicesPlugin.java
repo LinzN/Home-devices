@@ -14,7 +14,6 @@ package de.linzn.homeDevices;
 
 import de.linzn.homeDevices.devices.DeviceManager;
 import de.linzn.homeDevices.devices.enums.SwitchCategory;
-import de.linzn.homeDevices.devices.other.DoorRingDevice;
 import de.linzn.homeDevices.restfulapi.get.GET_AutoMode;
 import de.linzn.homeDevices.restfulapi.get.GET_DeviceStatus;
 import de.linzn.homeDevices.restfulapi.push.POST_ChangeAutoMode;

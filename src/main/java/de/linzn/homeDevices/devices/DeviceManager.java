@@ -18,8 +18,8 @@ import java.util.Map;
 
 public class DeviceManager {
 
-    private STEMPlugin stemPlugin;
-    private Map<String, MqttDevice> mqttDevices;
+    private final STEMPlugin stemPlugin;
+    private final Map<String, MqttDevice> mqttDevices;
 
     public DeviceManager(STEMPlugin stemPlugin) {
         this.stemPlugin = stemPlugin;
