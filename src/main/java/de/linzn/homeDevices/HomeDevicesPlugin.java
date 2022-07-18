@@ -16,6 +16,7 @@ import de.linzn.homeDevices.devices.DeviceManager;
 import de.linzn.homeDevices.devices.enums.SwitchCategory;
 import de.linzn.homeDevices.restfulapi.get.GET_AutoMode;
 import de.linzn.homeDevices.restfulapi.get.GET_DeviceStatus;
+import de.linzn.homeDevices.restfulapi.get.GET_MqttDeviceData;
 import de.linzn.homeDevices.restfulapi.push.POST_ChangeAutoMode;
 import de.linzn.homeDevices.restfulapi.push.POST_ChangeDevice;
 import de.linzn.homeDevices.stemLink.DeviceWrapperListener;
@@ -47,6 +48,7 @@ public class HomeDevicesPlugin extends STEMPlugin {
         this.deviceManager = new DeviceManager(this);
         RestFulApiPlugin.restFulApiPlugin.registerIGetJSONClass(new GET_AutoMode(this));
         RestFulApiPlugin.restFulApiPlugin.registerIGetJSONClass(new GET_DeviceStatus(this));
+        RestFulApiPlugin.restFulApiPlugin.registerIGetJSONClass(new GET_MqttDeviceData(this));
 
         RestFulApiPlugin.restFulApiPlugin.registerIPostJSONClass(new POST_ChangeAutoMode(this));
         RestFulApiPlugin.restFulApiPlugin.registerIPostJSONClass(new POST_ChangeDevice(this));
