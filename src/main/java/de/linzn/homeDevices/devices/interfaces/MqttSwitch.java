@@ -9,6 +9,7 @@ import de.linzn.homeDevices.events.DeviceUpdateEvent;
 import de.linzn.homeDevices.stemLink.DeviceWrapperListener;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import org.json.JSONObject;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +59,13 @@ public abstract class MqttSwitch extends MqttDevice {
 
     public SwitchCategory getSwitchCategory() {
         return switchCategory;
+    }
+
+    @Override
+    public JSONObject getJSONData() {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("status", this.getDeviceStatus());
+        return jsonObject;
     }
 
 }

@@ -58,4 +58,11 @@ public class DoorRingDevice extends MqttDevice {
         return true;
     }
 
+    @Override
+    public JSONObject getJSONData() {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("status", "Not supported");
+        return jsonObject;
+    }
+
 }

@@ -20,6 +20,7 @@ import de.linzn.homeDevices.restfulapi.get.GET_MqttDeviceData;
 import de.linzn.homeDevices.restfulapi.push.POST_ChangeAutoMode;
 import de.linzn.homeDevices.restfulapi.push.POST_ChangeDevice;
 import de.linzn.homeDevices.stemLink.DeviceWrapperListener;
+import de.linzn.homeDevices.webApi.WebApiHandler;
 import de.linzn.restfulapi.RestFulApiPlugin;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
@@ -31,6 +32,7 @@ public class HomeDevicesPlugin extends STEMPlugin {
 
     public static HomeDevicesPlugin homeDevicesPlugin;
     private DeviceManager deviceManager;
+    private WebApiHandler webApiHandler;
 
 
     private Map<SwitchCategory, Boolean> activeCategoryAutoModes;
@@ -46,6 +48,7 @@ public class HomeDevicesPlugin extends STEMPlugin {
         setUpConfig();
         loadCategoryAutoModes();
         this.deviceManager = new DeviceManager(this);
+        this.webApiHandler = new WebApiHandler(this);
         RestFulApiPlugin.restFulApiPlugin.registerIGetJSONClass(new GET_AutoMode(this));
         RestFulApiPlugin.restFulApiPlugin.registerIGetJSONClass(new GET_DeviceStatus(this));
         RestFulApiPlugin.restFulApiPlugin.registerIGetJSONClass(new GET_MqttDeviceData(this));

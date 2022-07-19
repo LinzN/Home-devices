@@ -7,6 +7,7 @@ import de.stem.stemSystem.modules.mqttModule.MqttModule;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.json.JSONObject;
 
 public abstract class MqttDevice implements IMqttMessageListener {
 
@@ -60,5 +61,7 @@ public abstract class MqttDevice implements IMqttMessageListener {
     public abstract void messageArrived(String s, MqttMessage mqttMessage);
 
     public abstract boolean hasData();
+
+    public abstract JSONObject getJSONData();
 
 }

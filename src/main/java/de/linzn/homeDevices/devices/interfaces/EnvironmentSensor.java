@@ -41,4 +41,13 @@ public abstract class EnvironmentSensor extends MqttSensor {
     public boolean hasData() {
         return this.temperature != null & this.humidity != null & this.battery != null;
     }
+
+    @Override
+    public JSONObject getJSONData() {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("temperature", this.getTemperature());
+        jsonObject.put("humidity", this.getHumidity());
+        jsonObject.put("battery", this.getBattery());
+        return jsonObject;
+    }
 }

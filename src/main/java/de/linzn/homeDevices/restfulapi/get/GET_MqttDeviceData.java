@@ -36,18 +36,7 @@ public class GET_MqttDeviceData implements IRequest {
 
         MqttDevice mqttDevice = this.homeDevicesPlugin.getDeviceManager().getMqttDevice(mqttDeviceName);
         if(mqttDevice != null) {
-            if(mqttDevice instanceof MqttSensor) {
-                MqttSensor mqttSensor = (MqttSensor) mqttDevice;
-                if (mqttSensor.getSensorCategory() == SensorCategory.ENVIRONMENT) {
-                    EnvironmentSensor environmentSensor = (EnvironmentSensor) mqttSensor;
-                    jsonObject.put("temperature", environmentSensor.getTemperature());
-                    jsonObject.put("humidity", environmentSensor.getHumidity());
-                    jsonObject.put("battery", environmentSensor.getBattery());
-                }
-            }else if(mqttDevice instanceof MqttSwitch){
-                MqttSwitch mqttSwitch = (MqttSwitch) mqttDevice;
-                jsonObject.put("status", mqttSwitch.getDeviceStatus());
-            }
+            jsonObject = mqttDevice.getJSONData();
         } else {
             jsonObject.put("error", 404);
         }
