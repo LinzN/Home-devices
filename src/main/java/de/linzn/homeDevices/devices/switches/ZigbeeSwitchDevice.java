@@ -86,6 +86,7 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
             mqttMessage.setQos(2);
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("brightness", brightness);
+            jsonObject.put("transition", 1);
             mqttMessage.setPayload(jsonObject.toString().getBytes());
             this.mqttModule.publish(zigbeeGatewayMqttName + "/" + deviceHardAddress + "/set", mqttMessage);
 
