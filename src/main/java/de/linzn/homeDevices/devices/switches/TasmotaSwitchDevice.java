@@ -51,6 +51,16 @@ public class TasmotaSwitchDevice extends MqttSwitch {
     }
 
     @Override
+    public void setBrightness(int brightness) {
+        // not supported
+    }
+
+    @Override
+    public boolean isDimmable() {
+        return false;
+    }
+
+    @Override
     protected void request_initial_status() {
         while (!this.hasData()) {
             MqttMessage mqttMessage = new MqttMessage();

@@ -11,6 +11,8 @@ import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class ZigbeeSwitchDevice extends MqttSwitch {
 
     private final String zigbeeGatewayMqttName;
@@ -56,10 +58,16 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
     }
 
     @Override
+    public boolean isDimmable() {
+        return true;
+    }
+
+    @Override
     protected void request_initial_status() {
         while (!this.hasData()) {
             JSONObject state = new JSONObject();
             state.put("state", "");
+            state.put("brightness", "");
             MqttMessage mqttMessage = new MqttMessage();
             mqttMessage.setPayload(state.toString().getBytes());
             mqttMessage.setQos(2);
@@ -73,6 +81,18 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
     }
 
     @Override
+    public void setBrightness(int brightness) {
+            MqttMessage mqttMessage = new MqttMessage();
+            mqttMessage.setQos(2);
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("brightness", brightness);
+            mqttMessage.setPayload(jsonObject.toString().getBytes());
+            this.mqttModule.publish(zigbeeGatewayMqttName + "/" + deviceHardAddress + "/set", mqttMessage);
+
+    }
+
+
+    @Override
     public void messageArrived(String s, MqttMessage mqttMessage) {
         String payload = new String(mqttMessage.getPayload());
         JSONObject jsonPayload = new JSONObject(payload);
@@ -80,5 +100,9 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
         if (jsonPayload.has("state")) {
             this.update_status(jsonPayload.getString("state").equalsIgnoreCase("ON"));
         }
+        if(jsonPayload.has("brightness")){
+            this.update_brightness(jsonPayload.getInt("brightness"));
+        }
     }
+
 }

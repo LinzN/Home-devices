@@ -50,4 +50,11 @@ public abstract class EnvironmentSensor extends MqttSensor {
         jsonObject.put("battery", this.getBattery());
         return jsonObject;
     }
+
+    @Override
+    public JSONObject setJSONData(JSONObject jsonInput) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("status", "Not supported");
+        return null;
+    }
 }

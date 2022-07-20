@@ -79,4 +79,15 @@ public class ZigbeeThermostatDevice extends MqttDevice {
         jsonObject.put("battery_low", this.isBatteryLow);
         return jsonObject;
     }
+
+    @Override
+    public JSONObject setJSONData(JSONObject jsonInput) {
+        JSONObject jsonObject = new JSONObject();
+
+        if(jsonInput.has("current_heating_setpoint")){
+            this.setTemperature(jsonInput.getDouble("current_heating_setpoint"));
+            jsonObject.put("status", "OK");
+        }
+        return jsonObject;
+    }
 }

@@ -14,6 +14,7 @@ import org.json.JSONObject;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class MqttSwitch extends MqttDevice {
 
@@ -22,6 +23,10 @@ public abstract class MqttSwitch extends MqttDevice {
     private final AutoSwitchOffTimer autoSwitchOffTimer;
     private final AutoStartStopTimer autoStartStopTimer;
     public AtomicBoolean deviceStatus;
+
+    protected AtomicInteger brightness;
+
+    private boolean isDimmable;
     public Date lastSwitch;
 
     protected MqttSwitch(STEMPlugin stemPlugin, String deviceHardAddress, String description, SwitchCategory switchCategory, String configName, DeviceTechnology deviceTechnology, String mqttTopic) {
@@ -44,13 +49,26 @@ public abstract class MqttSwitch extends MqttDevice {
         DeviceWrapperListener.updateStatus(this.configName, this.deviceStatus.get());
     }
 
+    protected void update_brightness(int brightness){
+        this.brightness = new AtomicInteger(brightness);
+        STEMSystemApp.LOGGER.INFO("DATA: [brightness:" + brightness + "]");
+    }
+
     public boolean getDeviceStatus() {
         return this.deviceStatus.get();
+    }
+
+    public int getBrightness() {
+        return this.brightness.get();
     }
 
     public abstract void switchDevice(boolean status);
 
     public abstract void toggleDevice();
+
+    public abstract void setBrightness(int brightness);
+
+    public abstract boolean isDimmable();
 
     @Override
     public boolean hasData() {
@@ -65,7 +83,24 @@ public abstract class MqttSwitch extends MqttDevice {
     public JSONObject getJSONData() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("status", this.getDeviceStatus());
+        if(this.isDimmable()) {
+            jsonObject.put("brightness", this.getBrightness());
+        }
         return jsonObject;
     }
 
+    @Override
+    public JSONObject setJSONData(JSONObject jsonInput) {
+        JSONObject jsonObject = new JSONObject();
+        if(jsonInput.has("status")) {
+            boolean requestStatus = jsonInput.getBoolean("status");
+            this.switchDevice(requestStatus);
+            jsonObject.put("status", "OK");
+        }
+        if(jsonInput.has("brightness")){
+            this.setBrightness(jsonInput.getInt("brightness"));
+            jsonObject.put("status", "OK");
+        }
+        return jsonObject;
+    }
 }

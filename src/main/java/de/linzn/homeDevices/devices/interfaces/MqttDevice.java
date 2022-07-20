@@ -64,4 +64,6 @@ public abstract class MqttDevice implements IMqttMessageListener {
 
     public abstract JSONObject getJSONData();
 
+    public abstract JSONObject setJSONData(JSONObject jsonInput);
+
 }
