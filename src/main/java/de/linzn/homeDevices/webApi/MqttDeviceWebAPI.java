@@ -18,8 +18,9 @@ public class MqttDeviceWebAPI extends RequestInterface {
     @Override
     public Object callHttpEvent(HttpExchange httpExchange, HttpRequestClientPayload httpRequestClientPayload) throws IOException {
         JSONObject jsonObject = new JSONObject();
-
         JSONObject postData = (JSONObject) httpRequestClientPayload.getPostData();
+        STEMSystemApp.LOGGER.DEBUG("MQTTData HomeDevices WEBAPI:");
+        STEMSystemApp.LOGGER.DEBUG(postData);
         String mqttDeviceName = postData.getString("deviceName");
         String requestAction = postData.getString("requestAction");
 
@@ -28,14 +29,7 @@ public class MqttDeviceWebAPI extends RequestInterface {
             if (requestAction.equalsIgnoreCase("READ")) {
                 jsonObject = mqttDevice.getJSONData();
             } else if (requestAction.equalsIgnoreCase("WRITE")) {
-                if (mqttDevice instanceof MqttSwitch) {
-                    MqttSwitch mqttSwitch = (MqttSwitch) mqttDevice;
-
-                    boolean requestStatus = postData.getBoolean("status");
-                    mqttSwitch.switchDevice(requestStatus);
-                    boolean newStatus = mqttSwitch.getDeviceStatus();
-                    jsonObject.put("status", newStatus);
-                }
+                jsonObject = mqttDevice.setJSONData(postData);
             }
         } else {
             jsonObject.put("error", 404);

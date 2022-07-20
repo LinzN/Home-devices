@@ -1,5 +1,6 @@
 package de.linzn.homeDevices.webApi;
 
+import de.linzn.webapi.WebApiPlugin;
 import de.linzn.webapi.modules.WebModule;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 
@@ -12,6 +13,7 @@ public class WebApiHandler {
         this.stemPlugin = stemPlugin;
         stemWebModule = new WebModule("homedevice");
         stemWebModule.registerSubCallHandler(new MqttDeviceWebAPI(), "device");
+        WebApiPlugin.webApiPlugin.getWebServer().enableCallModule(stemWebModule);
     }
 
 }
