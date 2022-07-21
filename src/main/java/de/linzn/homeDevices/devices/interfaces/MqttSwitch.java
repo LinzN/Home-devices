@@ -49,7 +49,7 @@ public abstract class MqttSwitch extends MqttDevice {
         DeviceWrapperListener.updateStatus(this.configName, this.deviceStatus.get());
     }
 
-    protected void update_brightness(int brightness){
+    protected void update_brightness(int brightness) {
         this.brightness = new AtomicInteger(brightness);
         STEMSystemApp.LOGGER.INFO("DATA: [brightness:" + brightness + "]");
     }
@@ -83,7 +83,7 @@ public abstract class MqttSwitch extends MqttDevice {
     public JSONObject getJSONData() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("status", this.getDeviceStatus());
-        if(this.isDimmable()) {
+        if (this.isDimmable()) {
             jsonObject.put("brightness", this.getBrightness());
         }
         return jsonObject;
@@ -92,12 +92,12 @@ public abstract class MqttSwitch extends MqttDevice {
     @Override
     public JSONObject setJSONData(JSONObject jsonInput) {
         JSONObject jsonObject = new JSONObject();
-        if(jsonInput.has("status")) {
+        if (jsonInput.has("status")) {
             boolean requestStatus = jsonInput.getBoolean("status");
             this.switchDevice(requestStatus);
             jsonObject.put("status", "OK");
         }
-        if(jsonInput.has("brightness")){
+        if (jsonInput.has("brightness")) {
             this.setBrightness(jsonInput.getInt("brightness"));
             jsonObject.put("status", "OK");
         }

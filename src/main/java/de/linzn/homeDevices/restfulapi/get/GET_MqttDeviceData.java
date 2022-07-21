@@ -12,11 +12,7 @@
 package de.linzn.homeDevices.restfulapi.get;
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
-import de.linzn.homeDevices.devices.enums.SensorCategory;
-import de.linzn.homeDevices.devices.interfaces.EnvironmentSensor;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
-import de.linzn.homeDevices.devices.interfaces.MqttSensor;
-import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.restfulapi.api.jsonapi.IRequest;
 import de.linzn.restfulapi.api.jsonapi.RequestData;
 import org.json.JSONObject;
@@ -35,7 +31,7 @@ public class GET_MqttDeviceData implements IRequest {
         JSONObject jsonObject = new JSONObject();
 
         MqttDevice mqttDevice = this.homeDevicesPlugin.getDeviceManager().getMqttDevice(mqttDeviceName);
-        if(mqttDevice != null) {
+        if (mqttDevice != null) {
             jsonObject = mqttDevice.getJSONData();
         } else {
             jsonObject.put("error", 404);

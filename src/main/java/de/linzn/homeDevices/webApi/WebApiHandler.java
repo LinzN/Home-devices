@@ -6,10 +6,10 @@ import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 
 public class WebApiHandler {
 
-    private STEMPlugin stemPlugin;
-    private WebModule stemWebModule;
+    private final STEMPlugin stemPlugin;
+    private final WebModule stemWebModule;
 
-    public WebApiHandler(STEMPlugin stemPlugin){
+    public WebApiHandler(STEMPlugin stemPlugin) {
         this.stemPlugin = stemPlugin;
         stemWebModule = new WebModule("homedevice");
         stemWebModule.registerSubCallHandler(new MqttDeviceWebAPI(), "device");
