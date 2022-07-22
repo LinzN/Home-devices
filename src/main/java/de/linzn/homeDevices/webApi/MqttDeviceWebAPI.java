@@ -18,8 +18,8 @@ public class MqttDeviceWebAPI extends RequestInterface {
         STEMSystemApp.LOGGER.DEBUG("MQTTData HomeDevices WEBAPI:");
         STEMSystemApp.LOGGER.DEBUG(postData);
 
-        String mqttDeviceName = postData.getString("deviceName");
-        String requestAction = postData.getString("requestAction");
+        String mqttDeviceName = postData.get("deviceName").toString();
+        String requestAction = postData.get("requestAction").toString();
 
         MqttDevice mqttDevice = HomeDevicesPlugin.homeDevicesPlugin.getDeviceManager().getMqttDevice(mqttDeviceName);
         if (mqttDevice != null) {
