@@ -23,11 +23,9 @@ public abstract class MqttSwitch extends MqttDevice {
     private final AutoSwitchOffTimer autoSwitchOffTimer;
     private final AutoStartStopTimer autoStartStopTimer;
     public AtomicBoolean deviceStatus;
-
-    protected AtomicInteger brightness;
-
-    private boolean isDimmable;
     public Date lastSwitch;
+    protected AtomicInteger brightness;
+    private boolean isDimmable;
 
     protected MqttSwitch(STEMPlugin stemPlugin, String deviceHardAddress, String description, SwitchCategory switchCategory, String configName, DeviceTechnology deviceTechnology, String mqttTopic) {
         super(stemPlugin, deviceHardAddress, description, configName, deviceTechnology, mqttTopic);
@@ -62,11 +60,11 @@ public abstract class MqttSwitch extends MqttDevice {
         return this.brightness.get();
     }
 
+    public abstract void setBrightness(int brightness);
+
     public abstract void switchDevice(boolean status);
 
     public abstract void toggleDevice();
-
-    public abstract void setBrightness(int brightness);
 
     public abstract boolean isDimmable();
 

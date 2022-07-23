@@ -11,16 +11,20 @@
 
 package de.linzn.homeDevices.devices.other;
 
+import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.events.MQTTDoorRingEvent;
 import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.notificationModule.NotificationPriority;
+import de.stem.stemSystem.modules.informationModule.InformationBlock;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import de.stem.stemSystem.utils.JavaUtils;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DoorRingDevice extends MqttDevice {
@@ -48,7 +52,10 @@ public class DoorRingDevice extends MqttDevice {
             STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(mqttDoorRingEvent);
             STEMSystemApp.LOGGER.INFO("DATA: [doorring:" + status + "]");
 
-            STEMSystemApp.getInstance().getNotificationModule().pushNotification("Door Ring activated", NotificationPriority.ASAP);
+            InformationBlock informationBlock = new InformationBlock("Door", "Door Ring activated", HomeDevicesPlugin.homeDevicesPlugin);
+            Instant expireDate = JavaUtils.getTimeInstant().plus(2, ChronoUnit.HOURS);
+            informationBlock.setExpireTime(expireDate);
+            STEMSystemApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
         }
         this.deviceLock.set(status);
     }
