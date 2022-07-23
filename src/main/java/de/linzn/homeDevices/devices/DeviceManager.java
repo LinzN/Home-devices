@@ -10,6 +10,8 @@ import de.linzn.homeDevices.devices.other.ZigbeeThermostatDevice;
 import de.linzn.homeDevices.devices.sensors.ZigbeeEnvironmentSensor;
 import de.linzn.homeDevices.devices.switches.TasmotaSwitchDevice;
 import de.linzn.homeDevices.devices.switches.ZigbeeSwitchDevice;
+import de.linzn.homeDevices.listener.RequestRestartListener;
+import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 
 import java.util.HashMap;
@@ -21,10 +23,16 @@ public class DeviceManager {
     private final STEMPlugin stemPlugin;
     private final Map<String, MqttDevice> mqttDevices;
 
+    private String randomZigbeeGateway;
+
     public DeviceManager(STEMPlugin stemPlugin) {
         this.stemPlugin = stemPlugin;
         this.mqttDevices = new HashMap<>();
+        this.randomZigbeeGateway = null;
         this.loadMqttDevices();
+        if (randomZigbeeGateway != null) {
+            STEMSystemApp.getInstance().getEventModule().getStemEventBus().register(new RequestRestartListener(randomZigbeeGateway));
+        }
     }
 
     private void loadMqttDevices() {
@@ -45,6 +53,7 @@ public class DeviceManager {
                     mqttDevice = new TasmotaSwitchDevice(this.stemPlugin, configName, deviceHardAddress, switchCategory, description);
                 } else if (deviceTechnology == DeviceTechnology.ZIGBEE) {
                     String zigbeeGateway = this.stemPlugin.getDefaultConfig().getString(configPath + ".options.zigbeeGateway", "zigbee2mqtt");
+                    this.randomZigbeeGateway = zigbeeGateway;
                     mqttDevice = new ZigbeeSwitchDevice(this.stemPlugin, configName, deviceHardAddress, switchCategory, description, zigbeeGateway);
                 }
             } else if (mqttDeviceCategory == MqttDeviceCategory.SENSOR) {
@@ -53,6 +62,7 @@ public class DeviceManager {
                     //do nothing at the moment - no such devices
                 } else if (deviceTechnology == DeviceTechnology.ZIGBEE) {
                     String zigbeeGateway = this.stemPlugin.getDefaultConfig().getString(configPath + ".options.zigbeeGateway", "zigbee2mqtt");
+                    this.randomZigbeeGateway = zigbeeGateway;
                     if (sensorCategory == SensorCategory.ENVIRONMENT) {
                         mqttDevice = new ZigbeeEnvironmentSensor(this.stemPlugin, deviceHardAddress, description, configName, zigbeeGateway);
                     } else if (sensorCategory == SensorCategory.OTHER) {
@@ -64,6 +74,7 @@ public class DeviceManager {
                     //do nothing at the moment - no such devices
                 } else if (deviceTechnology == DeviceTechnology.ZIGBEE) {
                     String zigbeeGateway = this.stemPlugin.getDefaultConfig().getString(configPath + ".options.zigbeeGateway", "zigbee2mqtt");
+                    this.randomZigbeeGateway = zigbeeGateway;
                     mqttDevice = new ZigbeeThermostatDevice(this.stemPlugin, deviceHardAddress, description, configName, zigbeeGateway);
                 }
             } else if (mqttDeviceCategory == MqttDeviceCategory.DOORRING) {
