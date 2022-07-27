@@ -3,6 +3,7 @@ package de.linzn.homeDevices.devices.interfaces;
 import de.linzn.homeDevices.AutoStartStopTimer;
 import de.linzn.homeDevices.AutoSwitchOffTimer;
 import de.linzn.homeDevices.HomeDevicesPlugin;
+import de.linzn.homeDevices.devices.HomeDeviceException;
 import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.linzn.homeDevices.devices.enums.SwitchCategory;
 import de.linzn.homeDevices.events.DeviceUpdateEvent;
@@ -25,7 +26,6 @@ public abstract class MqttSwitch extends MqttDevice {
     public AtomicBoolean deviceStatus;
     public Date lastSwitch;
     protected AtomicInteger brightness;
-    private boolean isDimmable;
 
     protected MqttSwitch(STEMPlugin stemPlugin, String deviceHardAddress, String description, SwitchCategory switchCategory, String configName, DeviceTechnology deviceTechnology, String mqttTopic) {
         super(stemPlugin, deviceHardAddress, description, configName, deviceTechnology, mqttTopic);
@@ -52,12 +52,20 @@ public abstract class MqttSwitch extends MqttDevice {
         STEMSystemApp.LOGGER.INFO("DATA: [brightness:" + brightness + "]");
     }
 
-    public boolean getDeviceStatus() {
-        return this.deviceStatus.get();
+    public boolean getDeviceStatus() throws HomeDeviceException {
+        if(this.deviceStatus != null){
+            return this.deviceStatus.get();
+        } else {
+            throw new HomeDeviceException("Device hat no status yet");
+        }
     }
 
-    public int getBrightness() {
-        return this.brightness.get();
+    public int getBrightness() throws HomeDeviceException {
+        if(this.brightness != null) {
+            return this.brightness.get();
+        } else {
+            throw new HomeDeviceException("Device hat no status yet");
+        }
     }
 
     public abstract void setBrightness(int brightness);
@@ -80,10 +88,19 @@ public abstract class MqttSwitch extends MqttDevice {
     @Override
     public JSONObject getJSONData() {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("status", this.getDeviceStatus());
-        if (this.isDimmable()) {
-            jsonObject.put("brightness", this.getBrightness());
+        try {
+            jsonObject.put("status", this.getDeviceStatus());
+            if (this.isDimmable()) {
+                jsonObject.put("brightness", this.getBrightness());
+            }
+        } catch (HomeDeviceException e) {
+            jsonObject.put("status", "error");
+            if (this.isDimmable()) {
+                jsonObject.put("brightness", "error");
+            }
+            e.printStackTrace();
         }
+
         return jsonObject;
     }
 

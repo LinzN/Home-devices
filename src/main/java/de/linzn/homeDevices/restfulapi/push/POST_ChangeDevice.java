@@ -12,6 +12,7 @@
 package de.linzn.homeDevices.restfulapi.push;
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
+import de.linzn.homeDevices.devices.HomeDeviceException;
 import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.homeDevices.events.RestApiSwitchRequestEvent;
 import de.linzn.restfulapi.api.jsonapi.IRequest;
@@ -38,17 +39,26 @@ public class POST_ChangeDevice implements IRequest {
         STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(restApiSwitchRequestEvent);
 
         if (!restApiSwitchRequestEvent.isCanceled()) {
-            boolean newStatus;
+            boolean newStatus = false;
 
             if (requestData.getSubChannels().size() < 2) {
                 mqttSwitch.toggleDevice();
-                newStatus = mqttSwitch.getDeviceStatus();
+                try {
+                    newStatus = mqttSwitch.getDeviceStatus();
+                } catch (HomeDeviceException e) {
+                    e.printStackTrace();
+                }
+
                 STEMSystemApp.LOGGER.INFO("[REST] Request device toggle " + deviceName + "#->#" + requestData.getInetSocketAddress().getAddress().getHostName());
 
             } else {
                 boolean setStatus = Boolean.parseBoolean(requestData.getSubChannels().get(1));
                 mqttSwitch.switchDevice(setStatus);
-                newStatus = mqttSwitch.getDeviceStatus();
+                try {
+                    newStatus = mqttSwitch.getDeviceStatus();
+                } catch (HomeDeviceException e) {
+                    e.printStackTrace();
+                }
                 STEMSystemApp.LOGGER.INFO("[REST] Request device switch " + deviceName + ":::" + setStatus + "#->#" + requestData.getInetSocketAddress().getAddress().getHostName());
             }
 

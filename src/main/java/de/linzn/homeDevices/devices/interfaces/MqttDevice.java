@@ -28,7 +28,7 @@ public abstract class MqttDevice implements IMqttMessageListener {
         this.topic = mqttTopic;
         this.mqttModule = STEMSystemApp.getInstance().getMqttModule();
         this.mqttModule.subscribe(topic, this);
-        //STEMSystemApp.getInstance().getScheduler().runTask(HomeDevicesPlugin.homeDevicesPlugin, this::request_initial_status);
+        STEMSystemApp.getInstance().getScheduler().runTask(HomeDevicesPlugin.homeDevicesPlugin, this::request_initial_status);
         STEMSystemApp.LOGGER.CONFIG("Register mqttDevice:" + this.configName);
         STEMSystemApp.LOGGER.CONFIG("Description: " + description);
         STEMSystemApp.LOGGER.CONFIG("DeviceTechnology: " + deviceTechnology.name());
