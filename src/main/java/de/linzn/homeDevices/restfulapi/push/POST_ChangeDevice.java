@@ -12,7 +12,7 @@
 package de.linzn.homeDevices.restfulapi.push;
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
-import de.linzn.homeDevices.devices.HomeDeviceException;
+import de.linzn.homeDevices.devices.exceptions.DeviceNotInitializedException;
 import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.homeDevices.events.RestApiSwitchRequestEvent;
 import de.linzn.restfulapi.api.jsonapi.IRequest;
@@ -45,7 +45,7 @@ public class POST_ChangeDevice implements IRequest {
                 mqttSwitch.toggleDevice();
                 try {
                     newStatus = mqttSwitch.getDeviceStatus();
-                } catch (HomeDeviceException e) {
+                } catch (DeviceNotInitializedException e) {
                     e.printStackTrace();
                 }
 
@@ -56,7 +56,7 @@ public class POST_ChangeDevice implements IRequest {
                 mqttSwitch.switchDevice(setStatus);
                 try {
                     newStatus = mqttSwitch.getDeviceStatus();
-                } catch (HomeDeviceException e) {
+                } catch (DeviceNotInitializedException e) {
                     e.printStackTrace();
                 }
                 STEMSystemApp.LOGGER.INFO("[REST] Request device switch " + deviceName + ":::" + setStatus + "#->#" + requestData.getInetSocketAddress().getAddress().getHostName());

@@ -12,7 +12,7 @@
 package de.linzn.homeDevices.restfulapi.get;
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
-import de.linzn.homeDevices.devices.HomeDeviceException;
+import de.linzn.homeDevices.devices.exceptions.DeviceNotInitializedException;
 import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.restfulapi.api.jsonapi.IRequest;
 import de.linzn.restfulapi.api.jsonapi.RequestData;
@@ -34,7 +34,7 @@ public class GET_DeviceStatus implements IRequest {
         if (mqttSwitch != null && mqttSwitch.deviceStatus != null) {
             try {
                 jsonObject.put("status", mqttSwitch.getDeviceStatus());
-            } catch (HomeDeviceException e) {
+            } catch (DeviceNotInitializedException e) {
                 e.printStackTrace();
             }
         } else {

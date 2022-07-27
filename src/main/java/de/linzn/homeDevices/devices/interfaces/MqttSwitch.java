@@ -3,7 +3,7 @@ package de.linzn.homeDevices.devices.interfaces;
 import de.linzn.homeDevices.AutoStartStopTimer;
 import de.linzn.homeDevices.AutoSwitchOffTimer;
 import de.linzn.homeDevices.HomeDevicesPlugin;
-import de.linzn.homeDevices.devices.HomeDeviceException;
+import de.linzn.homeDevices.devices.exceptions.DeviceNotInitializedException;
 import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.linzn.homeDevices.devices.enums.SwitchCategory;
 import de.linzn.homeDevices.events.DeviceUpdateEvent;
@@ -52,19 +52,19 @@ public abstract class MqttSwitch extends MqttDevice {
         STEMSystemApp.LOGGER.INFO("DATA: [brightness:" + brightness + "]");
     }
 
-    public boolean getDeviceStatus() throws HomeDeviceException {
+    public boolean getDeviceStatus() throws DeviceNotInitializedException {
         if(this.deviceStatus != null){
             return this.deviceStatus.get();
         } else {
-            throw new HomeDeviceException("Device hat no status yet");
+            throw new DeviceNotInitializedException();
         }
     }
 
-    public int getBrightness() throws HomeDeviceException {
+    public int getBrightness() throws DeviceNotInitializedException {
         if(this.brightness != null) {
             return this.brightness.get();
         } else {
-            throw new HomeDeviceException("Device hat no status yet");
+            throw new DeviceNotInitializedException();
         }
     }
 
@@ -93,7 +93,7 @@ public abstract class MqttSwitch extends MqttDevice {
             if (this.isDimmable()) {
                 jsonObject.put("brightness", this.getBrightness());
             }
-        } catch (HomeDeviceException e) {
+        } catch (DeviceNotInitializedException e) {
             jsonObject.put("status", "error");
             if (this.isDimmable()) {
                 jsonObject.put("brightness", "error");
