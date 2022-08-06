@@ -6,6 +6,7 @@ import de.linzn.homeDevices.devices.enums.SensorCategory;
 import de.linzn.homeDevices.devices.enums.SwitchCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.devices.other.DoorRingDevice;
+import de.linzn.homeDevices.devices.other.PowerConsumption;
 import de.linzn.homeDevices.devices.other.ZigbeeThermostatDevice;
 import de.linzn.homeDevices.devices.sensors.ZigbeeEnvironmentSensor;
 import de.linzn.homeDevices.devices.switches.TasmotaSwitchDevice;
@@ -79,6 +80,8 @@ public class DeviceManager {
                 }
             } else if (mqttDeviceCategory == MqttDeviceCategory.DOORRING) {
                 mqttDevice = new DoorRingDevice(this.stemPlugin, configName, deviceHardAddress, description);
+            } else if (mqttDeviceCategory == MqttDeviceCategory.POWERCONSUMPTION) {
+                mqttDevice = new PowerConsumption(this.stemPlugin, configName, deviceHardAddress, description);
             }
 
             if (mqttDevice != null) {
