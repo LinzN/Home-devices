@@ -107,4 +107,5 @@ public class ZigbeeThermostatDevice extends MqttDevice {
         }
         return jsonObject;
     }
+
 }

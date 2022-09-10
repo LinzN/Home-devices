@@ -11,22 +11,24 @@
 
 package de.linzn.homeDevices.events;
 
-import de.linzn.homeDevices.AutoStartStopTimer;
 import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
+import de.linzn.openJL.pairs.Pair;
 import de.stem.stemSystem.modules.eventModule.CancelableEvent;
+
+import java.time.LocalTime;
 
 
 public class AutoStartStopTimerEvent extends CancelableEvent {
 
     private final MqttSwitch mqttSwitch;
-    private final AutoStartStopTimer.SwitchTimer timer;
+    private final Pair<LocalTime, Boolean> timer;
 
-    public AutoStartStopTimerEvent(MqttSwitch mqttSwitch, AutoStartStopTimer.SwitchTimer timer) {
+    public AutoStartStopTimerEvent(MqttSwitch mqttSwitch, Pair<LocalTime, Boolean> timer) {
         this.mqttSwitch = mqttSwitch;
         this.timer = timer;
     }
 
-    public AutoStartStopTimer.SwitchTimer getTimer() {
+    public Pair<LocalTime, Boolean> getTimer() {
         return timer;
     }
 

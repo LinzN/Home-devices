@@ -1,28 +1,22 @@
 package de.linzn.homeDevices.devices.interfaces;
 
-import de.linzn.homeDevices.AutoStartStopTimer;
-import de.linzn.homeDevices.AutoSwitchOffTimer;
-import de.linzn.homeDevices.HomeDevicesPlugin;
-import de.linzn.homeDevices.devices.exceptions.DeviceNotInitializedException;
 import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.linzn.homeDevices.devices.enums.SwitchCategory;
+import de.linzn.homeDevices.devices.exceptions.DeviceNotInitializedException;
 import de.linzn.homeDevices.events.DeviceUpdateEvent;
+import de.linzn.homeDevices.profiles.SwitchDeviceProfile;
 import de.linzn.homeDevices.stemLink.DeviceWrapperListener;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.json.JSONObject;
 
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class MqttSwitch extends MqttDevice {
 
-
     public final SwitchCategory switchCategory;
-    private final AutoSwitchOffTimer autoSwitchOffTimer;
-    private final AutoStartStopTimer autoStartStopTimer;
     public AtomicBoolean deviceStatus;
     public Date lastSwitch;
     protected AtomicInteger brightness;
@@ -31,10 +25,9 @@ public abstract class MqttSwitch extends MqttDevice {
         super(stemPlugin, deviceHardAddress, description, configName, deviceTechnology, mqttTopic);
         this.switchCategory = switchCategory;
         STEMSystemApp.LOGGER.CONFIG("SwitchCategory: " + switchCategory.name());
-        this.autoSwitchOffTimer = new AutoSwitchOffTimer(this);
-        this.autoStartStopTimer = new AutoStartStopTimer(this);
-        STEMSystemApp.getInstance().getScheduler().runRepeatScheduler(HomeDevicesPlugin.homeDevicesPlugin, autoSwitchOffTimer, 10, 3, TimeUnit.SECONDS);
-        STEMSystemApp.getInstance().getScheduler().runTaskLater(HomeDevicesPlugin.homeDevicesPlugin, autoStartStopTimer, 2, TimeUnit.SECONDS);
+        this.setDeviceProfile(new SwitchDeviceProfile(this));
+        this.getDeviceProfile().loadProfile();
+        this.getDeviceProfile().runProfile();
     }
 
     protected void update_status(boolean newStatus) {
@@ -53,7 +46,7 @@ public abstract class MqttSwitch extends MqttDevice {
     }
 
     public boolean getDeviceStatus() throws DeviceNotInitializedException {
-        if(this.deviceStatus != null){
+        if (this.deviceStatus != null) {
             return this.deviceStatus.get();
         } else {
             throw new DeviceNotInitializedException();
@@ -61,7 +54,7 @@ public abstract class MqttSwitch extends MqttDevice {
     }
 
     public int getBrightness() throws DeviceNotInitializedException {
-        if(this.brightness != null) {
+        if (this.brightness != null) {
             return this.brightness.get();
         } else {
             throw new DeviceNotInitializedException();

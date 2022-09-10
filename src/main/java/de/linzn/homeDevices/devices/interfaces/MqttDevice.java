@@ -2,6 +2,7 @@ package de.linzn.homeDevices.devices.interfaces;
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.enums.DeviceTechnology;
+import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.mqttModule.MqttModule;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
@@ -17,6 +18,7 @@ public abstract class MqttDevice implements IMqttMessageListener {
     public final DeviceTechnology deviceTechnology;
     private final STEMPlugin stemPlugin;
     private final String topic;
+    public DeviceProfile deviceProfile;
     protected MqttModule mqttModule;
 
     public MqttDevice(STEMPlugin stemPlugin, String deviceHardAddress, String description, String configName, DeviceTechnology deviceTechnology, String mqttTopic) {
@@ -53,6 +55,14 @@ public abstract class MqttDevice implements IMqttMessageListener {
 
     public STEMPlugin getHomeDevicesPlugin() {
         return stemPlugin;
+    }
+
+    public DeviceProfile getDeviceProfile() {
+        return this.deviceProfile;
+    }
+
+    public void setDeviceProfile(DeviceProfile deviceProfile) {
+        this.deviceProfile = deviceProfile;
     }
 
     protected abstract void request_initial_status();
