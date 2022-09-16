@@ -11,46 +11,39 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
 public abstract class MqttDevice implements IMqttMessageListener {
-
-    public final String description;
-    public final String configName;
-    public final String deviceHardAddress;
-    public final DeviceTechnology deviceTechnology;
     private final STEMPlugin stemPlugin;
     private final String topic;
     public DeviceProfile deviceProfile;
     protected MqttModule mqttModule;
 
-    public MqttDevice(STEMPlugin stemPlugin, String deviceHardAddress, String description, String configName, DeviceTechnology deviceTechnology, String mqttTopic) {
+    public MqttDevice(STEMPlugin stemPlugin, DeviceProfile deviceProfile, String mqttTopic) {
         this.stemPlugin = stemPlugin;
-        this.deviceTechnology = deviceTechnology;
-        this.configName = configName.toLowerCase();
-        this.deviceHardAddress = deviceHardAddress;
-        this.description = description;
+        this.deviceProfile = deviceProfile;
         this.topic = mqttTopic;
         this.mqttModule = STEMSystemApp.getInstance().getMqttModule();
         this.mqttModule.subscribe(topic, this);
         STEMSystemApp.getInstance().getScheduler().runTask(HomeDevicesPlugin.homeDevicesPlugin, this::request_initial_status);
-        STEMSystemApp.LOGGER.CONFIG("Register mqttDevice:" + this.configName);
-        STEMSystemApp.LOGGER.CONFIG("Description: " + description);
-        STEMSystemApp.LOGGER.CONFIG("DeviceTechnology: " + deviceTechnology.name());
-        STEMSystemApp.LOGGER.CONFIG("DeviceHardAddress: " + deviceHardAddress);
+        STEMSystemApp.LOGGER.CONFIG("Register mqttDevice:" + deviceProfile.getName());
+        STEMSystemApp.LOGGER.CONFIG("Description: " + deviceProfile.getDescription());
+        STEMSystemApp.LOGGER.CONFIG("DeviceTechnology: " + deviceProfile.getDeviceTechnology().name());
+        STEMSystemApp.LOGGER.CONFIG("SubDeviceCategory: " + deviceProfile.getSubDeviceCategory());
+        STEMSystemApp.LOGGER.CONFIG("DeviceHardAddress: " + deviceProfile.getDeviceHardAddress());
     }
 
     public String getConfigName() {
-        return this.configName;
+        return this.deviceProfile.getName();
     }
 
     public String getDeviceHardAddress() {
-        return deviceHardAddress;
+        return this.deviceProfile.getDeviceHardAddress();
     }
 
     public DeviceTechnology getDeviceTechnology() {
-        return this.deviceTechnology;
+        return this.deviceProfile.getDeviceTechnology();
     }
 
     public String getDescription() {
-        return this.description;
+        return this.deviceProfile.getDescription();
     }
 
     public STEMPlugin getHomeDevicesPlugin() {
@@ -59,10 +52,6 @@ public abstract class MqttDevice implements IMqttMessageListener {
 
     public DeviceProfile getDeviceProfile() {
         return this.deviceProfile;
-    }
-
-    public void setDeviceProfile(DeviceProfile deviceProfile) {
-        this.deviceProfile = deviceProfile;
     }
 
     protected abstract void request_initial_status();

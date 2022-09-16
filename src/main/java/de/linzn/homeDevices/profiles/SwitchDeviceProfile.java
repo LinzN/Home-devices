@@ -1,11 +1,13 @@
 package de.linzn.homeDevices.profiles;
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
-import de.linzn.homeDevices.devices.interfaces.MqttDevice;
+import de.linzn.homeDevices.devices.enums.DeviceTechnology;
+import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.homeDevices.events.AutoStartStopTimerEvent;
 import de.linzn.homeDevices.events.AutoSwitchOffTimerEvent;
 import de.linzn.openJL.pairs.Pair;
+import de.linzn.simplyConfiguration.FileConfiguration;
 import de.stem.stemSystem.STEMSystemApp;
 
 import java.time.LocalTime;
@@ -18,8 +20,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class SwitchDeviceProfile extends DeviceProfile {
-    final MqttSwitch mqttSwitch;
     private final long autoStartStopTimerOffSet = 200;
+    MqttSwitch mqttSwitch;
     private boolean autoSwitchOffEnabled;
     private long autoSwitchOffTimer;
     private LocalTime autoSwitchOffStartTime;
@@ -28,13 +30,14 @@ public class SwitchDeviceProfile extends DeviceProfile {
     private LinkedList<Pair<LocalTime, Boolean>> autoStartStopTimerList;
 
 
-    public SwitchDeviceProfile(MqttDevice mqttDevice) {
-        super(mqttDevice);
-        this.mqttSwitch = (MqttSwitch) mqttDevice;
+    public SwitchDeviceProfile(FileConfiguration profileConfig, String name, String deviceHardAddress, String description, DeviceTechnology deviceTechnology, MqttDeviceCategory mqttDeviceCategory, String subDeviceCategory) {
+        super(profileConfig, name, deviceHardAddress, description, deviceTechnology, mqttDeviceCategory, subDeviceCategory);
+
     }
 
     @Override
     public void loadProfile() {
+        this.mqttSwitch = (MqttSwitch) mqttDevice;
         this.loadAutoSwitchOffTimer();
         this.loadAutoStartStopTimer();
     }
@@ -96,7 +99,7 @@ public class SwitchDeviceProfile extends DeviceProfile {
                     AutoSwitchOffTimerEvent autoSwitchOffTimerEvent = new AutoSwitchOffTimerEvent(this.mqttSwitch, autoSwitchOffStartTime, autoSwitchOffStopTime, this.mqttSwitch.lastSwitch);
                     STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(autoSwitchOffTimerEvent);
                     if (!autoSwitchOffTimerEvent.isCanceled()) {
-                        STEMSystemApp.LOGGER.INFO("Auto-switch off hardId: " + this.mqttSwitch.deviceHardAddress + " configName: " + this.mqttSwitch.configName + " after: " + ((int) (autoSwitchOffTimer / 1000)) + " seconds!");
+                        STEMSystemApp.LOGGER.INFO("Auto-switch off hardId: " + this.getDeviceHardAddress() + " configName: " + this.getName() + " after: " + ((int) (autoSwitchOffTimer / 1000)) + " seconds!");
                         this.mqttSwitch.switchDevice(false);
                     }
                 }
@@ -118,7 +121,7 @@ public class SwitchDeviceProfile extends DeviceProfile {
             for (String key : objectMap.keySet()) {
                 LocalTime localTime = LocalTime.parse(this.getLoadedConfig().getString(optionPath + "." + key + ".time"), dateTimeFormatter);
                 boolean value = this.getLoadedConfig().getBoolean(optionPath + "." + key + ".value");
-                STEMSystemApp.LOGGER.CONFIG("Add timer for hardId: " + this.mqttSwitch.deviceHardAddress + " configName: " + this.mqttSwitch.configName + " time: " + localTime.toString() + " value: " + value);
+                STEMSystemApp.LOGGER.CONFIG("Add timer for hardId: " + this.getDeviceHardAddress() + " configName: " + this.getName() + " time: " + localTime.toString() + " value: " + value);
                 this.autoStartStopTimerList.add(new Pair<>(localTime, value));
             }
 
@@ -156,7 +159,7 @@ public class SwitchDeviceProfile extends DeviceProfile {
                         first = this.autoStartStopTimerList.removeFirst();
                         if (!autoStartStopTimerEvent.isCanceled()) {
                             /* switch device */
-                            STEMSystemApp.LOGGER.INFO("Timer switch hardId: " + this.mqttSwitch.deviceHardAddress + " configName: " + this.mqttSwitch.configName + " status: " + first.getValue());
+                            STEMSystemApp.LOGGER.INFO("Timer switch hardId: " + this.getDeviceHardAddress() + " configName: " + this.getName() + " status: " + first.getValue());
                             this.mqttSwitch.switchDevice(first.getValue());
                             /* switch device */
                         }

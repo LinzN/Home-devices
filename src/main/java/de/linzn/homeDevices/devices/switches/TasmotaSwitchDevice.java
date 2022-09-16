@@ -1,12 +1,12 @@
 package de.linzn.homeDevices.devices.switches;
 
-import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.enums.SwitchCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.homeDevices.events.MQTTUpdateDeviceEvent;
 import de.linzn.homeDevices.events.SwitchDeviceEvent;
 import de.linzn.homeDevices.events.ToggleDeviceDeviceEvent;
+import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -15,8 +15,8 @@ import org.json.JSONObject;
 public class TasmotaSwitchDevice extends MqttSwitch {
 
 
-    public TasmotaSwitchDevice(STEMPlugin stemPlugin, String configName, String deviceHardAddress, SwitchCategory switchCategory, String description) {
-        super(stemPlugin, deviceHardAddress, description, switchCategory, configName.toLowerCase(), DeviceTechnology.TASMOTA, "stat/" + deviceHardAddress + "/RESULT");
+    public TasmotaSwitchDevice(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
+        super(stemPlugin, deviceProfile, SwitchCategory.valueOf(deviceProfile.getSubDeviceCategory()), "stat/" + deviceProfile.getDeviceHardAddress() + "/RESULT");
     }
 
 
@@ -33,7 +33,7 @@ public class TasmotaSwitchDevice extends MqttSwitch {
             } else {
                 mqttMessage.setPayload("OFF".getBytes());
             }
-            this.mqttModule.publish("cmnd/" + this.deviceHardAddress + "/Power", mqttMessage);
+            this.mqttModule.publish("cmnd/" + this.getDeviceHardAddress() + "/Power", mqttMessage);
         }
     }
 
@@ -46,7 +46,7 @@ public class TasmotaSwitchDevice extends MqttSwitch {
             MqttMessage mqttMessage = new MqttMessage();
             mqttMessage.setQos(2);
             mqttMessage.setPayload("TOGGLE".getBytes());
-            this.mqttModule.publish("cmnd/" + this.deviceHardAddress + "/Power", mqttMessage);
+            this.mqttModule.publish("cmnd/" + this.getDeviceHardAddress() + "/Power", mqttMessage);
         }
     }
 
@@ -65,8 +65,8 @@ public class TasmotaSwitchDevice extends MqttSwitch {
         while (!this.hasData()) {
             MqttMessage mqttMessage = new MqttMessage();
             mqttMessage.setQos(2);
-            this.mqttModule.publish("cmnd/" + this.deviceHardAddress + "/Power", mqttMessage);
-            STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.SWITCH.name() + ", " + this.deviceTechnology.name() + ")");
+            this.mqttModule.publish("cmnd/" + this.getDeviceHardAddress() + "/Power", mqttMessage);
+            STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.SWITCH.name() + ", " + this.getDeviceTechnology().name() + ")");
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ignored) {

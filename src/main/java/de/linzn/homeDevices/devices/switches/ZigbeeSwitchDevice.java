@@ -1,11 +1,11 @@
 package de.linzn.homeDevices.devices.switches;
 
-import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.enums.SwitchCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.homeDevices.events.SwitchDeviceEvent;
 import de.linzn.homeDevices.events.ToggleDeviceDeviceEvent;
+import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -15,9 +15,9 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
 
     private final String zigbeeGatewayMqttName;
 
-    public ZigbeeSwitchDevice(STEMPlugin stemPlugin, String configName, String deviceHardAddress, SwitchCategory switchCategory, String description, String zigbeeGatewayMqttName) {
-        super(stemPlugin, deviceHardAddress, description, switchCategory, configName.toLowerCase(), DeviceTechnology.ZIGBEE, zigbeeGatewayMqttName + "/" + deviceHardAddress);
-        this.zigbeeGatewayMqttName = zigbeeGatewayMqttName;
+    public ZigbeeSwitchDevice(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
+        super(stemPlugin, deviceProfile, SwitchCategory.valueOf(deviceProfile.getSubDeviceCategory()), deviceProfile.getZigbeeGateway() + "/" + deviceProfile.getDeviceHardAddress());
+        this.zigbeeGatewayMqttName = deviceProfile.getZigbeeGateway();
     }
 
 
@@ -36,7 +36,7 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
                 state.put("state", "OFF");
             }
             mqttMessage.setPayload(state.toString().getBytes());
-            this.mqttModule.publish(zigbeeGatewayMqttName + "/" + deviceHardAddress + "/set", mqttMessage);
+            this.mqttModule.publish(zigbeeGatewayMqttName + "/" + this.getDeviceHardAddress() + "/set", mqttMessage);
         }
     }
 
@@ -51,7 +51,7 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
             JSONObject state = new JSONObject();
             state.put("state", "TOGGLE");
             mqttMessage.setPayload(state.toString().getBytes());
-            this.mqttModule.publish(zigbeeGatewayMqttName + "/" + deviceHardAddress + "/set", mqttMessage);
+            this.mqttModule.publish(zigbeeGatewayMqttName + "/" + this.getDeviceHardAddress() + "/set", mqttMessage);
         }
     }
 
@@ -69,8 +69,8 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
             MqttMessage mqttMessage = new MqttMessage();
             mqttMessage.setPayload(state.toString().getBytes());
             mqttMessage.setQos(2);
-            this.mqttModule.publish(zigbeeGatewayMqttName + "/" + deviceHardAddress + "/get", mqttMessage);
-            STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.SWITCH.name() + ", " + this.deviceTechnology.name() + ")");
+            this.mqttModule.publish(zigbeeGatewayMqttName + "/" + this.getDeviceHardAddress() + "/get", mqttMessage);
+            STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.SWITCH.name() + ", " + this.getDeviceTechnology().name() + ")");
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ignored) {
@@ -86,7 +86,7 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
         jsonObject.put("brightness", brightness);
         jsonObject.put("transition", 1);
         mqttMessage.setPayload(jsonObject.toString().getBytes());
-        this.mqttModule.publish(zigbeeGatewayMqttName + "/" + deviceHardAddress + "/set", mqttMessage);
+        this.mqttModule.publish(zigbeeGatewayMqttName + "/" + this.getDeviceHardAddress() + "/set", mqttMessage);
 
     }
 

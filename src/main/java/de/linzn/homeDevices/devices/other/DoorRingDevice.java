@@ -12,10 +12,10 @@
 package de.linzn.homeDevices.devices.other;
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
-import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.events.MQTTDoorRingEvent;
+import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.informationModule.InformationBlock;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
@@ -31,8 +31,8 @@ public class DoorRingDevice extends MqttDevice {
 
     public AtomicBoolean deviceLock = new AtomicBoolean(false);
 
-    public DoorRingDevice(STEMPlugin stemPlugin, String configName, String deviceHardAddress, String description) {
-        super(stemPlugin, deviceHardAddress, description, configName, DeviceTechnology.TASMOTA, "stat/" + deviceHardAddress + "/RESULT");
+    public DoorRingDevice(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
+        super(stemPlugin, deviceProfile, "stat/" + deviceProfile.getDeviceHardAddress() + "/RESULT");
     }
 
     @Override
@@ -47,7 +47,7 @@ public class DoorRingDevice extends MqttDevice {
         boolean status = jsonPayload.getString("POWER").equalsIgnoreCase("ON");
 
         if (!this.deviceLock.get() && status) {
-            STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + configName + " DeviceHardAddress: " + deviceHardAddress);
+            STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getDeviceProfile().getName() + " DeviceHardAddress: " + getDeviceProfile().getDeviceHardAddress());
             final MQTTDoorRingEvent mqttDoorRingEvent = new MQTTDoorRingEvent(this);
             STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(mqttDoorRingEvent);
             STEMSystemApp.LOGGER.INFO("DATA: [doorring:" + status + "]");

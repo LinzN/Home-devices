@@ -1,9 +1,9 @@
 package de.linzn.homeDevices.devices.other;
 
 import com.google.common.util.concurrent.AtomicDouble;
-import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
+import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -22,9 +22,9 @@ public class ZigbeeThermostatDevice extends MqttDevice {
     private AtomicBoolean awayMode;
 
 
-    public ZigbeeThermostatDevice(STEMPlugin stemPlugin, String deviceHardAddress, String description, String configName, String zigbeeGatewayMqttName) {
-        super(stemPlugin, deviceHardAddress, description, configName, DeviceTechnology.ZIGBEE, zigbeeGatewayMqttName + "/" + deviceHardAddress);
-        this.zigbeeGatewayMqttName = zigbeeGatewayMqttName;
+    public ZigbeeThermostatDevice(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
+        super(stemPlugin, deviceProfile, deviceProfile.getZigbeeGateway() + "/" + deviceProfile.getDeviceHardAddress());
+        this.zigbeeGatewayMqttName = deviceProfile.getZigbeeGateway();
     }
 
     @Override
@@ -38,7 +38,7 @@ public class ZigbeeThermostatDevice extends MqttDevice {
         JSONObject temperature = new JSONObject();
         temperature.put("current_heating_setpoint", value);
         mqttMessage.setPayload(temperature.toString().getBytes());
-        this.mqttModule.publish(zigbeeGatewayMqttName + "/" + deviceHardAddress + "/set", mqttMessage);
+        this.mqttModule.publish(zigbeeGatewayMqttName + "/" + getDeviceHardAddress() + "/set", mqttMessage);
     }
 
     public void setSystemMode(String value) {
@@ -47,7 +47,7 @@ public class ZigbeeThermostatDevice extends MqttDevice {
         JSONObject temperature = new JSONObject();
         temperature.put("system_mode", value);
         mqttMessage.setPayload(temperature.toString().getBytes());
-        this.mqttModule.publish(zigbeeGatewayMqttName + "/" + deviceHardAddress + "/set", mqttMessage);
+        this.mqttModule.publish(zigbeeGatewayMqttName + "/" + getDeviceHardAddress() + "/set", mqttMessage);
     }
 
     public void requestTemperature() {
@@ -56,7 +56,7 @@ public class ZigbeeThermostatDevice extends MqttDevice {
         JSONObject temperature = new JSONObject();
         temperature.put("current_heating_setpoint", "");
         mqttMessage.setPayload(temperature.toString().getBytes());
-        this.mqttModule.publish(zigbeeGatewayMqttName + "/" + deviceHardAddress + "/get", mqttMessage);
+        this.mqttModule.publish(zigbeeGatewayMqttName + "/" + getDeviceHardAddress() + "/get", mqttMessage);
     }
 
     protected void update_data(JSONObject jsonObject) {
@@ -65,7 +65,7 @@ public class ZigbeeThermostatDevice extends MqttDevice {
         this.childLock = new AtomicBoolean(jsonObject.getString("child_lock").equalsIgnoreCase("LOCK"));
         this.isBatteryLow = new AtomicBoolean(jsonObject.getBoolean("battery_low"));
         this.systemMode = jsonObject.getString("system_mode");
-        STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + configName + " DeviceHardAddress: " + deviceHardAddress);
+        STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getConfigName() + " DeviceHardAddress: " + getDeviceHardAddress());
         STEMSystemApp.LOGGER.INFO("DATA: [current_heating_setpoint:" + this.currentTemperature + "], [away_mode:" + this.awayMode + "], [child_lock:" + childLock + "], [system_mode:" + this.systemMode + "]");
     }
 

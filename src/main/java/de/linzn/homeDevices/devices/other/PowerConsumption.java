@@ -12,9 +12,9 @@
 package de.linzn.homeDevices.devices.other;
 
 import com.google.common.util.concurrent.AtomicDouble;
-import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
+import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -28,8 +28,8 @@ public class PowerConsumption extends MqttDevice {
     public AtomicInteger power = new AtomicInteger(0);
     public AtomicDouble today = new AtomicDouble(0);
 
-    public PowerConsumption(STEMPlugin stemPlugin, String configName, String deviceHardAddress, String description) {
-        super(stemPlugin, deviceHardAddress, description, configName, DeviceTechnology.TASMOTA, "tele/" + deviceHardAddress + "/SENSOR");
+    public PowerConsumption(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
+        super(stemPlugin, deviceProfile, "tele/" + deviceProfile.getDeviceHardAddress() + "/SENSOR");
     }
 
     @Override

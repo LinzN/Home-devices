@@ -1,13 +1,15 @@
 package de.linzn.homeDevices.profiles;
 
+import de.linzn.homeDevices.devices.enums.DeviceTechnology;
+import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.EnvironmentSensor;
-import de.linzn.homeDevices.devices.interfaces.MqttDevice;
+import de.linzn.simplyConfiguration.FileConfiguration;
 import de.stem.stemSystem.STEMSystemApp;
 
-public class EnvironmentSensorProfile extends DeviceProfile{
+public class EnvironmentSensorProfile extends DeviceProfile {
 
-    public EnvironmentSensorProfile(MqttDevice mqttDevice) {
-        super(mqttDevice);
+    public EnvironmentSensorProfile(FileConfiguration profileConfig, String name, String deviceHardAddress, String description, DeviceTechnology deviceTechnology, MqttDeviceCategory mqttDeviceCategory, String subDeviceCategory) {
+        super(profileConfig, name, deviceHardAddress, description, deviceTechnology, mqttDeviceCategory, subDeviceCategory);
     }
 
     @Override

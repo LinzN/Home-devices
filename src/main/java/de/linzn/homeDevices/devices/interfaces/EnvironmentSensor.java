@@ -1,9 +1,8 @@
 package de.linzn.homeDevices.devices.interfaces;
 
 import com.google.common.util.concurrent.AtomicDouble;
-import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.linzn.homeDevices.devices.enums.SensorCategory;
-import de.linzn.homeDevices.profiles.EnvironmentSensorProfile;
+import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.json.JSONObject;
@@ -17,15 +16,12 @@ public abstract class EnvironmentSensor extends MqttSensor {
     private double offsetTemperature = 0D;
     private double offsetHumidity = 0D;
 
-    public EnvironmentSensor(STEMPlugin stemPlugin, String deviceHardAddress, String description, String configName, DeviceTechnology deviceTechnology, String mqttTopic) {
-        super(stemPlugin, deviceHardAddress, description, SensorCategory.ENVIRONMENT, configName, deviceTechnology, mqttTopic);
-        this.setDeviceProfile(new EnvironmentSensorProfile(this));
-        this.getDeviceProfile().loadProfile();
-        this.getDeviceProfile().runProfile();
+    public EnvironmentSensor(STEMPlugin stemPlugin, DeviceProfile deviceProfile, String mqttTopic) {
+        super(stemPlugin, deviceProfile, SensorCategory.ENVIRONMENT, mqttTopic);
     }
 
     protected void update_data(JSONObject jsonObject) {
-        STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + configName + " DeviceHardAddress: " + deviceHardAddress);
+        STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getConfigName() + " DeviceHardAddress: " + getDeviceHardAddress());
         this.temperature = new AtomicDouble(jsonObject.getDouble("temperature"));
         this.humidity = new AtomicDouble(jsonObject.getDouble("humidity"));
         this.battery = new AtomicDouble(jsonObject.getDouble("battery"));
@@ -44,10 +40,11 @@ public abstract class EnvironmentSensor extends MqttSensor {
         return battery;
     }
 
-    public void setOffsetTemperature(double offsetTemperature){
+    public void setOffsetTemperature(double offsetTemperature) {
         this.offsetTemperature = offsetTemperature;
     }
-    public void setOffsetHumidity(double offsetHumidity){
+
+    public void setOffsetHumidity(double offsetHumidity) {
         this.offsetHumidity = offsetHumidity;
     }
 
