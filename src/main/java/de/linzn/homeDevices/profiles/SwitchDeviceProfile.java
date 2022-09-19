@@ -55,7 +55,7 @@ public class SwitchDeviceProfile extends DeviceProfile {
 
         String optionPath = "autoModeSwitchOffSettings";
 
-        if (this.hasOwnConfig() && this.getLoadedConfig().contains(optionPath)) {
+        if (this.getLoadedConfig().contains(optionPath)) {
             this.autoSwitchOffEnabled = this.getLoadedConfig().getBoolean(optionPath + ".autoSwitchOffEnabled");
             this.autoSwitchOffTimer = this.getLoadedConfig().getInt(optionPath + ".autoSwitchOffAfterSeconds") * 1000L;
             this.autoSwitchOffStartTime = LocalTime.parse(this.getLoadedConfig().getString(optionPath + ".startTime"), dateTimeFormatter);
@@ -114,7 +114,7 @@ public class SwitchDeviceProfile extends DeviceProfile {
 
         String optionPath = "autoStartStopTimer";
 
-        if (this.hasOwnConfig() && this.getLoadedConfig().contains(optionPath)) {
+        if (this.getLoadedConfig().contains(optionPath)) {
             autoStartStopEnabled = true;
             Map<String, Map> objectMap = (LinkedHashMap<String, Map>) this.getLoadedConfig().get(optionPath);
 

@@ -60,45 +60,14 @@ public abstract class DeviceProfile {
                 deviceProfile = new EnvironmentSensorProfile(profileConfig, name, deviceHardAddress, description, deviceTechnology, mqttDeviceCategory, subDeviceCategory);
             }
         } else if (mqttDeviceCategory == MqttDeviceCategory.THERMOSTAT) {
-            //do something
+            deviceProfile = new ThermostatDeviceProfile(profileConfig, name, deviceHardAddress, description, deviceTechnology, mqttDeviceCategory, subDeviceCategory);
         }
 
         if (deviceProfile == null) {
-            deviceProfile = new DeviceProfile(profileConfig, name, deviceHardAddress, description, deviceTechnology, mqttDeviceCategory, subDeviceCategory) {
-                @Override
-                public void loadProfile() {
-
-                }
-
-                @Override
-                public void runProfile() {
-
-                }
-            };
+            deviceProfile = new DefaultDeviceProfile(profileConfig, name, deviceHardAddress, description, deviceTechnology, mqttDeviceCategory, subDeviceCategory);
         }
         return deviceProfile;
     }
-
-/*
-    public DeviceProfile(MqttDevice mqttDevice) {
-        this.mqttDevice = mqttDevice;
-        File defaultFile = new File(HomeDevicesPlugin.homeDevicesPlugin.getDataFolder(), "profiles/default.yml");
-        this.defaultProfileConfig = YamlConfiguration.loadConfiguration(defaultFile);
-
-        if (!defaultFile.exists()) {
-            this.defaultProfileConfig.save();
-        }
-
-        File profileFile = new File(HomeDevicesPlugin.homeDevicesPlugin.getDataFolder(), "profiles/" + mqttDevice.configName + ".yml");
-        if (profileFile.exists()) {
-            this.profileConfig = YamlConfiguration.loadConfiguration(profileFile);
-            STEMSystemApp.LOGGER.CONFIG("Loading profile config for hardId " + mqttDevice.getDeviceHardAddress() + " configName " + mqttDevice.getConfigName());
-        } else {
-            this.profileConfig = null;
-            STEMSystemApp.LOGGER.CONFIG("Using default config for hardId " + mqttDevice.getDeviceHardAddress() + " configName " + mqttDevice.getConfigName());
-        }
-    }
-*/
 
     public static FileConfiguration getDefaultConfig() {
         return defaultProfileConfig;
@@ -113,15 +82,7 @@ public abstract class DeviceProfile {
     }
 
     public FileConfiguration getLoadedConfig() {
-        if (profileConfig != null) {
-            return profileConfig;
-        } else {
-            return defaultProfileConfig;
-        }
-    }
-
-    public boolean hasOwnConfig() {
-        return profileConfig != null;
+        return profileConfig;
     }
 
     public abstract void loadProfile();

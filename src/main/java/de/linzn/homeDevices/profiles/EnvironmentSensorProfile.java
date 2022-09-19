@@ -18,7 +18,7 @@ public class EnvironmentSensorProfile extends DeviceProfile {
 
         String optionPath = "offset";
 
-        if (this.hasOwnConfig() && this.getLoadedConfig().contains(optionPath)) {
+        if (this.getLoadedConfig().contains(optionPath)) {
             double offsetTemperature = this.getLoadedConfig().getDouble(optionPath + ".temperature");
             double offsetHumidity = this.getLoadedConfig().getDouble(optionPath + ".humidity");
 
