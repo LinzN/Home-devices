@@ -7,11 +7,18 @@ import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.json.JSONObject;
 
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+
 public abstract class EnvironmentSensor extends MqttSensor {
 
     private AtomicDouble temperature;
     private AtomicDouble humidity;
     private AtomicDouble battery;
+
+    private Date lastCollection;
+
+    private Date healthSwitchDateRequest;
 
     private double offsetTemperature = 0D;
     private double offsetHumidity = 0D;
@@ -21,6 +28,7 @@ public abstract class EnvironmentSensor extends MqttSensor {
     }
 
     protected void update_data(JSONObject jsonObject) {
+        this.lastCollection = new Date();
         STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getConfigName() + " DeviceHardAddress: " + getDeviceHardAddress());
         this.temperature = new AtomicDouble(jsonObject.getDouble("temperature"));
         this.humidity = new AtomicDouble(jsonObject.getDouble("humidity"));
@@ -46,6 +54,16 @@ public abstract class EnvironmentSensor extends MqttSensor {
 
     public void setOffsetHumidity(double offsetHumidity) {
         this.offsetHumidity = offsetHumidity;
+    }
+
+    @Override
+    public void requestHealthCheck() {
+        this.healthSwitchDateRequest = new Date();
+    }
+
+    @Override
+    public boolean healthCheckStatus() {
+        return this.healthSwitchDateRequest.toInstant().minus(1, ChronoUnit.HOURS).toEpochMilli() <= this.lastCollection.getTime();
     }
 
     @Override

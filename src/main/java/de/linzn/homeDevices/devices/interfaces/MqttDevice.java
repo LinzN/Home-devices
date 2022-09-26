@@ -58,6 +58,8 @@ public abstract class MqttDevice implements IMqttMessageListener {
 
     @Override
     public abstract void messageArrived(String s, MqttMessage mqttMessage);
+    public abstract void requestHealthCheck();
+    public abstract boolean healthCheckStatus();
 
     public abstract boolean hasData();
 

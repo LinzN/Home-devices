@@ -9,11 +9,16 @@ import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ZigbeeThermostatDevice extends MqttDevice {
     private final String zigbeeGatewayMqttName;
 
+    private Date lastCollection;
+
+    private Date healthSwitchDateRequest;
     private AtomicDouble currentTemperature;
     private AtomicBoolean isBatteryLow;
 
@@ -60,6 +65,7 @@ public class ZigbeeThermostatDevice extends MqttDevice {
     }
 
     protected void update_data(JSONObject jsonObject) {
+        this.lastCollection = new Date();
         this.currentTemperature = new AtomicDouble(jsonObject.getDouble("current_heating_setpoint"));
         this.awayMode = new AtomicBoolean(jsonObject.getString("away_mode").equalsIgnoreCase("ON"));
         this.childLock = new AtomicBoolean(jsonObject.getString("child_lock").equalsIgnoreCase("LOCK"));
@@ -75,6 +81,16 @@ public class ZigbeeThermostatDevice extends MqttDevice {
         String payload = new String(mqttMessage.getPayload());
         JSONObject jsonPayload = new JSONObject(payload);
         this.update_data(jsonPayload);
+    }
+
+    @Override
+    public void requestHealthCheck() {
+        this.healthSwitchDateRequest = new Date();
+    }
+
+    @Override
+    public boolean healthCheckStatus() {
+        return this.healthSwitchDateRequest.toInstant().minus(45, ChronoUnit.MINUTES).toEpochMilli() <= this.lastCollection.getTime();
     }
 
     @Override

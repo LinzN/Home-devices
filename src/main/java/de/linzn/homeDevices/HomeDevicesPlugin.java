@@ -14,6 +14,7 @@ package de.linzn.homeDevices;
 
 import de.linzn.homeDevices.devices.DeviceManager;
 import de.linzn.homeDevices.devices.enums.SwitchCategory;
+import de.linzn.homeDevices.healthcheck.HomeDeviceHealthCheck;
 import de.linzn.homeDevices.restfulapi.get.GET_AutoMode;
 import de.linzn.homeDevices.restfulapi.get.GET_DeviceStatus;
 import de.linzn.homeDevices.restfulapi.get.GET_MqttDeviceData;
@@ -56,6 +57,7 @@ public class HomeDevicesPlugin extends STEMPlugin {
         RestFulApiPlugin.restFulApiPlugin.registerIPostJSONClass(new POST_ChangeAutoMode(this));
         RestFulApiPlugin.restFulApiPlugin.registerIPostJSONClass(new POST_ChangeDevice(this));
         STEMSystemApp.getInstance().getStemLinkModule().getStemLinkServer().registerEvents(new DeviceWrapperListener(this));
+        STEMSystemApp.getInstance().getHealthModule().registerHealthCheck(new HomeDeviceHealthCheck(this));
     }
 
     @Override

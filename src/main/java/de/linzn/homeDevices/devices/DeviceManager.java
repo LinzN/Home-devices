@@ -17,6 +17,7 @@ import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -79,5 +80,9 @@ public class DeviceManager {
 
     public MqttDevice getMqttDevice(String configName) {
         return this.mqttDevices.get(configName.toLowerCase());
+    }
+
+    public Collection<MqttDevice> getAllDevices(){
+        return this.mqttDevices.values();
     }
 }

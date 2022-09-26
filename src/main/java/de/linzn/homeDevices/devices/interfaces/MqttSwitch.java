@@ -20,6 +20,8 @@ public abstract class MqttSwitch extends MqttDevice {
     public Date lastSwitch;
     protected AtomicInteger brightness;
 
+    private Date healthSwitchDateRequest;
+
     protected MqttSwitch(STEMPlugin stemPlugin, DeviceProfile deviceProfile, SwitchCategory switchCategory, String mqttTopic) {
         super(stemPlugin, deviceProfile, mqttTopic);
         this.switchCategory = switchCategory;
@@ -64,6 +66,17 @@ public abstract class MqttSwitch extends MqttDevice {
     public abstract void toggleDevice();
 
     public abstract boolean isDimmable();
+
+    @Override
+    public void requestHealthCheck() {
+        this.healthSwitchDateRequest = new Date();
+        this.switchDevice(this.deviceStatus.get());
+    }
+
+    @Override
+    public boolean healthCheckStatus() {
+        return this.lastSwitch.getTime() >= this.healthSwitchDateRequest.getTime();
+    }
 
     @Override
     public boolean hasData() {

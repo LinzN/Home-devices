@@ -61,6 +61,16 @@ public class DoorRingDevice extends MqttDevice {
     }
 
     @Override
+    public void requestHealthCheck() {
+        //not supported
+    }
+
+    @Override
+    public boolean healthCheckStatus() {
+        return true;
+    }
+
+    @Override
     public boolean hasData() {
         return true;
     }
