@@ -55,6 +55,7 @@ public class DoorRingDevice extends MqttDevice {
             InformationBlock informationBlock = new InformationBlock("Door", "Door Ring activated", HomeDevicesPlugin.homeDevicesPlugin);
             Instant expireDate = JavaUtils.getTimeInstant().plus(2, ChronoUnit.HOURS);
             informationBlock.setExpireTime(expireDate);
+            informationBlock.setIcon("DOOR");
             STEMSystemApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
         }
         this.deviceLock.set(status);
