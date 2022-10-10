@@ -16,8 +16,8 @@
     <name>home-devices</name>
     <repositories>
         <repository>
-            <id>enigmar-repo</id>
-            <url>https://repository.enigmar.de/</url>
+            <id>Stem Builds Repository</id>
+            <url>https://builds.app.stem-system.de/plugin/repository/everything/</url>
         </repository>
         <repository>
             <id>Eclipse Paho Repo</id>
@@ -88,7 +88,7 @@
         <dependency>
             <groupId>de.stem</groupId>
             <artifactId>stem-system</artifactId>
-            <version>1.0.1</version>
+            <version>1.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>de.stem.plugins</groupId>
