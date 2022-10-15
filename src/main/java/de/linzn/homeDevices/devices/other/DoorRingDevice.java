@@ -16,6 +16,7 @@ import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.events.MQTTDoorRingEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
+import de.linzn.openJL.converter.TimeAdapter;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.informationModule.InformationBlock;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
@@ -53,7 +54,7 @@ public class DoorRingDevice extends MqttDevice {
             STEMSystemApp.LOGGER.INFO("DATA: [doorring:" + status + "]");
 
             InformationBlock informationBlock = new InformationBlock("Door", "Door Ring activated", HomeDevicesPlugin.homeDevicesPlugin);
-            Instant expireDate = JavaUtils.getTimeInstant().plus(2, ChronoUnit.HOURS);
+            Instant expireDate = TimeAdapter.getTimeInstant().plus(2, ChronoUnit.HOURS);
             informationBlock.setExpireTime(expireDate);
             informationBlock.setIcon("DOOR");
             STEMSystemApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
