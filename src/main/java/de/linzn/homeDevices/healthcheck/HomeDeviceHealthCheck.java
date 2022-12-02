@@ -32,7 +32,7 @@ public class HomeDeviceHealthCheck extends HealthCheck {
         }
 
         try {
-            Thread.sleep(1000*120);
+            Thread.sleep(1000 * 120);
         } catch (InterruptedException ignored) {
         }
         HealthCheckFeedback healthCheckFeedback;

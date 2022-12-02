@@ -57,8 +57,19 @@ public abstract class MqttDevice implements IMqttMessageListener {
     protected abstract void request_initial_status();
 
     @Override
-    public abstract void messageArrived(String s, MqttMessage mqttMessage);
+    public void messageArrived(String s, MqttMessage mqttMessage) {
+        try {
+            this.mqttMessageEvent(mqttMessage);
+        } catch (Exception e) {
+            STEMSystemApp.LOGGER.ERROR("Catch error in mqtt data call! Prevent thread freeze");
+            STEMSystemApp.LOGGER.ERROR(e);
+        }
+    }
+
+    public abstract void mqttMessageEvent(MqttMessage mqttMessage);
+
     public abstract void requestHealthCheck();
+
     public abstract boolean healthCheckStatus();
 
     public abstract boolean hasData();

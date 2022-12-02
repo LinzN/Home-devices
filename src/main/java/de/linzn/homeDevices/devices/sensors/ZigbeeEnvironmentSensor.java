@@ -25,13 +25,9 @@ public class ZigbeeEnvironmentSensor extends EnvironmentSensor {
     }
 
     @Override
-    public void messageArrived(String s, MqttMessage mqttMessage) {
-        try {
-            String payload = new String(mqttMessage.getPayload());
-            JSONObject jsonPayload = new JSONObject(payload);
-            this.update_data(jsonPayload);
-        } catch (Exception e) {
-            STEMSystemApp.LOGGER.ERROR(e);
-        }
+    public void mqttMessageEvent(MqttMessage mqttMessage) {
+        String payload = new String(mqttMessage.getPayload());
+        JSONObject jsonPayload = new JSONObject(payload);
+        this.update_data(jsonPayload);
     }
 }

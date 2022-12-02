@@ -26,10 +26,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class PowerConsumption extends MqttDevice {
 
-    private Date lastCollection;
-    private Date healthSwitchDateRequest;
     public AtomicInteger power = new AtomicInteger(0);
     public AtomicDouble today = new AtomicDouble(0);
+    private Date lastCollection;
+    private Date healthSwitchDateRequest;
 
     public PowerConsumption(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
         super(stemPlugin, deviceProfile, "tele/" + deviceProfile.getDeviceHardAddress() + "/SENSOR");
@@ -41,17 +41,13 @@ public class PowerConsumption extends MqttDevice {
     }
 
     @Override
-    public void messageArrived(String s, MqttMessage mqttMessage) {
-        try {
-            this.lastCollection = new Date();
-            String payload = new String(mqttMessage.getPayload());
-            JSONObject jsonPayload = new JSONObject(payload);
-            JSONObject energy = jsonPayload.getJSONObject("ENERGY");
-            this.power = new AtomicInteger(energy.getInt("Power"));
-            this.today = new AtomicDouble(energy.getDouble("Today"));
-        } catch (Exception e) {
-            STEMSystemApp.LOGGER.ERROR(e);
-        }
+    public void mqttMessageEvent(MqttMessage mqttMessage) {
+        this.lastCollection = new Date();
+        String payload = new String(mqttMessage.getPayload());
+        JSONObject jsonPayload = new JSONObject(payload);
+        JSONObject energy = jsonPayload.getJSONObject("ENERGY");
+        this.power = new AtomicInteger(energy.getInt("Power"));
+        this.today = new AtomicDouble(energy.getDouble("Today"));
     }
 
     @Override

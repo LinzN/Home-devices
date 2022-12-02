@@ -57,7 +57,7 @@ public class ThermostatDeviceProfile extends DeviceProfile {
 
             for (String key : objectMap.keySet()) {
                 LocalTime localTime = LocalTime.parse(DeviceProfile.getDefaultConfig().getString(optionPath + "." + key + ".time"), dateTimeFormatter);
-                double value =DeviceProfile.getDefaultConfig().getDouble(optionPath + "." + key + ".value");
+                double value = DeviceProfile.getDefaultConfig().getDouble(optionPath + "." + key + ".value");
                 STEMSystemApp.LOGGER.CONFIG("Add default thermostat timer for hardId: " + this.getDeviceHardAddress() + " configName: " + this.getName() + " time: " + localTime.toString() + " value: " + value);
                 this.thermostatTimerList.add(new Pair<>(localTime, value));
             }
@@ -84,7 +84,7 @@ public class ThermostatDeviceProfile extends DeviceProfile {
         ZigbeeThermostatDevice zigbeeThermostatDevice = (ZigbeeThermostatDevice) this.mqttDevice;
         while (true) {
             try {
-                if(!this.thermostatTimerList.isEmpty()) {
+                if (!this.thermostatTimerList.isEmpty()) {
                     Pair<LocalTime, Double> first = this.thermostatTimerList.getFirst();
                     LocalTime offSetTime = first.getKey().plus(this.thermostatOffSet, ChronoUnit.MILLIS);
 

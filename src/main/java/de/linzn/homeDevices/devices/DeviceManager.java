@@ -82,7 +82,7 @@ public class DeviceManager {
         return this.mqttDevices.get(configName.toLowerCase());
     }
 
-    public Collection<MqttDevice> getAllDevices(){
+    public Collection<MqttDevice> getAllDevices() {
         return this.mqttDevices.values();
     }
 }
