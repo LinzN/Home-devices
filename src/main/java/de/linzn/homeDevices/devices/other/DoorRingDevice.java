@@ -20,7 +20,6 @@ import de.linzn.openJL.converter.TimeAdapter;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.informationModule.InformationBlock;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
-import de.stem.stemSystem.utils.JavaUtils;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
@@ -43,23 +42,27 @@ public class DoorRingDevice extends MqttDevice {
 
     @Override
     public void messageArrived(String s, MqttMessage mqttMessage) {
-        String payload = new String(mqttMessage.getPayload());
-        JSONObject jsonPayload = new JSONObject(payload);
-        boolean status = jsonPayload.getString("POWER").equalsIgnoreCase("ON");
+        try {
+            String payload = new String(mqttMessage.getPayload());
+            JSONObject jsonPayload = new JSONObject(payload);
+            boolean status = jsonPayload.getString("POWER").equalsIgnoreCase("ON");
 
-        if (!this.deviceLock.get() && status) {
-            STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getDeviceProfile().getName() + " DeviceHardAddress: " + getDeviceProfile().getDeviceHardAddress());
-            final MQTTDoorRingEvent mqttDoorRingEvent = new MQTTDoorRingEvent(this);
-            STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(mqttDoorRingEvent);
-            STEMSystemApp.LOGGER.INFO("DATA: [doorring:" + status + "]");
+            if (!this.deviceLock.get() && status) {
+                STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getDeviceProfile().getName() + " DeviceHardAddress: " + getDeviceProfile().getDeviceHardAddress());
+                final MQTTDoorRingEvent mqttDoorRingEvent = new MQTTDoorRingEvent(this);
+                STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(mqttDoorRingEvent);
+                STEMSystemApp.LOGGER.INFO("DATA: [doorring:" + status + "]");
 
-            InformationBlock informationBlock = new InformationBlock("Door", "Door Ring activated", HomeDevicesPlugin.homeDevicesPlugin);
-            Instant expireDate = TimeAdapter.getTimeInstant().plus(2, ChronoUnit.HOURS);
-            informationBlock.setExpireTime(expireDate);
-            informationBlock.setIcon("DOOR");
-            STEMSystemApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
+                InformationBlock informationBlock = new InformationBlock("Door", "Door Ring activated", HomeDevicesPlugin.homeDevicesPlugin);
+                Instant expireDate = TimeAdapter.getTimeInstant().plus(2, ChronoUnit.HOURS);
+                informationBlock.setExpireTime(expireDate);
+                informationBlock.setIcon("DOOR");
+                STEMSystemApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
+            }
+            this.deviceLock.set(status);
+        } catch (Exception e) {
+            STEMSystemApp.LOGGER.ERROR(e);
         }
-        this.deviceLock.set(status);
     }
 
     @Override

@@ -66,11 +66,33 @@ public class ZigbeeThermostatDevice extends MqttDevice {
 
     protected void update_data(JSONObject jsonObject) {
         this.lastCollection = new Date();
-        this.currentTemperature = new AtomicDouble(jsonObject.getDouble("current_heating_setpoint"));
-        this.awayMode = new AtomicBoolean(jsonObject.getString("away_mode").equalsIgnoreCase("ON"));
-        this.childLock = new AtomicBoolean(jsonObject.getString("child_lock").equalsIgnoreCase("LOCK"));
-        this.isBatteryLow = new AtomicBoolean(jsonObject.getBoolean("battery_low"));
-        this.systemMode = jsonObject.getString("system_mode");
+        if (jsonObject.has("current_heating_setpoint")) {
+            this.currentTemperature = new AtomicDouble(jsonObject.getDouble("current_heating_setpoint"));
+        } else {
+            this.currentTemperature = new AtomicDouble(-1);
+        }
+        if (jsonObject.has("away_mode")) {
+            this.awayMode = new AtomicBoolean(jsonObject.getString("away_mode").equalsIgnoreCase("ON"));
+        } else {
+            this.awayMode = new AtomicBoolean(false);
+        }
+        if (jsonObject.has("child_lock")) {
+            this.childLock = new AtomicBoolean(jsonObject.getString("child_lock").equalsIgnoreCase("LOCK"));
+        } else {
+            this.childLock = new AtomicBoolean(false);
+        }
+
+        if (jsonObject.has("battery_low")) {
+            this.isBatteryLow = new AtomicBoolean(jsonObject.getBoolean("battery_low"));
+        } else {
+            this.isBatteryLow = new AtomicBoolean(false);
+        }
+        if (jsonObject.has("system_mode")) {
+            this.systemMode = jsonObject.getString("system_mode");
+        } else {
+            this.systemMode = "auto";
+        }
+
         STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getConfigName() + " DeviceHardAddress: " + getDeviceHardAddress());
         STEMSystemApp.LOGGER.INFO("DATA: [current_heating_setpoint:" + this.currentTemperature + "], [away_mode:" + this.awayMode + "], [child_lock:" + childLock + "], [system_mode:" + this.systemMode + "]");
     }
@@ -78,9 +100,13 @@ public class ZigbeeThermostatDevice extends MqttDevice {
 
     @Override
     public void messageArrived(String s, MqttMessage mqttMessage) {
-        String payload = new String(mqttMessage.getPayload());
-        JSONObject jsonPayload = new JSONObject(payload);
-        this.update_data(jsonPayload);
+        try {
+            String payload = new String(mqttMessage.getPayload());
+            JSONObject jsonPayload = new JSONObject(payload);
+            this.update_data(jsonPayload);
+        } catch (Exception e) {
+            STEMSystemApp.LOGGER.ERROR(e);
+        }
     }
 
     @Override

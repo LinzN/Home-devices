@@ -42,13 +42,16 @@ public class PowerConsumption extends MqttDevice {
 
     @Override
     public void messageArrived(String s, MqttMessage mqttMessage) {
-        this.lastCollection = new Date();
-        String payload = new String(mqttMessage.getPayload());
-        JSONObject jsonPayload = new JSONObject(payload);
-        JSONObject energy = jsonPayload.getJSONObject("ENERGY");
-        this.power = new AtomicInteger(energy.getInt("Power"));
-        this.today = new AtomicDouble(energy.getDouble("Today"));
-
+        try {
+            this.lastCollection = new Date();
+            String payload = new String(mqttMessage.getPayload());
+            JSONObject jsonPayload = new JSONObject(payload);
+            JSONObject energy = jsonPayload.getJSONObject("ENERGY");
+            this.power = new AtomicInteger(energy.getInt("Power"));
+            this.today = new AtomicDouble(energy.getDouble("Today"));
+        } catch (Exception e) {
+            STEMSystemApp.LOGGER.ERROR(e);
+        }
     }
 
     @Override
