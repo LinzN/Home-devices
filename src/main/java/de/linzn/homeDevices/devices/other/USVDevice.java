@@ -16,9 +16,11 @@ import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.linzn.openJL.converter.TimeAdapter;
+import de.linzn.openJL.math.FloatingPoint;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.informationModule.InformationBlock;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import de.stem.stemSystem.utils.JavaUtils;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
@@ -34,8 +36,12 @@ public class USVDevice extends MqttDevice {
     private Date healthSwitchDateRequest;
     private InformationBlock informationBlock;
 
-    private long batterieTicks = 0;
+    private static final int MAX_CAPACITY = 24000;
+    private static final int CHARGE_TICK = 5;
+    private static final int DISCHARGE_TICK = 100;
 
+    /* only calculated based on how long ac is on */
+    private long batteryCapacityTicks = 0;
 
     public USVDevice(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
         super(stemPlugin, deviceProfile, "stat/" + deviceProfile.getDeviceHardAddress() + "/status");
@@ -64,7 +70,11 @@ public class USVDevice extends MqttDevice {
             } else {
                 informationBlock.setDescription("USV is running in battery mode!");
             }
-            this.batterieTicks++;
+            if ((this.batteryCapacityTicks - DISCHARGE_TICK) >= 0) {
+                this.batteryCapacityTicks = this.batteryCapacityTicks - DISCHARGE_TICK;
+            } else {
+                this.batteryCapacityTicks = 0;
+            }
         } else {
             if (informationBlock != null) {
                 informationBlock.setDescription("USV was running in battery mode!");
@@ -72,10 +82,13 @@ public class USVDevice extends MqttDevice {
                 informationBlock.setExpireTime(expireDate);
                 this.informationBlock = null;
             }
-            if ((this.batterieTicks - 1) <= 0) {
-                this.batterieTicks--;
+            if ((this.batteryCapacityTicks + CHARGE_TICK) <= MAX_CAPACITY) {
+                this.batteryCapacityTicks = this.batteryCapacityTicks + CHARGE_TICK;
             }
         }
+    }
+    private float calculateCapacity(){
+        return FloatingPoint.round((100F/MAX_CAPACITY) * this.batteryCapacityTicks, 1);
     }
 
     @Override
@@ -97,6 +110,7 @@ public class USVDevice extends MqttDevice {
     public JSONObject getJSONData() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("acMode", this.isACMode.get());
+        jsonObject.put("capacity", this.calculateCapacity());
         return jsonObject;
     }
 

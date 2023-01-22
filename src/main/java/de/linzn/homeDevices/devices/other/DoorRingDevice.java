@@ -25,14 +25,16 @@ import org.json.JSONObject;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Date;
 
 public class DoorRingDevice extends MqttDevice {
 
-    public AtomicBoolean deviceLock = new AtomicBoolean(false);
+    public Date lastData;
+    private Date lastEvent;
+    private Date healthSwitchDateRequest;
 
     public DoorRingDevice(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
-        super(stemPlugin, deviceProfile, "stat/" + deviceProfile.getDeviceHardAddress() + "/RESULT");
+        super(stemPlugin, deviceProfile, "stat/" + deviceProfile.getDeviceHardAddress() + "/data");
     }
 
     @Override
@@ -44,13 +46,18 @@ public class DoorRingDevice extends MqttDevice {
     public void mqttMessageEvent(MqttMessage mqttMessage) {
         String payload = new String(mqttMessage.getPayload());
         JSONObject jsonPayload = new JSONObject(payload);
-        boolean status = jsonPayload.getString("POWER").equalsIgnoreCase("ON");
 
-        if (!this.deviceLock.get() && status) {
+        /* Update heartbeat date */
+        if (jsonPayload.has("heartbeat")) {
+            this.lastData = new Date();
+        }
+
+        /* Trigger if event fired */
+        if (jsonPayload.has("event")) {
+            this.lastEvent = new Date();
             STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getDeviceProfile().getName() + " DeviceHardAddress: " + getDeviceProfile().getDeviceHardAddress());
             final MQTTDoorRingEvent mqttDoorRingEvent = new MQTTDoorRingEvent(this);
             STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(mqttDoorRingEvent);
-            STEMSystemApp.LOGGER.INFO("DATA: [doorring:" + status + "]");
 
             InformationBlock informationBlock = new InformationBlock("Door", "Door Ring activated", HomeDevicesPlugin.homeDevicesPlugin);
             Instant expireDate = TimeAdapter.getTimeInstant().plus(2, ChronoUnit.HOURS);
@@ -58,28 +65,27 @@ public class DoorRingDevice extends MqttDevice {
             informationBlock.setIcon("DOOR");
             STEMSystemApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
         }
-        this.deviceLock.set(status);
     }
 
     @Override
     public void requestHealthCheck() {
-        //not supported
+        this.healthSwitchDateRequest = new Date();
     }
 
     @Override
     public boolean healthCheckStatus() {
-        return true;
+        return this.healthSwitchDateRequest.toInstant().minus(30, ChronoUnit.SECONDS).toEpochMilli() <= this.lastData.getTime();
     }
 
     @Override
     public boolean hasData() {
-        return true;
+        return this.lastData != null;
     }
 
     @Override
     public JSONObject getJSONData() {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("status", "Not supported");
+        jsonObject.put("lastEvent", lastEvent.getTime());
         return jsonObject;
     }
 
