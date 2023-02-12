@@ -32,9 +32,29 @@ public class DoorRingDevice extends MqttDevice {
     public Date lastData;
     private Date lastEvent;
     private Date healthSwitchDateRequest;
+    private String rf433MQTT;
+    private String rf433CodeWord;
 
     public DoorRingDevice(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
         super(stemPlugin, deviceProfile, "stat/" + deviceProfile.getDeviceHardAddress() + "/data");
+        if (this.deviceProfile.getLoadedConfig().contains("custom.rf433MQTT")) {
+            this.rf433MQTT = this.deviceProfile.getLoadedConfig().getString("custom.rf433MQTT");
+        }
+        if (this.deviceProfile.getLoadedConfig().contains("custom.codeWord")) {
+            this.rf433CodeWord = this.deviceProfile.getLoadedConfig().getString("custom.codeWord");
+        }
+    }
+
+    private void sendRF433MQTT() {
+        if(this.rf433MQTT != null && this.rf433CodeWord != null) {
+            MqttMessage mqttMessage = new MqttMessage();
+            mqttMessage.setQos(2);
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("value", this.rf433CodeWord);
+
+            mqttMessage.setPayload(jsonObject.toString().getBytes());
+            this.mqttModule.publish(rf433MQTT, mqttMessage);
+        }
     }
 
     @Override
@@ -58,6 +78,8 @@ public class DoorRingDevice extends MqttDevice {
             STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getDeviceProfile().getName() + " DeviceHardAddress: " + getDeviceProfile().getDeviceHardAddress());
             final MQTTDoorRingEvent mqttDoorRingEvent = new MQTTDoorRingEvent(this);
             STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(mqttDoorRingEvent);
+
+            this.sendRF433MQTT();
 
             InformationBlock informationBlock = new InformationBlock("Door", "Door Ring activated", HomeDevicesPlugin.homeDevicesPlugin);
             Instant expireDate = TimeAdapter.getTimeInstant().plus(2, ChronoUnit.HOURS);
