@@ -26,7 +26,7 @@ public class HomeDeviceHealthCheck extends HealthCheck {
         for (MqttDevice device : devices) {
             device.requestHealthCheck();
             try {
-                Thread.sleep(100);
+                Thread.sleep(1000);
             } catch (InterruptedException ignored) {
             }
         }
