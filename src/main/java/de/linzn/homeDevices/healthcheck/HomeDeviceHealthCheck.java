@@ -25,8 +25,9 @@ public class HomeDeviceHealthCheck extends HealthCheck {
         Collection<MqttDevice> devices = HomeDevicesPlugin.homeDevicesPlugin.getDeviceManager().getAllDevices();
         for (MqttDevice device : devices) {
             device.requestHealthCheck();
+            STEMSystemApp.LOGGER.INFO("Request health check for device: " + device.getConfigName());
             try {
-                Thread.sleep(300);
+                Thread.sleep(1000);
             } catch (InterruptedException ignored) {
             }
         }

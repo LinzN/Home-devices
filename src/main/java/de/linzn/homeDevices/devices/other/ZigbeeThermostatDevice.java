@@ -97,10 +97,6 @@ public class ZigbeeThermostatDevice extends MqttDevice {
     public void requestHealthCheck() {
         this.healthSwitchDateRequest = new Date();
         double temp = this.currentTemperature.get();
-        this.setTemperature(temp - 0.5);
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException ignored) {}
         this.setTemperature(temp);
     }
 
