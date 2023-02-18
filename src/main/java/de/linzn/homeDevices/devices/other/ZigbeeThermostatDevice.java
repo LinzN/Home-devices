@@ -15,13 +15,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ZigbeeThermostatDevice extends MqttDevice {
     private final String zigbeeGatewayMqttName;
-
     private Date lastCollection;
-
     private Date healthSwitchDateRequest;
     private AtomicDouble currentTemperature;
     private AtomicBoolean isBatteryLow;
-
     private String systemMode;
     private AtomicBoolean childLock;
     private AtomicBoolean awayMode;
@@ -53,15 +50,6 @@ public class ZigbeeThermostatDevice extends MqttDevice {
         temperature.put("system_mode", value);
         mqttMessage.setPayload(temperature.toString().getBytes());
         this.mqttModule.publish(zigbeeGatewayMqttName + "/" + getDeviceHardAddress() + "/set", mqttMessage);
-    }
-
-    public void requestTemperature() {
-        MqttMessage mqttMessage = new MqttMessage();
-        mqttMessage.setQos(2);
-        JSONObject temperature = new JSONObject();
-        temperature.put("current_heating_setpoint", "");
-        mqttMessage.setPayload(temperature.toString().getBytes());
-        this.mqttModule.publish(zigbeeGatewayMqttName + "/" + getDeviceHardAddress() + "/get", mqttMessage);
     }
 
     protected void update_data(JSONObject jsonObject) {
@@ -108,7 +96,12 @@ public class ZigbeeThermostatDevice extends MqttDevice {
     @Override
     public void requestHealthCheck() {
         this.healthSwitchDateRequest = new Date();
-        this.setTemperature(this.currentTemperature.get());
+        double temp = this.currentTemperature.get();
+        this.setTemperature(temp - 0.5);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException ignored) {}
+        this.setTemperature(temp);
     }
 
     @Override
