@@ -23,33 +23,35 @@ public class DevicesStatusWebAPI extends RequestInterface {
             if (device instanceof MqttSwitch) {
                 MqttSwitch mqttSwitch = (MqttSwitch) device;
                 SwitchCategory switchCategory = mqttSwitch.switchCategory;
+                if (!jsonObject.has("switches")) {
+                    jsonObject.put("switches", new JSONObject());
+                }
 
-                if (!jsonObject.has("switches." + switchCategory.name())) {
-                    jsonObject.put("switches." + switchCategory.name(), new JsonArray());
-
+                if (!jsonObject.getJSONObject("switches").has(switchCategory.name())) {
                     JSONObject categoryData = new JSONObject();
                     categoryData.put("amount", 0);
                     categoryData.put("running", 0);
                     categoryData.put("notRunning", 0);
-                    jsonObject.put("switches.status." + switchCategory, categoryData);
+                    categoryData.put("values", new JsonArray());
+                    jsonObject.getJSONObject("switches").put(switchCategory.name(), categoryData);
                 }
-                jsonObject.getJSONArray("switches." + switchCategory.name()).put(mqttSwitch.getConfigName());
+                jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).getJSONArray("values").put(mqttSwitch.getConfigName());
 
-                int amount = jsonObject.getJSONObject("switches.status." + switchCategory).getInt("amount");
-                jsonObject.getJSONObject("switches.status." + switchCategory).remove("amount");
+                int amount = jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).getInt("amount");
+                jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).remove("amount");
                 amount++;
-                jsonObject.getJSONObject("switches.status." + switchCategory).put("amount", amount);
+                jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).put("amount", amount);
 
                 if (mqttSwitch.getDeviceStatus()) {
-                    int running = jsonObject.getJSONObject("switches.status." + switchCategory).getInt("running");
-                    jsonObject.getJSONObject("switches.status." + switchCategory).remove("running");
+                    int running = jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).getInt("running");
+                    jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).remove("running");
                     running++;
-                    jsonObject.getJSONObject("switches.status." + switchCategory).put("running", running);
+                    jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).put("running", running);
                 } else {
-                    int notRunning = jsonObject.getJSONObject("switches.status." + switchCategory).getInt("notRunning");
-                    jsonObject.getJSONObject("switches.status." + switchCategory).remove("notRunning");
+                    int notRunning = jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).getInt("notRunning");
+                    jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).remove("notRunning");
                     notRunning++;
-                    jsonObject.getJSONObject("switches.status." + switchCategory).put("notRunning", notRunning);
+                    jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).put("notRunning", notRunning);
                 }
 
             }
