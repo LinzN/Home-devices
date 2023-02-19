@@ -13,6 +13,7 @@ public class WebApiHandler {
         this.stemPlugin = stemPlugin;
         stemWebModule = new WebModule("homedevice");
         stemWebModule.registerSubCallHandler(new MqttDeviceWebAPI(), "device");
+        stemWebModule.registerSubCallHandler(new DevicesStatusWebAPI(), "status");
         WebApiPlugin.webApiPlugin.getWebServer().enableCallModule(stemWebModule);
     }
 
