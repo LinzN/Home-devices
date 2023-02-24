@@ -11,6 +11,7 @@
 
 package de.linzn.homeDevices.devices.other;
 
+import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.profiles.DeviceProfile;
@@ -21,6 +22,7 @@ import org.json.JSONObject;
 
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RF433Device extends MqttDevice {
@@ -28,6 +30,7 @@ public class RF433Device extends MqttDevice {
     public Date lastData;
     private Date healthSwitchDateRequest;
     private AtomicBoolean isGarageModuleConnected;
+    private AtomicBoolean isGarageTriggered;
     private AtomicBoolean hasHeartbeat;
     private String rf433MQTT;
 
@@ -36,6 +39,7 @@ public class RF433Device extends MqttDevice {
         if (this.deviceProfile.getLoadedConfig().contains("custom.rf433MQTT")) {
             this.rf433MQTT = this.deviceProfile.getLoadedConfig().getString("custom.rf433MQTT");
         }
+        this.isGarageTriggered = new AtomicBoolean(false);
     }
 
     @Override
@@ -58,6 +62,8 @@ public class RF433Device extends MqttDevice {
 
         if (jsonPayload.has("garageEvent")) {
             STEMSystemApp.LOGGER.INFO("Garage callback event received!");
+            this.isGarageTriggered.set(true);
+            STEMSystemApp.getInstance().getScheduler().runTaskLater(HomeDevicesPlugin.homeDevicesPlugin, () -> isGarageTriggered.set(false), 2, TimeUnit.SECONDS);
         }
 
         STEMSystemApp.LOGGER.DEBUG("RF433 DATA: [heartbeat:" + this.hasHeartbeat.get() + ", garageModuleConnected:" + this.isGarageModuleConnected.get() + "]");
@@ -83,7 +89,7 @@ public class RF433Device extends MqttDevice {
 
     @Override
     public boolean healthCheckStatus() {
-        if(!this.isGarageModuleConnected.get()){
+        if (!this.isGarageModuleConnected.get()) {
             return false;
         }
         return this.healthSwitchDateRequest.toInstant().minus(30, ChronoUnit.SECONDS).toEpochMilli() <= this.lastData.getTime();
@@ -98,6 +104,12 @@ public class RF433Device extends MqttDevice {
     public JSONObject getJSONData() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("garageModuleConnected", this.isGarageModuleConnected.get());
+        String status = "unknown";
+
+        if (this.isGarageTriggered.get()) {
+            status = "working";
+        }
+        jsonObject.put("garageModuleStatus", status);
         return jsonObject;
     }
 
