@@ -12,5 +12,5 @@
 package de.linzn.homeDevices.devices.enums;
 
 public enum MqttDeviceCategory {
-    SWITCH, SENSOR, THERMOSTAT, DOORRING, POWERCONSUMPTION, USV;
+    SWITCH, SENSOR, THERMOSTAT, DOORRING, POWERCONSUMPTION, USV, RF433;
 }
