@@ -20,7 +20,6 @@ import de.linzn.openJL.math.FloatingPoint;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.informationModule.InformationBlock;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
-import de.stem.stemSystem.utils.JavaUtils;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
@@ -31,15 +30,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class USVDevice extends MqttDevice {
 
+    private static final int MAX_CAPACITY = 24000;
+    private static final int CHARGE_TICK = 5;
+    private static final int DISCHARGE_TICK = 100;
     public Date lastData;
     private AtomicBoolean isACMode;
     private Date healthSwitchDateRequest;
     private InformationBlock informationBlock;
-
-    private static final int MAX_CAPACITY = 24000;
-    private static final int CHARGE_TICK = 5;
-    private static final int DISCHARGE_TICK = 100;
-
     /* only calculated based on how long ac is on */
     private long batteryCapacityTicks = 0;
 
@@ -87,8 +84,9 @@ public class USVDevice extends MqttDevice {
             }
         }
     }
-    private float calculateCapacity(){
-        return FloatingPoint.round((100F/MAX_CAPACITY) * this.batteryCapacityTicks, 1);
+
+    private float calculateCapacity() {
+        return FloatingPoint.round((100F / MAX_CAPACITY) * this.batteryCapacityTicks, 1);
     }
 
     @Override
