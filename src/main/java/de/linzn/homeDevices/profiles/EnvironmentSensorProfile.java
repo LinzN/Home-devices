@@ -33,4 +33,10 @@ public class EnvironmentSensorProfile extends DeviceProfile {
     public void runProfile() {
 
     }
+
+    @Override
+    public boolean changeSmartProfile() {
+        STEMSystemApp.LOGGER.WARNING("Change of smartHome profile for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.SENSOR.name() + ", " + this.getDeviceTechnology().name() + ") is not supported!");
+        return true;
+    }
 }

@@ -20,4 +20,9 @@ public class DefaultDeviceProfile extends DeviceProfile {
     public void runProfile() {
 
     }
+
+    @Override
+    public boolean changeSmartProfile() {
+        return true;
+    }
 }

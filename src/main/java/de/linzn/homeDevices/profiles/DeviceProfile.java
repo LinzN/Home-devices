@@ -89,6 +89,8 @@ public abstract class DeviceProfile {
 
     public abstract void runProfile();
 
+    public abstract boolean changeSmartProfile();
+
     public String getDeviceHardAddress() {
         return deviceHardAddress;
     }

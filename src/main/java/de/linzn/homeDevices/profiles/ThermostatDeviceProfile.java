@@ -3,6 +3,7 @@ package de.linzn.homeDevices.profiles;
 import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
+import de.linzn.homeDevices.devices.enums.SmartHomeProfile;
 import de.linzn.homeDevices.devices.other.ZigbeeThermostatDevice;
 import de.linzn.openJL.pairs.Pair;
 import de.linzn.simplyConfiguration.FileConfiguration;
@@ -36,33 +37,47 @@ public class ThermostatDeviceProfile extends DeviceProfile {
         STEMSystemApp.getInstance().getScheduler().runTaskLater(HomeDevicesPlugin.homeDevicesPlugin, this::run, 2, TimeUnit.SECONDS);
     }
 
+    @Override
+    public boolean changeSmartProfile() {
+        loadThermostatTimer();
+        return true;
+    }
+
     private void loadThermostatTimer() {
         this.thermostatTimerList = new LinkedList<>();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH-mm-ss.SSS");
 
-        String optionPath = "thermostat";
+        SmartHomeProfile smartHomeProfile = HomeDevicesPlugin.homeDevicesPlugin.getCurrentProfile();
 
-        if (this.getLoadedConfig().contains(optionPath)) {
-            Map<String, Map> objectMap = (LinkedHashMap<String, Map>) this.getLoadedConfig().get(optionPath);
+        String settingsPath;
+        FileConfiguration config;
 
-            for (String key : objectMap.keySet()) {
-                LocalTime localTime = LocalTime.parse(this.getLoadedConfig().getString(optionPath + "." + key + ".time"), dateTimeFormatter);
-                double value = this.getLoadedConfig().getDouble(optionPath + "." + key + ".value");
-                STEMSystemApp.LOGGER.CONFIG("Add thermostat timer for hardId: " + this.getDeviceHardAddress() + " configName: " + this.getName() + " time: " + localTime.toString() + " value: " + value);
-                this.thermostatTimerList.add(new Pair<>(localTime, value));
-            }
-
+        if (this.getLoadedConfig().contains("thermostat." + smartHomeProfile.name())) {
+            settingsPath = "thermostat." + smartHomeProfile.name();
+            config = this.getLoadedConfig();
+            STEMSystemApp.LOGGER.CONFIG("Load custom thermostat settings CUSTOM:" + smartHomeProfile.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
+        } else if (getDefaultConfig().contains("thermostat." + smartHomeProfile.name())) {
+            settingsPath = "thermostat." + smartHomeProfile.name();
+            config = getDefaultConfig();
+            STEMSystemApp.LOGGER.CONFIG("Load default thermostat settings DEFAULT:" + smartHomeProfile.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
+        } else if (this.getLoadedConfig().contains("thermostat." + SmartHomeProfile.DEFAULT.name())) {
+            settingsPath = "thermostat." + SmartHomeProfile.DEFAULT.name();
+            config = getLoadedConfig();
+            STEMSystemApp.LOGGER.WARNING("Load custom default thermostat settings CUSTOM:" + SmartHomeProfile.DEFAULT.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
         } else {
-            Map<String, Map> objectMap = (LinkedHashMap<String, Map>) DeviceProfile.getDefaultConfig().get(optionPath);
-
-            for (String key : objectMap.keySet()) {
-                LocalTime localTime = LocalTime.parse(DeviceProfile.getDefaultConfig().getString(optionPath + "." + key + ".time"), dateTimeFormatter);
-                double value = DeviceProfile.getDefaultConfig().getDouble(optionPath + "." + key + ".value");
-                STEMSystemApp.LOGGER.CONFIG("Add default thermostat timer for hardId: " + this.getDeviceHardAddress() + " configName: " + this.getName() + " time: " + localTime.toString() + " value: " + value);
-                this.thermostatTimerList.add(new Pair<>(localTime, value));
-            }
+            config = getDefaultConfig();
+            settingsPath = "thermostat." + SmartHomeProfile.DEFAULT.name();
+            STEMSystemApp.LOGGER.WARNING("Load default fallback thermostat settings DEFAULT:" + SmartHomeProfile.DEFAULT.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
         }
 
+        Map<String, Map> objectMap = (LinkedHashMap<String, Map>) config.get(settingsPath);
+
+        for (String key : objectMap.keySet()) {
+            LocalTime localTime = LocalTime.parse(config.getString(settingsPath + "." + key + ".time"), dateTimeFormatter);
+            double value = config.getDouble(settingsPath + "." + key + ".value");
+            STEMSystemApp.LOGGER.CONFIG("Add thermostat timer for hardId: " + this.getDeviceHardAddress() + " configName: " + this.getName() + " time: " + localTime.toString() + " value: " + value);
+            this.thermostatTimerList.add(new Pair<>(localTime, value));
+        }
 
         int moveCounter = 0;
         for (int i = 0; i < this.thermostatTimerList.size(); i++) {
