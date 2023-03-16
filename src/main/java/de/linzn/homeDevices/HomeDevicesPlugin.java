@@ -13,7 +13,9 @@ package de.linzn.homeDevices;
 
 
 import de.linzn.homeDevices.devices.DeviceManager;
+import de.linzn.homeDevices.devices.enums.SmartHomeProfile;
 import de.linzn.homeDevices.devices.enums.SwitchCategory;
+import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.healthcheck.HomeDeviceHealthCheck;
 import de.linzn.homeDevices.restfulapi.get.GET_AutoMode;
 import de.linzn.homeDevices.restfulapi.get.GET_DeviceStatus;
@@ -34,9 +36,9 @@ public class HomeDevicesPlugin extends STEMPlugin {
     public static HomeDevicesPlugin homeDevicesPlugin;
     private DeviceManager deviceManager;
     private WebApiHandler webApiHandler;
-
-
     private Map<SwitchCategory, Boolean> activeCategoryAutoModes;
+
+    private SmartHomeProfile currentProfile;
 
     public HomeDevicesPlugin() {
         homeDevicesPlugin = this;
@@ -44,8 +46,8 @@ public class HomeDevicesPlugin extends STEMPlugin {
 
     @Override
     public void onEnable() {
-
         this.activeCategoryAutoModes = new HashMap<>();
+        this.currentProfile = SmartHomeProfile.DEFAULT;
         setUpConfig();
         loadCategoryAutoModes();
         this.deviceManager = new DeviceManager(this);
@@ -89,6 +91,26 @@ public class HomeDevicesPlugin extends STEMPlugin {
             STEMSystemApp.LOGGER.CONFIG("Load categoryAutoMode for " + switchCategory.name() + ":" + value);
             this.activeCategoryAutoModes.put(switchCategory, value);
         }
+    }
+
+    public SmartHomeProfile getCurrentProfile() {
+        return currentProfile;
+    }
+
+    public boolean changeSmartHomeProfile(SmartHomeProfile smartHomeProfile) {
+        this.currentProfile = smartHomeProfile;
+        boolean success = true;
+        STEMSystemApp.LOGGER.CONFIG("Changing SmartHomeProfile to " + smartHomeProfile.name());
+
+        for (MqttDevice mqttDevice : this.getDeviceManager().getAllDevices()) {
+            if (!mqttDevice.deviceProfile.changeSmartProfile()) {
+                success = false;
+                STEMSystemApp.LOGGER.ERROR("Error while changing SmartHomeProfile to " + smartHomeProfile.name());
+            } else {
+                STEMSystemApp.LOGGER.CONFIG("Success changing SmartHomeProfile to " + smartHomeProfile.name());
+            }
+        }
+        return success;
     }
 
 }

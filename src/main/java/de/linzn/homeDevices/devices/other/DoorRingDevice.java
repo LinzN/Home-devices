@@ -46,7 +46,7 @@ public class DoorRingDevice extends MqttDevice {
     }
 
     private void sendRF433MQTT() {
-        if(this.rf433MQTT != null && this.rf433CodeWord != null) {
+        if (this.rf433MQTT != null && this.rf433CodeWord != null) {
             MqttMessage mqttMessage = new MqttMessage();
             mqttMessage.setQos(2);
             JSONObject jsonObject = new JSONObject();

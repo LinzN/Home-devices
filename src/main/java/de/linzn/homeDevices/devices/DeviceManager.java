@@ -22,6 +22,7 @@ import java.util.Map;
 public class DeviceManager {
 
     private final STEMPlugin stemPlugin;
+
     private final Map<String, MqttDevice> mqttDevices;
 
     public DeviceManager(STEMPlugin stemPlugin) {
@@ -87,4 +88,5 @@ public class DeviceManager {
     public Collection<MqttDevice> getAllDevices() {
         return this.mqttDevices.values();
     }
+
 }

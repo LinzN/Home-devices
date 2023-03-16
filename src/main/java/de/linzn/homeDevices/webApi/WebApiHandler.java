@@ -14,6 +14,7 @@ public class WebApiHandler {
         stemWebModule = new WebModule("homedevice");
         stemWebModule.registerSubCallHandler(new MqttDeviceWebAPI(), "device");
         stemWebModule.registerSubCallHandler(new DevicesStatusWebAPI(), "status");
+        stemWebModule.registerSubCallHandler(new SmartHomeProfileWebAPI(), "smarthomeprofile");
         WebApiPlugin.webApiPlugin.getWebServer().enableCallModule(stemWebModule);
     }
 
