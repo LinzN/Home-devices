@@ -14,7 +14,6 @@ package de.linzn.homeDevices.restfulapi.push;
 import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.exceptions.DeviceNotInitializedException;
 import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
-import de.linzn.homeDevices.events.RestApiSwitchRequestEvent;
 import de.linzn.restfulapi.api.jsonapi.IRequest;
 import de.linzn.restfulapi.api.jsonapi.RequestData;
 import de.stem.stemSystem.STEMSystemApp;
@@ -35,35 +34,31 @@ public class POST_ChangeDevice implements IRequest {
         String deviceName = requestData.getSubChannels().get(0);
         MqttSwitch mqttSwitch = (MqttSwitch) this.homeDevicesPlugin.getDeviceManager().getMqttDevice(deviceName);
 
-        RestApiSwitchRequestEvent restApiSwitchRequestEvent = new RestApiSwitchRequestEvent(mqttSwitch);
-        STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(restApiSwitchRequestEvent);
+        boolean newStatus = false;
 
-        if (!restApiSwitchRequestEvent.isCanceled()) {
-            boolean newStatus = false;
-
-            if (requestData.getSubChannels().size() < 2) {
-                mqttSwitch.toggleDevice();
-                try {
-                    newStatus = mqttSwitch.getDeviceStatus();
-                } catch (DeviceNotInitializedException e) {
-                    e.printStackTrace();
-                }
-
-                STEMSystemApp.LOGGER.INFO("[REST] Request device toggle " + deviceName + "#->#" + requestData.getInetSocketAddress().getAddress().getHostName());
-
-            } else {
-                boolean setStatus = Boolean.parseBoolean(requestData.getSubChannels().get(1));
-                mqttSwitch.switchDevice(setStatus);
-                try {
-                    newStatus = mqttSwitch.getDeviceStatus();
-                } catch (DeviceNotInitializedException e) {
-                    e.printStackTrace();
-                }
-                STEMSystemApp.LOGGER.INFO("[REST] Request device switch " + deviceName + ":::" + setStatus + "#->#" + requestData.getInetSocketAddress().getAddress().getHostName());
+        if (requestData.getSubChannels().size() < 2) {
+            mqttSwitch.toggleDevice();
+            try {
+                newStatus = mqttSwitch.getDeviceStatus();
+            } catch (DeviceNotInitializedException e) {
+                e.printStackTrace();
             }
 
-            jsonObject.put("status", newStatus);
+            STEMSystemApp.LOGGER.INFO("[REST] Request device toggle " + deviceName + "#->#" + requestData.getInetSocketAddress().getAddress().getHostName());
+
+        } else {
+            boolean setStatus = Boolean.parseBoolean(requestData.getSubChannels().get(1));
+            mqttSwitch.switchDevice(setStatus);
+            try {
+                newStatus = mqttSwitch.getDeviceStatus();
+            } catch (DeviceNotInitializedException e) {
+                e.printStackTrace();
+            }
+            STEMSystemApp.LOGGER.INFO("[REST] Request device switch " + deviceName + ":::" + setStatus + "#->#" + requestData.getInetSocketAddress().getAddress().getHostName());
         }
+
+        jsonObject.put("status", newStatus);
+
         return jsonObject;
     }
 

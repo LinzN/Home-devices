@@ -13,7 +13,6 @@ import java.io.File;
 public abstract class DeviceProfile {
     private static final File defaultFile = new File(HomeDevicesPlugin.homeDevicesPlugin.getDataFolder(), "profiles/default.yml");
     private static final FileConfiguration defaultProfileConfig = YamlConfiguration.loadConfiguration(defaultFile);
-    ;
     private final FileConfiguration profileConfig;
     private final String name;
     private final String deviceHardAddress;

@@ -30,7 +30,7 @@ public class RF433Device extends MqttDevice {
     public Date lastData;
     private Date healthSwitchDateRequest;
     private AtomicBoolean isGarageModuleConnected;
-    private AtomicBoolean isGarageTriggered;
+    private final AtomicBoolean isGarageTriggered;
     private AtomicBoolean hasHeartbeat;
     private String rf433MQTT;
 
