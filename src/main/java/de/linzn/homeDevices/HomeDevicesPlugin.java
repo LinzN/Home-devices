@@ -42,7 +42,6 @@ public class HomeDevicesPlugin extends STEMPlugin {
     @Override
     public void onEnable() {
         this.currentProfile = SmartHomeProfile.DEFAULT;
-        setUpConfig();
         this.deviceManager = new DeviceManager(this);
         this.webApiHandler = new WebApiHandler(this);
         RestFulApiPlugin.restFulApiPlugin.registerIGetJSONClass(new GET_AutoMode(this));
@@ -58,10 +57,6 @@ public class HomeDevicesPlugin extends STEMPlugin {
     @Override
     public void onDisable() {
 
-    }
-
-    private void setUpConfig() {
-        this.getDefaultConfig().save();
     }
 
     public DeviceManager getDeviceManager() {

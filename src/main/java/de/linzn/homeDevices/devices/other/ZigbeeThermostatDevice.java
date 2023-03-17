@@ -107,7 +107,7 @@ public class ZigbeeThermostatDevice extends MqttDevice {
 
     @Override
     public boolean healthCheckStatus() {
-        return this.healthSwitchDateRequest.toInstant().minus(5, ChronoUnit.MINUTES).toEpochMilli() <= this.lastCollection.getTime();
+        return this.healthSwitchDateRequest.toInstant().minus(120, ChronoUnit.MINUTES).toEpochMilli() <= this.lastCollection.getTime();
     }
 
     @Override
