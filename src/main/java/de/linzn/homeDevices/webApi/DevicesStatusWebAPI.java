@@ -16,7 +16,8 @@ import java.util.Collection;
 public class DevicesStatusWebAPI extends RequestInterface {
     @Override
     public Object callHttpEvent(HttpExchange httpExchange, HttpRequestClientPayload httpRequestClientPayload) throws IOException {
-        JSONObject jsonObject = new JSONObject();
+        WebApiResponseBuilder webApiResponseBuilder = new WebApiResponseBuilder();
+
         Collection<MqttDevice> devices = HomeDevicesPlugin.homeDevicesPlugin.getDeviceManager().getAllDevices();
 
         for (MqttDevice device : devices) {
@@ -24,41 +25,40 @@ public class DevicesStatusWebAPI extends RequestInterface {
                 if (device instanceof MqttSwitch) {
                     MqttSwitch mqttSwitch = (MqttSwitch) device;
                     SwitchCategory switchCategory = mqttSwitch.switchCategory;
-                    if (!jsonObject.has("switches")) {
-                        jsonObject.put("switches", new JSONObject());
+                    if (!webApiResponseBuilder.getContent().has("switches")) {
+                        webApiResponseBuilder.getContent().put("switches", new JSONObject());
                     }
 
-                    if (!jsonObject.getJSONObject("switches").has(switchCategory.name())) {
+                    if (!webApiResponseBuilder.getContent().getJSONObject("switches").has(switchCategory.name())) {
                         JSONObject categoryData = new JSONObject();
                         categoryData.put("amount", 0);
                         categoryData.put("running", 0);
                         categoryData.put("notRunning", 0);
                         categoryData.put("values", new JsonArray());
-                        jsonObject.getJSONObject("switches").put(switchCategory.name(), categoryData);
+                        webApiResponseBuilder.getContent().getJSONObject("switches").put(switchCategory.name(), categoryData);
                     }
-                    jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).getJSONArray("values").put(mqttSwitch.getConfigName());
+                    webApiResponseBuilder.getContent().getJSONObject("switches").getJSONObject(switchCategory.name()).getJSONArray("values").put(mqttSwitch.getConfigName());
 
-                    int amount = jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).getInt("amount");
-                    jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).remove("amount");
+                    int amount = webApiResponseBuilder.getContent().getJSONObject("switches").getJSONObject(switchCategory.name()).getInt("amount");
+                    webApiResponseBuilder.getContent().getJSONObject("switches").getJSONObject(switchCategory.name()).remove("amount");
                     amount++;
-                    jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).put("amount", amount);
+                    webApiResponseBuilder.getContent().getJSONObject("switches").getJSONObject(switchCategory.name()).put("amount", amount);
 
                     if (mqttSwitch.getDeviceStatus()) {
-                        int running = jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).getInt("running");
-                        jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).remove("running");
+                        int running = webApiResponseBuilder.getContent().getJSONObject("switches").getJSONObject(switchCategory.name()).getInt("running");
+                        webApiResponseBuilder.getContent().getJSONObject("switches").getJSONObject(switchCategory.name()).remove("running");
                         running++;
-                        jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).put("running", running);
+                        webApiResponseBuilder.getContent().getJSONObject("switches").getJSONObject(switchCategory.name()).put("running", running);
                     } else {
-                        int notRunning = jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).getInt("notRunning");
-                        jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).remove("notRunning");
+                        int notRunning = webApiResponseBuilder.getContent().getJSONObject("switches").getJSONObject(switchCategory.name()).getInt("notRunning");
+                        webApiResponseBuilder.getContent().getJSONObject("switches").getJSONObject(switchCategory.name()).remove("notRunning");
                         notRunning++;
-                        jsonObject.getJSONObject("switches").getJSONObject(switchCategory.name()).put("notRunning", notRunning);
+                        webApiResponseBuilder.getContent().getJSONObject("switches").getJSONObject(switchCategory.name()).put("notRunning", notRunning);
                     }
 
                 }
             }
         }
-
-        return jsonObject;
+        return webApiResponseBuilder.getResponse();
     }
 }

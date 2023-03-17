@@ -31,8 +31,8 @@ public class GET_AutoMode implements IRequest {
         JSONObject jsonObject = new JSONObject();
 
         for (SwitchCategory switchCategory : SwitchCategory.values()) {
-            boolean status = this.homeDevicesPlugin.isCategoryInAutoSwitchOffMode(switchCategory);
-            jsonObject.put(switchCategory.name(), status);
+
+            jsonObject.put(switchCategory.name(), false);
         }
         return jsonObject;
     }

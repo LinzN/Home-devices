@@ -105,7 +105,7 @@ public class ThermostatDeviceProfile extends DeviceProfile {
 
                     if (first.getKey().isBefore(LocalTime.now()) && offSetTime.isAfter(LocalTime.now())) {
                         first = this.thermostatTimerList.removeFirst();
-                        STEMSystemApp.LOGGER.INFO("Set thermostat value to:  " + first.getKey().toString() + " value: " + first.getValue());
+                        STEMSystemApp.LOGGER.INFO("Set thermostat " + this.getName() + " value to:  " + first.getKey().toString() + " value: " + first.getValue());
                         zigbeeThermostatDevice.setTemperature(first.getValue());
                         this.thermostatTimerList.addLast(first);
                     }

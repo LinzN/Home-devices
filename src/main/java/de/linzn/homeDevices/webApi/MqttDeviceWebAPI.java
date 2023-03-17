@@ -13,7 +13,8 @@ import java.io.IOException;
 public class MqttDeviceWebAPI extends RequestInterface {
     @Override
     public Object callHttpEvent(HttpExchange httpExchange, HttpRequestClientPayload httpRequestClientPayload) throws IOException {
-        JSONObject jsonObject = new JSONObject();
+        WebApiResponseBuilder webApiResponseBuilder = new WebApiResponseBuilder();
+
         JSONObject postData = (JSONObject) httpRequestClientPayload.getPostData();
         STEMSystemApp.LOGGER.DEBUG("MQTTData HomeDevices WEBAPI:");
         STEMSystemApp.LOGGER.DEBUG(postData);
@@ -22,15 +23,19 @@ public class MqttDeviceWebAPI extends RequestInterface {
         String requestAction = postData.get("requestAction").toString();
 
         MqttDevice mqttDevice = HomeDevicesPlugin.homeDevicesPlugin.getDeviceManager().getMqttDevice(mqttDeviceName);
+
+
         if (mqttDevice != null) {
             if (requestAction.equalsIgnoreCase("READ")) {
-                jsonObject = mqttDevice.getJSONData();
+                webApiResponseBuilder.setContent(mqttDevice.getJSONData());
             } else if (requestAction.equalsIgnoreCase("WRITE")) {
-                jsonObject = mqttDevice.setJSONData(postData);
+                webApiResponseBuilder.setContent(mqttDevice.setJSONData(postData));
+            } else {
+                webApiResponseBuilder.setError("No restAction defined. Use 'READ' or 'WRITE'");
             }
         } else {
-            jsonObject.put("error", 404);
+            webApiResponseBuilder.setError("No device found with this name!");
         }
-        return jsonObject;
+        return webApiResponseBuilder.getResponse();
     }
 }

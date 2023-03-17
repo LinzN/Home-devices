@@ -110,8 +110,24 @@ public class SwitchDeviceProfile extends DeviceProfile {
         }
     }
 
+    private boolean isCategoryInAutoSwitchOffMode() {
+        String settingsPath;
+        FileConfiguration config;
+
+        SmartHomeProfile smartHomeProfile = HomeDevicesPlugin.homeDevicesPlugin.getCurrentProfile();
+        if (getDefaultConfig().contains("category." + mqttSwitch.getSwitchCategory().name() + "." + smartHomeProfile.name())) {
+            config = getDefaultConfig();
+            settingsPath = "category." + mqttSwitch.getSwitchCategory().name() + "." + smartHomeProfile.name();
+        } else {
+            config = getDefaultConfig();
+            settingsPath = "category." + mqttSwitch.getSwitchCategory().name() + "." + SmartHomeProfile.DEFAULT.name();
+        }
+
+        return config.getBoolean(settingsPath + ".autoSwitchOffEnabled");
+    }
+
     private void runAutoSwitchOffTimer() {
-        if (HomeDevicesPlugin.homeDevicesPlugin.isCategoryInAutoSwitchOffMode(this.mqttSwitch.getSwitchCategory())) {
+        if (isCategoryInAutoSwitchOffMode()) {
             if (this.mqttSwitch.deviceStatus != null && this.mqttSwitch.deviceStatus.get()) {
                 if (this.canBeAutoSwitchOff(this.mqttSwitch.lastSwitch.getTime())) {
                     AutoSwitchOffTimerEvent autoSwitchOffTimerEvent = new AutoSwitchOffTimerEvent(this.mqttSwitch, autoSwitchOffStartTime, autoSwitchOffStopTime, this.mqttSwitch.lastSwitch);

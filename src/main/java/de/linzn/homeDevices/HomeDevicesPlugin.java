@@ -14,7 +14,6 @@ package de.linzn.homeDevices;
 
 import de.linzn.homeDevices.devices.DeviceManager;
 import de.linzn.homeDevices.devices.enums.SmartHomeProfile;
-import de.linzn.homeDevices.devices.enums.SwitchCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.healthcheck.HomeDeviceHealthCheck;
 import de.linzn.homeDevices.restfulapi.get.GET_AutoMode;
@@ -28,15 +27,11 @@ import de.linzn.restfulapi.RestFulApiPlugin;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class HomeDevicesPlugin extends STEMPlugin {
 
     public static HomeDevicesPlugin homeDevicesPlugin;
     private DeviceManager deviceManager;
     private WebApiHandler webApiHandler;
-    private Map<SwitchCategory, Boolean> activeCategoryAutoModes;
 
     private SmartHomeProfile currentProfile;
 
@@ -46,10 +41,8 @@ public class HomeDevicesPlugin extends STEMPlugin {
 
     @Override
     public void onEnable() {
-        this.activeCategoryAutoModes = new HashMap<>();
         this.currentProfile = SmartHomeProfile.DEFAULT;
         setUpConfig();
-        loadCategoryAutoModes();
         this.deviceManager = new DeviceManager(this);
         this.webApiHandler = new WebApiHandler(this);
         RestFulApiPlugin.restFulApiPlugin.registerIGetJSONClass(new GET_AutoMode(this));
@@ -73,24 +66,6 @@ public class HomeDevicesPlugin extends STEMPlugin {
 
     public DeviceManager getDeviceManager() {
         return this.deviceManager;
-    }
-
-    public boolean isCategoryInAutoSwitchOffMode(SwitchCategory switchCategory) {
-        return this.activeCategoryAutoModes.get(switchCategory);
-    }
-
-    public boolean setCategoryInAutoMode(SwitchCategory switchCategory, boolean value) {
-        this.activeCategoryAutoModes.put(switchCategory, value);
-        STEMSystemApp.LOGGER.INFO("Update DeviceCategory autoMode: " + switchCategory + " status: " + value);
-        return isCategoryInAutoSwitchOffMode(switchCategory);
-    }
-
-    private void loadCategoryAutoModes() {
-        for (SwitchCategory switchCategory : SwitchCategory.values()) {
-            boolean value = this.getDefaultConfig().getBoolean("category." + switchCategory.name() + ".autoSwitchOffEnabled");
-            STEMSystemApp.LOGGER.CONFIG("Load categoryAutoMode for " + switchCategory.name() + ":" + value);
-            this.activeCategoryAutoModes.put(switchCategory, value);
-        }
     }
 
     public SmartHomeProfile getCurrentProfile() {

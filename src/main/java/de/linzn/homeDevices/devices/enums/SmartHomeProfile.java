@@ -15,11 +15,11 @@ public enum SmartHomeProfile {
         return false;
     }
 
-    public static List<String> valuesToString(){
+    public static List<String> valuesToString() {
         List<String> values = new ArrayList<>();
         for (SmartHomeProfile smartHomeProfile : SmartHomeProfile.values()) {
             values.add(smartHomeProfile.name());
         }
-        return  values;
+        return values;
     }
 }

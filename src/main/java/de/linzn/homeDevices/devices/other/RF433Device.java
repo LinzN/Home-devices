@@ -27,10 +27,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RF433Device extends MqttDevice {
 
+    private final AtomicBoolean isGarageTriggered;
     public Date lastData;
     private Date healthSwitchDateRequest;
     private AtomicBoolean isGarageModuleConnected;
-    private final AtomicBoolean isGarageTriggered;
     private AtomicBoolean hasHeartbeat;
     private String rf433MQTT;
 

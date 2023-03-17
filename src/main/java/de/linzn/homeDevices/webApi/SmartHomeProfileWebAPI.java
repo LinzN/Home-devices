@@ -13,37 +13,38 @@ import java.io.IOException;
 public class SmartHomeProfileWebAPI extends RequestInterface {
     @Override
     public Object callHttpEvent(HttpExchange httpExchange, HttpRequestClientPayload httpRequestClientPayload) throws IOException {
-        JSONObject jsonObject = new JSONObject();
+        WebApiResponseBuilder webApiResponseBuilder = new WebApiResponseBuilder();
+
         JSONObject postData = (JSONObject) httpRequestClientPayload.getPostData();
 
         String requestAction = postData.get("requestAction").toString();
 
         if (requestAction.equalsIgnoreCase("READ")) {
             if (postData.has("current")) {
-                jsonObject.put("currentProfile", HomeDevicesPlugin.homeDevicesPlugin.getCurrentProfile().name());
+                webApiResponseBuilder.getContent().put("currentProfile", HomeDevicesPlugin.homeDevicesPlugin.getCurrentProfile().name());
             } else if (postData.has("available")) {
                 JSONArray values = new JSONArray();
                 values.putAll(SmartHomeProfile.valuesToString());
-                jsonObject.put("availableProfiles", values);
+                webApiResponseBuilder.getContent().put("availableProfiles", values);
             }
 
         } else if (requestAction.equalsIgnoreCase("WRITE")) {
             if (postData.has("profile")) {
                 if (SmartHomeProfile.has(postData.getString("profile"))) {
                     SmartHomeProfile smartHomeProfile = SmartHomeProfile.valueOf(postData.getString("profile"));
-                    if(HomeDevicesPlugin.homeDevicesPlugin.changeSmartHomeProfile(smartHomeProfile)){
-                        jsonObject.put("error", 0);
-                    } else {
-                        jsonObject.put("error", 1);
+                    if (!HomeDevicesPlugin.homeDevicesPlugin.changeSmartHomeProfile(smartHomeProfile)) {
+                        webApiResponseBuilder.setError("Changing of smartHomeProfile failed!");
                     }
                 } else {
-                    jsonObject.put("error", 404);
+                    webApiResponseBuilder.setError("This smartHomeProfile is not defined!");
                 }
             } else {
-                jsonObject.put("error", 404);
+                webApiResponseBuilder.setError("No profile defined!");
             }
+        } else {
+            webApiResponseBuilder.setError("No restAction defined. Use 'READ' or 'WRITE'");
         }
 
-        return jsonObject;
+        return webApiResponseBuilder.getResponse();
     }
 }

@@ -34,8 +34,8 @@ public class POST_ChangeAutoMode implements IRequest {
         boolean value = Boolean.parseBoolean(requestData.getSubChannels().get(1).toLowerCase());
 
         STEMSystemApp.LOGGER.INFO("[REST] Request update deviceCategory autoMode " + switchCategory.name() + ":::" + value + "#->#" + requestData.getInetSocketAddress().getAddress().getHostName());
-        boolean newValue = this.homeDevicesPlugin.setCategoryInAutoMode(switchCategory, value);
-        jsonObject.put("status", newValue);
+
+        jsonObject.put("status", false);
 
 
         return jsonObject;
