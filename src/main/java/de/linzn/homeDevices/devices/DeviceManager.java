@@ -5,11 +5,13 @@ import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.devices.other.*;
+import de.linzn.homeDevices.devices.sensors.DoorSensor;
 import de.linzn.homeDevices.devices.sensors.ZigbeeEnvironmentSensor;
 import de.linzn.homeDevices.devices.switches.TasmotaSwitchDevice;
 import de.linzn.homeDevices.devices.switches.ZigbeeSwitchDevice;
 import de.linzn.homeDevices.listener.RequestRestartListener;
 import de.linzn.homeDevices.profiles.DeviceProfile;
+import de.linzn.homeDevices.profiles.DoorSensorProfile;
 import de.linzn.homeDevices.profiles.EnvironmentSensorProfile;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
@@ -55,6 +57,8 @@ public class DeviceManager {
                     if (deviceProfile.getDeviceTechnology() == DeviceTechnology.ZIGBEE) {
                         if (deviceProfile instanceof EnvironmentSensorProfile) {
                             mqttDevice = new ZigbeeEnvironmentSensor(this.stemPlugin, deviceProfile);
+                        } else if(deviceProfile instanceof DoorSensorProfile){
+                            mqttDevice = new DoorSensor(this.stemPlugin, deviceProfile);
                         }
                     }
                 } else if (deviceProfile.getMqttDeviceCategory() == MqttDeviceCategory.THERMOSTAT) {

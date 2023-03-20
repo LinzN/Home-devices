@@ -57,6 +57,8 @@ public abstract class DeviceProfile {
         } else if (mqttDeviceCategory == MqttDeviceCategory.SENSOR) {
             if (SensorCategory.valueOf(subDeviceCategory) == SensorCategory.ENVIRONMENT) {
                 deviceProfile = new EnvironmentSensorProfile(profileConfig, name, deviceHardAddress, description, deviceTechnology, mqttDeviceCategory, subDeviceCategory);
+            } else if (SensorCategory.valueOf(subDeviceCategory) == SensorCategory.DOOR) {
+                deviceProfile = new DoorSensorProfile(profileConfig, name, deviceHardAddress, description, deviceTechnology, mqttDeviceCategory, subDeviceCategory);
             }
         } else if (mqttDeviceCategory == MqttDeviceCategory.THERMOSTAT) {
             deviceProfile = new ThermostatDeviceProfile(profileConfig, name, deviceHardAddress, description, deviceTechnology, mqttDeviceCategory, subDeviceCategory);
