@@ -19,6 +19,7 @@ import de.linzn.openJL.converter.TimeAdapter;
 import de.linzn.openJL.math.FloatingPoint;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.informationModule.InformationBlock;
+import de.stem.stemSystem.modules.informationModule.InformationIntent;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
@@ -63,6 +64,8 @@ public class USVDevice extends MqttDevice {
                 informationBlock = new InformationBlock("USV", "USV is running in battery mode!", HomeDevicesPlugin.homeDevicesPlugin);
                 informationBlock.setIcon("USV");
                 informationBlock.setExpireTime(-1L);
+                informationBlock.addIntent(InformationIntent.NOTIFY_USER);
+                informationBlock.addIntent(InformationIntent.SHOW_DISPLAY);
                 STEMSystemApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
             } else {
                 informationBlock.setDescription("USV is running in battery mode!");

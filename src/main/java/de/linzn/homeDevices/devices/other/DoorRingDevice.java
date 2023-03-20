@@ -19,6 +19,7 @@ import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.linzn.openJL.converter.TimeAdapter;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.informationModule.InformationBlock;
+import de.stem.stemSystem.modules.informationModule.InformationIntent;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
@@ -85,6 +86,8 @@ public class DoorRingDevice extends MqttDevice {
             Instant expireDate = TimeAdapter.getTimeInstant().plus(2, ChronoUnit.HOURS);
             informationBlock.setExpireTime(expireDate);
             informationBlock.setIcon("DOOR");
+            informationBlock.addIntent(InformationIntent.NOTIFY_USER);
+            informationBlock.addIntent(InformationIntent.SHOW_DISPLAY);
             STEMSystemApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
         }
     }
