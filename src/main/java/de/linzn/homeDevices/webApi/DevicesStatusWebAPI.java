@@ -3,12 +3,14 @@ package de.linzn.homeDevices.webApi;
 import com.mysql.cj.xdevapi.JsonArray;
 import com.sun.net.httpserver.HttpExchange;
 import de.linzn.homeDevices.HomeDevicesPlugin;
+import de.linzn.homeDevices.devices.enums.SmartHomeProfile;
 import de.linzn.homeDevices.devices.enums.SwitchCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.webapi.core.ApiResponse;
 import de.linzn.webapi.core.HttpRequestClientPayload;
 import de.linzn.webapi.modules.RequestInterface;
+import de.stem.stemSystem.STEMSystemApp;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -18,6 +20,13 @@ public class DevicesStatusWebAPI extends RequestInterface {
     @Override
     public Object callHttpEvent(HttpExchange httpExchange, HttpRequestClientPayload httpRequestClientPayload) throws IOException {
         ApiResponse webApiResponseBuilder = new ApiResponse();
+
+        SmartHomeProfile smartHomeProfile = HomeDevicesPlugin.homeDevicesPlugin.getCurrentProfile();
+        webApiResponseBuilder.getJSONObject().put("currentProfile", smartHomeProfile.name());
+        /* Need to add human presence detector */
+        webApiResponseBuilder.getJSONObject().put("currentHumanPresence", 0);
+        /* Need to add health status */
+        webApiResponseBuilder.getJSONObject().put("healthStatus", 0);
 
         Collection<MqttDevice> devices = HomeDevicesPlugin.homeDevicesPlugin.getDeviceManager().getAllDevices();
 
