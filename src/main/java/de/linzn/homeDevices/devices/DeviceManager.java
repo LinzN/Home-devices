@@ -73,6 +73,8 @@ public class DeviceManager {
                     mqttDevice = new USVDevice(this.stemPlugin, deviceProfile);
                 } else if (deviceProfile.getMqttDeviceCategory() == MqttDeviceCategory.RF433) {
                     mqttDevice = new RF433Device(this.stemPlugin, deviceProfile);
+                } else if (deviceProfile.getMqttDeviceCategory() == MqttDeviceCategory.LED) {
+                    mqttDevice = new LEDDevice(this.stemPlugin, deviceProfile);
                 }
 
                 if (mqttDevice != null) {
