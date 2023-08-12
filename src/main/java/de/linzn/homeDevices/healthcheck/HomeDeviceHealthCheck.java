@@ -38,7 +38,7 @@ public class HomeDeviceHealthCheck extends HealthCheck {
         }
         HealthCheckFeedback healthCheckFeedback;
         for (MqttDevice device : devices) {
-            if (device.healthCheckStatus()) {
+            if (device.hasData() && device.healthCheckStatus()) {
                 healthCheckFeedback = new HealthCheckFeedback(HealthCheckLevel.DONE, "Device status ok");
             } else {
                 STEMSystemApp.LOGGER.WARNING("Check failed for " + device.getConfigName());

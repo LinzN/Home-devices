@@ -62,7 +62,7 @@ public class PowerConsumption extends MqttDevice {
 
     @Override
     public boolean hasData() {
-        return true;
+        return this.lastCollection != null;
     }
 
     @Override
