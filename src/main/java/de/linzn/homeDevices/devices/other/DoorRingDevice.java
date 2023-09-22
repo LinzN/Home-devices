@@ -11,6 +11,7 @@
 
 package de.linzn.homeDevices.devices.other;
 
+import de.linzn.gptFramework.GPTFrameworkPlugin;
 import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
@@ -82,7 +83,8 @@ public class DoorRingDevice extends MqttDevice {
 
             this.sendRF433MQTT();
 
-            InformationBlock informationBlock = new InformationBlock("Door", "Door Ring activated", HomeDevicesPlugin.homeDevicesPlugin);
+            JSONObject response = GPTFrameworkPlugin.gptFrameworkPlugin.getGptManager().createAIEventCompletion().requestEventResponse("Door Ring activated");
+            InformationBlock informationBlock = new InformationBlock("Door", response.getString("output"), HomeDevicesPlugin.homeDevicesPlugin);
             Instant expireDate = TimeAdapter.getTimeInstant().plus(2, ChronoUnit.HOURS);
             informationBlock.setExpireTime(expireDate);
             informationBlock.setIcon("DOOR");
