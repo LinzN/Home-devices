@@ -82,7 +82,7 @@ public class DoorRingDevice extends MqttDevice {
 
             this.sendRF433MQTT();
 
-            InformationBlock informationBlock = new InformationBlock("Door", "Door Ring activated", HomeDevicesPlugin.homeDevicesPlugin, true);
+            InformationBlock informationBlock = new InformationBlock("DOOR", "Door Ring activated", HomeDevicesPlugin.homeDevicesPlugin);
             Instant expireDate = TimeAdapter.getTimeInstant().plus(2, ChronoUnit.HOURS);
             informationBlock.setExpireTime(expireDate);
             informationBlock.setIcon("DOOR");
