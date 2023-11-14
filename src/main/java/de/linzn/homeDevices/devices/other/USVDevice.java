@@ -61,7 +61,7 @@ public class USVDevice extends MqttDevice {
 
         if (!this.isACMode.get()) {
             if (informationBlock == null) {
-                informationBlock = new InformationBlock("USV", "USV is running in battery mode!", HomeDevicesPlugin.homeDevicesPlugin);
+                informationBlock = new InformationBlock("USV", "USV is running in battery mode!", HomeDevicesPlugin.homeDevicesPlugin, "USV is running in battery mode!");
                 informationBlock.setIcon("USV");
                 informationBlock.setExpireTime(-1L);
                 informationBlock.addIntent(InformationIntent.NOTIFY_USER);
