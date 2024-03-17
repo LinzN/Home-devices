@@ -5,6 +5,7 @@ import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.devices.other.*;
+import de.linzn.homeDevices.devices.other.nanoCLR.KeyBoardDevice;
 import de.linzn.homeDevices.devices.sensors.DoorSensor;
 import de.linzn.homeDevices.devices.sensors.ZigbeeEnvironmentSensor;
 import de.linzn.homeDevices.devices.switches.TasmotaSwitchDevice;
@@ -75,6 +76,8 @@ public class DeviceManager {
                     mqttDevice = new RF433Device(this.stemPlugin, deviceProfile);
                 } else if (deviceProfile.getMqttDeviceCategory() == MqttDeviceCategory.LED) {
                     mqttDevice = new LEDDevice(this.stemPlugin, deviceProfile);
+                }else if (deviceProfile.getMqttDeviceCategory() == MqttDeviceCategory.NANOCLR_KEYBOARD) {
+                    mqttDevice = new KeyBoardDevice(this.stemPlugin, deviceProfile);
                 }
 
                 if (mqttDevice != null) {

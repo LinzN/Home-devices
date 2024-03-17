@@ -1,5 +1,5 @@
 package de.linzn.homeDevices.devices.enums;
 
 public enum DeviceTechnology {
-    TASMOTA, ZIGBEE, WINDOWS
+    TASMOTA, ZIGBEE, WINDOWS, NANOCLR
 }

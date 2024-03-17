@@ -22,7 +22,7 @@ public class SmartHomeProfileWebAPI extends RequestInterface {
 
         if (requestAction.equalsIgnoreCase("READ")) {
             if (postData.has("current")) {
-                apiResponse.getJSONObject().put("currentProfile", HomeDevicesPlugin.homeDevicesPlugin.getCurrentProfile().name());
+                apiResponse.getJSONObject().put("currentProfile", HomeDevicesPlugin.homeDevicesPlugin.getProfileController().getCurrentProfile().name());
             } else if (postData.has("available")) {
                 JSONArray values = new JSONArray();
                 values.putAll(SmartHomeProfile.valuesToString());
@@ -33,7 +33,7 @@ public class SmartHomeProfileWebAPI extends RequestInterface {
             if (postData.has("profile")) {
                 if (SmartHomeProfile.has(postData.getString("profile"))) {
                     SmartHomeProfile smartHomeProfile = SmartHomeProfile.valueOf(postData.getString("profile"));
-                    if (!HomeDevicesPlugin.homeDevicesPlugin.changeSmartHomeProfile(smartHomeProfile)) {
+                    if (!HomeDevicesPlugin.homeDevicesPlugin.getProfileController().requestProfileChange(smartHomeProfile)) {
                         apiResponse.setError("Changing of smartHomeProfile failed!");
                     }
                 } else {

@@ -60,7 +60,7 @@ public class SwitchDeviceProfile extends DeviceProfile {
 
     private void loadAutoSwitchOffTimer() {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH-mm");
-        SmartHomeProfile smartHomeProfile = HomeDevicesPlugin.homeDevicesPlugin.getCurrentProfile();
+        SmartHomeProfile smartHomeProfile = HomeDevicesPlugin.homeDevicesPlugin.getProfileController().getCurrentProfile();
 
         String settingsPath;
         FileConfiguration config;
@@ -114,7 +114,7 @@ public class SwitchDeviceProfile extends DeviceProfile {
         String settingsPath;
         FileConfiguration config;
 
-        SmartHomeProfile smartHomeProfile = HomeDevicesPlugin.homeDevicesPlugin.getCurrentProfile();
+        SmartHomeProfile smartHomeProfile = HomeDevicesPlugin.homeDevicesPlugin.getProfileController().getCurrentProfile();
         if (getDefaultConfig().contains("category." + mqttSwitch.getSwitchCategory().name() + "." + smartHomeProfile.name())) {
             config = getDefaultConfig();
             settingsPath = "category." + mqttSwitch.getSwitchCategory().name() + "." + smartHomeProfile.name();
@@ -146,7 +146,7 @@ public class SwitchDeviceProfile extends DeviceProfile {
         this.autoStartStopTimerList = new LinkedList<>();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH-mm-ss.SSS");
 
-        SmartHomeProfile smartHomeProfile = HomeDevicesPlugin.homeDevicesPlugin.getCurrentProfile();
+        SmartHomeProfile smartHomeProfile = HomeDevicesPlugin.homeDevicesPlugin.getProfileController().getCurrentProfile();
 
         String optionPath = "autoStartStopTimer." + smartHomeProfile.name();
 

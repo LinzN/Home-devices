@@ -47,7 +47,7 @@ public class ThermostatDeviceProfile extends DeviceProfile {
         this.thermostatTimerList = new LinkedList<>();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH-mm-ss.SSS");
 
-        SmartHomeProfile smartHomeProfile = HomeDevicesPlugin.homeDevicesPlugin.getCurrentProfile();
+        SmartHomeProfile smartHomeProfile = HomeDevicesPlugin.homeDevicesPlugin.getProfileController().getCurrentProfile();
 
         String settingsPath;
         FileConfiguration config;

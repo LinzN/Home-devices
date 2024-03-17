@@ -21,7 +21,7 @@ public class DevicesStatusWebAPI extends RequestInterface {
     public Object callHttpEvent(HttpExchange httpExchange, HttpRequestClientPayload httpRequestClientPayload) throws IOException {
         ApiResponse webApiResponseBuilder = new ApiResponse();
 
-        SmartHomeProfile smartHomeProfile = HomeDevicesPlugin.homeDevicesPlugin.getCurrentProfile();
+        SmartHomeProfile smartHomeProfile = HomeDevicesPlugin.homeDevicesPlugin.getProfileController().getCurrentProfile();
         webApiResponseBuilder.getJSONObject().put("currentProfile", smartHomeProfile.name());
         /* Need to add human presence detector */
         webApiResponseBuilder.getJSONObject().put("currentHumanPresence", 0);

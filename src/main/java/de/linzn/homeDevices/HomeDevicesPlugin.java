@@ -30,10 +30,9 @@ import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 public class HomeDevicesPlugin extends STEMPlugin {
 
     public static HomeDevicesPlugin homeDevicesPlugin;
+    private ProfileController profileController;
     private DeviceManager deviceManager;
     private WebApiHandler webApiHandler;
-
-    private SmartHomeProfile currentProfile;
 
     public HomeDevicesPlugin() {
         homeDevicesPlugin = this;
@@ -41,7 +40,7 @@ public class HomeDevicesPlugin extends STEMPlugin {
 
     @Override
     public void onEnable() {
-        this.currentProfile = SmartHomeProfile.DEFAULT;
+        this.profileController = new ProfileController(this);
         this.deviceManager = new DeviceManager(this);
         this.webApiHandler = new WebApiHandler(this);
         RestFulApiPlugin.restFulApiPlugin.registerIGetJSONClass(new GET_AutoMode(this));
@@ -63,24 +62,8 @@ public class HomeDevicesPlugin extends STEMPlugin {
         return this.deviceManager;
     }
 
-    public SmartHomeProfile getCurrentProfile() {
-        return currentProfile;
+
+    public ProfileController getProfileController() {
+        return profileController;
     }
-
-    public boolean changeSmartHomeProfile(SmartHomeProfile smartHomeProfile) {
-        this.currentProfile = smartHomeProfile;
-        boolean success = true;
-        STEMSystemApp.LOGGER.CONFIG("Changing SmartHomeProfile to " + smartHomeProfile.name());
-
-        for (MqttDevice mqttDevice : this.getDeviceManager().getAllDevices()) {
-            if (!mqttDevice.deviceProfile.changeSmartProfile()) {
-                success = false;
-                STEMSystemApp.LOGGER.ERROR("Error while changing SmartHomeProfile to " + smartHomeProfile.name());
-            } else {
-                STEMSystemApp.LOGGER.CONFIG("Success changing SmartHomeProfile to " + smartHomeProfile.name());
-            }
-        }
-        return success;
-    }
-
 }
