@@ -20,6 +20,7 @@ import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -29,6 +30,8 @@ public class RF433Device extends MqttDevice {
 
     private final AtomicBoolean isGarageTriggered;
     public Date lastData;
+
+    public Date lastEventCallback;
     private Date healthSwitchDateRequest;
     private AtomicBoolean isGarageModuleConnected;
     private AtomicBoolean hasHeartbeat;
@@ -40,6 +43,7 @@ public class RF433Device extends MqttDevice {
             this.rf433MQTT = this.deviceProfile.getLoadedConfig().getString("custom.rf433MQTT");
         }
         this.isGarageTriggered = new AtomicBoolean(false);
+        this.lastEventCallback = new Date(0);
     }
 
     @Override
@@ -61,6 +65,7 @@ public class RF433Device extends MqttDevice {
         }
 
         if (jsonPayload.has("garageEvent")) {
+            this.lastEventCallback = new Date();
             STEMSystemApp.LOGGER.INFO("Garage callback event received!");
             this.isGarageTriggered.set(true);
             STEMSystemApp.getInstance().getScheduler().runTaskLater(HomeDevicesPlugin.homeDevicesPlugin, () -> isGarageTriggered.set(false), 2, TimeUnit.SECONDS);
@@ -104,6 +109,7 @@ public class RF433Device extends MqttDevice {
     public JSONObject getJSONData() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("garageModuleConnected", this.isGarageModuleConnected.get());
+        jsonObject.put("lastEventCallback", new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(this.lastEventCallback));
         String status = "unknown";
 
         if (this.isGarageTriggered.get()) {
