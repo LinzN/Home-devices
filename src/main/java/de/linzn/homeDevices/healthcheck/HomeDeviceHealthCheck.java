@@ -42,17 +42,7 @@ public class HomeDeviceHealthCheck extends HealthCheck {
                 healthCheckFeedback = new HealthCheckFeedback(HealthCheckLevel.DONE, "Device status ok");
             } else {
                 STEMSystemApp.LOGGER.WARNING("Check failed for " + device.getConfigName());
-                if (device instanceof MqttSensor) {
-                    healthCheckFeedback = new HealthCheckFeedback(HealthCheckLevel.WARNING, "Device status warning - " + device.getConfigName());
-                } else if (device instanceof MqttSwitch) {
-                    healthCheckFeedback = new HealthCheckFeedback(HealthCheckLevel.ERROR, "Device status error - " + device.getConfigName());
-                } else if (device instanceof ZigbeeThermostatDevice) {
-                    healthCheckFeedback = new HealthCheckFeedback(HealthCheckLevel.ERROR, "Device status error - " + device.getConfigName());
-                } else if (device instanceof PowerConsumption) {
-                    healthCheckFeedback = new HealthCheckFeedback(HealthCheckLevel.WARNING, "Device status warning - " + device.getConfigName());
-                } else {
-                    healthCheckFeedback = new HealthCheckFeedback(HealthCheckLevel.ERROR, "Device status unknown - " + device.getConfigName());
-                }
+                healthCheckFeedback = new HealthCheckFeedback(HealthCheckLevel.ERROR, "Device status unknown - " + device.getConfigName());
             }
             this.addHealthCheckFeedback(healthCheckFeedback);
         }
