@@ -9,26 +9,22 @@
  *
  */
 
-package de.linzn.homeDevices.events;
+package de.linzn.homeDevices.events.cancelable;
 
 
 import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
-import de.stem.stemSystem.modules.eventModule.StemEvent;
+import de.stem.stemSystem.modules.eventModule.CancelableEvent;
 
-public class DeviceUpdateEvent implements StemEvent {
+public class SwitchDeviceEvent extends CancelableEvent {
     private final MqttSwitch mqttSwitch;
-    private final boolean newStatus;
 
-    public DeviceUpdateEvent(final MqttSwitch mqttSwitch, final boolean newStatus) {
+
+    public SwitchDeviceEvent(final MqttSwitch mqttSwitch) {
         this.mqttSwitch = mqttSwitch;
-        this.newStatus = newStatus;
     }
 
     public MqttSwitch getSwitchableMQTTDevice() {
         return mqttSwitch;
     }
 
-    public boolean getNewStatus() {
-        return newStatus;
-    }
 }

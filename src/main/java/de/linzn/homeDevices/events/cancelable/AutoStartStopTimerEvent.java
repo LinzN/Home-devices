@@ -9,7 +9,7 @@
  *
  */
 
-package de.linzn.homeDevices.events;
+package de.linzn.homeDevices.events.cancelable;
 
 import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.openJL.pairs.Pair;

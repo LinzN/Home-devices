@@ -14,7 +14,7 @@ package de.linzn.homeDevices.devices.other;
 import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
-import de.linzn.homeDevices.events.MQTTDoorRingEvent;
+import de.linzn.homeDevices.events.records.MQTTDoorRingEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.linzn.openJL.converter.TimeAdapter;
 import de.stem.stemSystem.STEMSystemApp;

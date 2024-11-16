@@ -9,7 +9,7 @@
  *
  */
 
-package de.linzn.homeDevices.events;
+package de.linzn.homeDevices.events.cancelable;
 
 import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.stem.stemSystem.modules.eventModule.CancelableEvent;

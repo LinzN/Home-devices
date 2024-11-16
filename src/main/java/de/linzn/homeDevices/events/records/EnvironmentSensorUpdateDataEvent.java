@@ -9,21 +9,14 @@
  *
  */
 
-package de.linzn.homeDevices.events;
+package de.linzn.homeDevices.events.records;
 
 
-import de.linzn.homeDevices.devices.other.DoorRingDevice;
+import de.linzn.homeDevices.devices.interfaces.EnvironmentSensor;
 import de.stem.stemSystem.modules.eventModule.StemEvent;
 
-public class MQTTDoorRingEvent implements StemEvent {
-    private final DoorRingDevice doorRingDevice;
+import java.util.Date;
 
-    public MQTTDoorRingEvent(final DoorRingDevice doorRingDevice) {
-        this.doorRingDevice = doorRingDevice;
-    }
-
-    public DoorRingDevice getDoorRingDevice() {
-        return doorRingDevice;
-    }
-
+public record EnvironmentSensorUpdateDataEvent(EnvironmentSensor environmentSensor,
+                                               Date timestamp) implements StemEvent {
 }

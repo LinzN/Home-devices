@@ -2,6 +2,7 @@ package de.linzn.homeDevices.devices.interfaces;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import de.linzn.homeDevices.devices.enums.SensorCategory;
+import de.linzn.homeDevices.events.records.EnvironmentSensorUpdateDataEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
@@ -33,7 +34,10 @@ public abstract class EnvironmentSensor extends MqttSensor {
         this.temperature = new AtomicDouble(jsonObject.getDouble("temperature"));
         this.humidity = new AtomicDouble(jsonObject.getDouble("humidity"));
         this.battery = new AtomicDouble(jsonObject.getDouble("battery"));
-        STEMSystemApp.LOGGER.INFO("DATA: [temperature:" + this.temperature + "], [humidity:" + this.humidity + "], [battery:" + battery + "]");
+        STEMSystemApp.LOGGER.DEBUG("DATA: [temperature:" + this.temperature + "], [humidity:" + this.humidity + "], [battery:" + battery + "]");
+
+        EnvironmentSensorUpdateDataEvent deviceUpdateEvent = new EnvironmentSensorUpdateDataEvent(this, this.lastCollection);
+        STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(deviceUpdateEvent);
     }
 
     public AtomicDouble getTemperature() {

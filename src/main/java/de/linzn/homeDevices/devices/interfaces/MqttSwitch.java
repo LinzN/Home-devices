@@ -2,7 +2,7 @@ package de.linzn.homeDevices.devices.interfaces;
 
 import de.linzn.homeDevices.devices.enums.SwitchCategory;
 import de.linzn.homeDevices.devices.exceptions.DeviceNotInitializedException;
-import de.linzn.homeDevices.events.DeviceUpdateEvent;
+import de.linzn.homeDevices.events.records.DeviceUpdateEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.linzn.homeDevices.stemLink.DeviceWrapperListener;
 import de.stem.stemSystem.STEMSystemApp;
