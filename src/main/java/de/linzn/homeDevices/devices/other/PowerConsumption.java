@@ -55,7 +55,7 @@ public class PowerConsumption extends MqttDevice {
         this.today = new AtomicDouble(energy.getDouble("Today"));
         final PowerConsumptionUpdateDataEvent powerConsumptionUpdateDataEvent;
         try {
-            powerConsumptionUpdateDataEvent = new PowerConsumptionUpdateDataEvent(this, new SimpleDateFormat("yyyy-MM-ddTHH:mm:ss").parse(jsonPayload.getString("time")));
+            powerConsumptionUpdateDataEvent = new PowerConsumptionUpdateDataEvent(this, new SimpleDateFormat("yyyy-MM-dd").parse(jsonPayload.getString("Time")));
             STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(powerConsumptionUpdateDataEvent);
         } catch (ParseException e) {
             STEMSystemApp.LOGGER.ERROR(e);
