@@ -18,5 +18,5 @@ import de.stem.stemSystem.modules.eventModule.StemEvent;
 import java.util.Date;
 
 
-public record PowerConsumptionUpdateDataEvent(PowerConsumption PowerConsumption, Date date) implements StemEvent {
+public record PowerConsumptionUpdateDataEvent(PowerConsumption powerConsumption, Date date) implements StemEvent {
 }
