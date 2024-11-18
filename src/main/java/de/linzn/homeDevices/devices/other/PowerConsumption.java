@@ -14,12 +14,17 @@ package de.linzn.homeDevices.devices.other;
 import com.google.common.util.concurrent.AtomicDouble;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
+import de.linzn.homeDevices.events.records.MQTTUpdateDeviceEvent;
+import de.linzn.homeDevices.events.records.PowerConsumptionUpdateDataEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,6 +53,13 @@ public class PowerConsumption extends MqttDevice {
         JSONObject energy = jsonPayload.getJSONObject("ENERGY");
         this.power = new AtomicInteger(energy.getInt("Power"));
         this.today = new AtomicDouble(energy.getDouble("Today"));
+        final PowerConsumptionUpdateDataEvent powerConsumptionUpdateDataEvent;
+        try {
+            powerConsumptionUpdateDataEvent = new PowerConsumptionUpdateDataEvent(this, new SimpleDateFormat("yyyy-MM-ddTHH:mm:ss").parse(jsonPayload.getString("time")));
+            STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(powerConsumptionUpdateDataEvent);
+        } catch (ParseException e) {
+            STEMSystemApp.LOGGER.ERROR(e);
+        }
     }
 
     @Override
