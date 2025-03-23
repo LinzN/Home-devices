@@ -11,23 +11,16 @@
 
 package de.linzn.homeDevices.devices.other;
 
-import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.profiles.DeviceProfile;
-import de.linzn.openJL.converter.TimeAdapter;
-import de.linzn.openJL.math.FloatingPoint;
 import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.informationModule.InformationBlock;
-import de.stem.stemSystem.modules.informationModule.InformationIntent;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
-import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class LEDDevice extends MqttDevice {
     public Date lastData;
@@ -36,6 +29,7 @@ public class LEDDevice extends MqttDevice {
     private int r = 0;
     private int g = 0;
     private int b = 0;
+
     public LEDDevice(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
         super(stemPlugin, deviceProfile, "stat/" + deviceProfile.getDeviceHardAddress() + "/data");
     }
@@ -51,7 +45,7 @@ public class LEDDevice extends MqttDevice {
         String payload = new String(mqttMessage.getPayload());
         JSONObject jsonPayload = new JSONObject(payload);
         int currentMode = jsonPayload.getInt("currentMode");
-        if(currentMode != this.mode){
+        if (currentMode != this.mode) {
             this.updateLED();
         }
     }
@@ -81,7 +75,7 @@ public class LEDDevice extends MqttDevice {
         return jsonObject;
     }
 
-    public void setLEDMode(int mode, int r, int g, int b){
+    public void setLEDMode(int mode, int r, int g, int b) {
         this.mode = mode;
         this.r = r;
         this.g = g;
@@ -89,7 +83,7 @@ public class LEDDevice extends MqttDevice {
         this.updateLED();
     }
 
-    private void updateLED(){
+    private void updateLED() {
         MqttMessage mqttMessage = new MqttMessage();
         mqttMessage.setQos(2);
         JSONObject setting = new JSONObject();
@@ -105,7 +99,7 @@ public class LEDDevice extends MqttDevice {
     @Override
     public JSONObject setJSONData(JSONObject jsonInput) {
         JSONObject jsonObject = new JSONObject();
-        this.setLEDMode(jsonInput.getInt("mode"), jsonInput.getInt("r"), jsonInput.getInt("g"), jsonInput.getInt("b")) ;
+        this.setLEDMode(jsonInput.getInt("mode"), jsonInput.getInt("r"), jsonInput.getInt("g"), jsonInput.getInt("b"));
         jsonObject.put("status", "ok");
         return jsonObject;
     }

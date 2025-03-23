@@ -6,9 +6,8 @@ import de.stem.stemSystem.STEMSystemApp;
 
 public class ProfileController {
 
-    private SmartHomeProfile currentSmartHomeProfile;
-
     public HomeDevicesPlugin plugin;
+    private SmartHomeProfile currentSmartHomeProfile;
 
     public ProfileController(HomeDevicesPlugin homeDevicesPlugin) {
         this.plugin = homeDevicesPlugin;

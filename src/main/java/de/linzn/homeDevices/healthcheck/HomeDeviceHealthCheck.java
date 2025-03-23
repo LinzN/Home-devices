@@ -2,10 +2,6 @@ package de.linzn.homeDevices.healthcheck;
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
-import de.linzn.homeDevices.devices.interfaces.MqttSensor;
-import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
-import de.linzn.homeDevices.devices.other.PowerConsumption;
-import de.linzn.homeDevices.devices.other.ZigbeeThermostatDevice;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.healthModule.HealthCheck;
 import de.stem.stemSystem.modules.healthModule.HealthCheckFeedback;

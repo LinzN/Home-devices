@@ -13,8 +13,6 @@ package de.linzn.homeDevices;
 
 
 import de.linzn.homeDevices.devices.DeviceManager;
-import de.linzn.homeDevices.devices.enums.SmartHomeProfile;
-import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.healthcheck.HomeDeviceHealthCheck;
 import de.linzn.homeDevices.restfulapi.get.GET_AutoMode;
 import de.linzn.homeDevices.restfulapi.get.GET_DeviceStatus;

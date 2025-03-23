@@ -1,6 +1,5 @@
 package de.linzn.homeDevices.devices.sensors;
 
-import com.google.common.util.concurrent.AtomicDouble;
 import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
@@ -25,6 +24,7 @@ public class DoorSensor extends MqttDevice {
     private AtomicBoolean doorClosed;
 
     private InformationBlock informationBlock;
+
     public DoorSensor(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
         super(stemPlugin, deviceProfile, deviceProfile.getZigbeeGateway() + "/" + deviceProfile.getDeviceHardAddress());
         this.zigbeeGatewayMqttName = deviceProfile.getZigbeeGateway();
@@ -44,7 +44,7 @@ public class DoorSensor extends MqttDevice {
         STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getConfigName() + " DeviceHardAddress: " + getDeviceHardAddress());
         STEMSystemApp.LOGGER.INFO("DATA: [door_closed:" + this.doorClosed.get() + "]");
 
-        if(!this.doorClosed.get()) {
+        if (!this.doorClosed.get()) {
             if (informationBlock == null || !informationBlock.isActive()) {
                 informationBlock = new InformationBlock("DOOR", "Door is open!", HomeDevicesPlugin.homeDevicesPlugin);
                 informationBlock.setIcon("DOOR");

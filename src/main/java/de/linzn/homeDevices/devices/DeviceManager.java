@@ -58,7 +58,7 @@ public class DeviceManager {
                     if (deviceProfile.getDeviceTechnology() == DeviceTechnology.ZIGBEE) {
                         if (deviceProfile instanceof EnvironmentSensorProfile) {
                             mqttDevice = new ZigbeeEnvironmentSensor(this.stemPlugin, deviceProfile);
-                        } else if(deviceProfile instanceof DoorSensorProfile){
+                        } else if (deviceProfile instanceof DoorSensorProfile) {
                             mqttDevice = new DoorSensor(this.stemPlugin, deviceProfile);
                         }
                     }
@@ -76,8 +76,10 @@ public class DeviceManager {
                     mqttDevice = new RF433Device(this.stemPlugin, deviceProfile);
                 } else if (deviceProfile.getMqttDeviceCategory() == MqttDeviceCategory.LED) {
                     mqttDevice = new LEDDevice(this.stemPlugin, deviceProfile);
-                }else if (deviceProfile.getMqttDeviceCategory() == MqttDeviceCategory.NANOCLR_KEYBOARD) {
+                } else if (deviceProfile.getMqttDeviceCategory() == MqttDeviceCategory.NANOCLR_KEYBOARD) {
                     mqttDevice = new KeyBoardDevice(this.stemPlugin, deviceProfile);
+                } else if (deviceProfile.getMqttDeviceCategory() == MqttDeviceCategory.ANKERMAKE_PRINTER) {
+                    mqttDevice = new AnkermakePrinter(this.stemPlugin, deviceProfile);
                 }
 
                 if (mqttDevice != null) {

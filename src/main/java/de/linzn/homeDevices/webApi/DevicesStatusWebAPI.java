@@ -10,7 +10,6 @@ import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.webapi.core.ApiResponse;
 import de.linzn.webapi.core.HttpRequestClientPayload;
 import de.linzn.webapi.modules.RequestInterface;
-import de.stem.stemSystem.STEMSystemApp;
 import org.json.JSONObject;
 
 import java.io.IOException;
