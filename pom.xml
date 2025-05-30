@@ -17,7 +17,7 @@
     <repositories>
         <repository>
             <id>Stem Builds Repository</id>
-            <url>https://builds.app.stem-system.de/plugin/repository/everything/</url>
+            <url>https://builds.mirranet.de/plugin/repository/everything/</url>
         </repository>
         <repository>
             <id>Eclipse Paho Repo</id>

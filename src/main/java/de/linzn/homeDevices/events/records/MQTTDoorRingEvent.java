@@ -12,7 +12,7 @@
 package de.linzn.homeDevices.events.records;
 
 
-import de.linzn.homeDevices.devices.other.DoorRingDevice;
+import de.linzn.homeDevices.devices.other.nanoCLR.DoorRingDevice;
 import de.stem.stemSystem.modules.eventModule.StemEvent;
 
 public record MQTTDoorRingEvent(DoorRingDevice doorRingDevice) implements StemEvent {

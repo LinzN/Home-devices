@@ -9,7 +9,7 @@
  *
  */
 
-package de.linzn.homeDevices.devices.other;
+package de.linzn.homeDevices.devices.other.nanoCLR;
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
@@ -37,7 +37,7 @@ public class DoorRingDevice extends MqttDevice {
     private String rf433CodeWord;
 
     public DoorRingDevice(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
-        super(stemPlugin, deviceProfile, "stat/" + deviceProfile.getDeviceHardAddress() + "/data");
+        super(stemPlugin, deviceProfile, "stat/nanoCLR/" + deviceProfile.getDeviceHardAddress() + "/data");
         if (this.deviceProfile.getLoadedConfig().contains("custom.rf433MQTT")) {
             this.rf433MQTT = this.deviceProfile.getLoadedConfig().getString("custom.rf433MQTT");
         }
@@ -69,7 +69,7 @@ public class DoorRingDevice extends MqttDevice {
         JSONObject jsonPayload = new JSONObject(payload);
 
         /* Update heartbeat date */
-        if (jsonPayload.has("heartbeat")) {
+        if (jsonPayload.has("device")) {
             this.lastData = new Date();
         }
 

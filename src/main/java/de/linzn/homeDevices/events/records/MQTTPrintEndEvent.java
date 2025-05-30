@@ -13,7 +13,6 @@ package de.linzn.homeDevices.events.records;
 
 
 import de.linzn.homeDevices.devices.other.AnkermakePrinter;
-import de.linzn.homeDevices.devices.other.DoorRingDevice;
 import de.stem.stemSystem.modules.eventModule.StemEvent;
 
 public record MQTTPrintEndEvent(AnkermakePrinter ankermakePrinter, int eventValue, String printName) implements StemEvent {
