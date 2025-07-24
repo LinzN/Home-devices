@@ -14,7 +14,6 @@ package de.linzn.homeDevices.devices.other;
 import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
-import de.linzn.homeDevices.events.records.MQTTDoorRingEvent;
 import de.linzn.homeDevices.events.records.MQTTPrintEndEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.linzn.openJL.converter.TimeAdapter;
@@ -26,7 +25,6 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
@@ -35,6 +33,7 @@ public class AnkermakePrinter extends MqttDevice {
     public Date lastPrinterData;
     private JSONObject printData;
     private InformationBlock informationBlock;
+    private String last_success_task_id = null;
 
     public AnkermakePrinter(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
         super(stemPlugin, deviceProfile, "ankermake2mqtt/printers/" + deviceProfile.getDeviceHardAddress() + "/data");
@@ -61,7 +60,7 @@ public class AnkermakePrinter extends MqttDevice {
     }
 
     public String getPrinterStatus() {
-        if (this.printData != null &&  this.lastPrinterData.toInstant().plus(15, ChronoUnit.SECONDS).toEpochMilli() >= new Date().toInstant().toEpochMilli()) {
+        if (this.printData != null && this.lastPrinterData.toInstant().plus(15, ChronoUnit.SECONDS).toEpochMilli() >= new Date().toInstant().toEpochMilli()) {
             if (this.printData.has("1001")) {
                 return "PRINTING";
             } else {
@@ -118,17 +117,20 @@ public class AnkermakePrinter extends MqttDevice {
                     }
                     case 1001 -> {
                         printData.put("1001", true);
-                        if(object.has("progress")) {
+                        if (object.has("task_id")) {
+                            printData.put("task_id", object.getString("task_id"));
+                        }
+                        if (object.has("progress")) {
                             printData.put("print_progress", object.getInt("progress"));
                         } else {
                             printData.put("print_progress", -1);
                         }
-                        if(object.has("name")) {
+                        if (object.has("name")) {
                             printData.put("print_name", object.getString("name"));
                         } else {
                             printData.put("print_name", "unknown");
                         }
-                        if(object.has("realSpeed")) {
+                        if (object.has("realSpeed")) {
                             printData.put("print_speed", object.getInt("realSpeed"));
                         } else {
                             printData.put("print_speed", -1);
@@ -138,23 +140,28 @@ public class AnkermakePrinter extends MqttDevice {
             }
         }
         this.printData = printData;
-        if(this.printData.has("1000")){
+        if (this.printData.has("1000")) {
             //STEMSystemApp.LOGGER.CORE("EVENT_TYPE: " + this.printData.getInt("event_type") + " EVENT_VALUE: " + this.printData.getInt("event_value"));
-            if(this.printData.getInt("event_type") == 1 && this.printData.getInt("event_value") == 4){
-                final MQTTPrintEndEvent mqttPrintEndEvent = new MQTTPrintEndEvent(this, this.printData.getInt("event_value"), this.printData.getString("print_name"));
-                STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(mqttPrintEndEvent);
+            if (this.printData.getInt("event_type") == 1 && this.printData.getInt("event_value") == 4) {
+                if (this.last_success_task_id == null || !this.last_success_task_id.equalsIgnoreCase(this.printData.getString("task_id"))) {
 
-                if(this.informationBlock != null && this.informationBlock.isActive()){
-                    this.informationBlock.expire();
-                    this.informationBlock = null;
+                    this.last_success_task_id = this.printData.getString("task_id");
+
+                    final MQTTPrintEndEvent mqttPrintEndEvent = new MQTTPrintEndEvent(this, this.printData.getInt("event_value"), this.printData.getString("print_name"));
+                    STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(mqttPrintEndEvent);
+
+                    if (this.informationBlock != null && this.informationBlock.isActive()) {
+                        this.informationBlock.expire();
+                        this.informationBlock = null;
+                    }
+
+                    this.informationBlock = new InformationBlock("3D Printer", "3D print job done for " + this.printData.getString("print_name"), HomeDevicesPlugin.homeDevicesPlugin, "3D print done for print job " + this.printData.getString("print_name") + " with exit value " + this.printData.getInt("event_value"));
+                    this.informationBlock.setIcon("USV");
+                    this.informationBlock.setExpireTime(TimeAdapter.getTimeInstant().plus(20, ChronoUnit.MINUTES));
+                    this.informationBlock.addIntent(InformationIntent.NOTIFY_USER);
+                    this.informationBlock.addIntent(InformationIntent.SHOW_DISPLAY);
+                    STEMSystemApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
                 }
-
-                this.informationBlock = new InformationBlock("3D Printer", "3D print job done for " + this.printData.getString("print_name"), HomeDevicesPlugin.homeDevicesPlugin, "3D print done for print job " + this.printData.getString("print_name")  + " with exit value " + this.printData.getInt("event_value"));
-                this.informationBlock.setIcon("USV");
-                this.informationBlock.setExpireTime(TimeAdapter.getTimeInstant().plus(20, ChronoUnit.MINUTES));
-                this.informationBlock.addIntent(InformationIntent.NOTIFY_USER);
-                this.informationBlock.addIntent(InformationIntent.SHOW_DISPLAY);
-                STEMSystemApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
             }
         }
     }
