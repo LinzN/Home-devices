@@ -62,7 +62,8 @@ public class TasmotaSwitchDevice extends MqttSwitch {
 
     @Override
     protected void request_initial_status() {
-        while (!this.hasData()) {
+        int counter = 0;
+        while (!this.hasData() && counter <= 30) {
             MqttMessage mqttMessage = new MqttMessage();
             mqttMessage.setQos(2);
             this.mqttModule.publish("cmnd/" + this.getDeviceHardAddress() + "/Power", mqttMessage);
@@ -71,6 +72,10 @@ public class TasmotaSwitchDevice extends MqttSwitch {
                 Thread.sleep(1000);
             } catch (InterruptedException ignored) {
             }
+            counter++;
+        }
+        if(counter > 30){
+            STEMSystemApp.LOGGER.WARNING("Seems device " + this.getDeviceHardAddress() + " is disconnected!");
         }
     }
 

@@ -70,12 +70,18 @@ public abstract class MqttSwitch extends MqttDevice {
     @Override
     public void requestHealthCheck() {
         this.healthSwitchDateRequest = new Date();
-        this.switchDevice(this.deviceStatus.get());
+        if(this.deviceStatus != null) {
+            this.switchDevice(this.deviceStatus.get());
+        }
     }
 
     @Override
     public boolean healthCheckStatus() {
-        return this.lastSwitch.getTime() >= this.healthSwitchDateRequest.getTime();
+        if(this.lastSwitch != null){
+            return this.lastSwitch.getTime() >= this.healthSwitchDateRequest.getTime();
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -100,7 +106,7 @@ public abstract class MqttSwitch extends MqttDevice {
             if (this.isDimmable()) {
                 jsonObject.put("brightness", "error");
             }
-            STEMSystemApp.LOGGER.WARNING(e.getMessage());
+            //STEMSystemApp.LOGGER.WARNING(e.getMessage());
         }
 
         return jsonObject;

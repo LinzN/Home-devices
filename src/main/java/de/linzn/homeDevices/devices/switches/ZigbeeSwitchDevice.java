@@ -62,7 +62,8 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
 
     @Override
     protected void request_initial_status() {
-        while (!this.hasData()) {
+        int counter = 0;
+        while (!this.hasData() && counter <= 30) {
             JSONObject state = new JSONObject();
             state.put("state", "");
             state.put("brightness", "");
@@ -75,6 +76,10 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
                 Thread.sleep(1000);
             } catch (InterruptedException ignored) {
             }
+            counter++;
+        }
+        if(counter > 30){
+            STEMSystemApp.LOGGER.WARNING("Seems device " + this.getDeviceHardAddress() + " is disconnected!");
         }
     }
 
