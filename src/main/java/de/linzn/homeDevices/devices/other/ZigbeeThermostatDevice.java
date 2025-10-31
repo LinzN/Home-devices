@@ -27,7 +27,7 @@ public class ZigbeeThermostatDevice extends MqttDevice {
     public void request_initial_status() {
         STEMSystemApp.LOGGER.WARNING("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.THERMOSTAT.name() + ") is not supported!");
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("EF00/0267", ((ThermostatDeviceProfile) this.getDeviceProfile()).getCurrentConfigTemperature() * 10);
+        jsonObject.put("TuyaTempTarget", ((ThermostatDeviceProfile) this.getDeviceProfile()).getCurrentConfigTemperature());
         this.update_data(jsonObject);
     }
 
@@ -37,7 +37,7 @@ public class ZigbeeThermostatDevice extends MqttDevice {
         JSONObject messagePayload = new JSONObject();
         messagePayload.put("device", deviceProfile.getDeviceHardAddress());
         JSONObject zbCommand = new JSONObject();
-        zbCommand.put("EF00/0267", value * 10);
+        zbCommand.put("TuyaTempTarget", value*10);
         messagePayload.put("write", zbCommand);
         mqttMessage.setPayload(messagePayload.toString().getBytes());
         this.mqttModule.publish("cmnd/" + deviceProfile.getZigbeeGateway() + "/" + this.getDeviceHardAddress() + "/zbsend", mqttMessage);
@@ -45,10 +45,10 @@ public class ZigbeeThermostatDevice extends MqttDevice {
 
     protected void update_data(JSONObject jsonObject) {
         this.lastCollection = new Date();
-        if (jsonObject.has("EF00/0267")) {
-            this.currentTemperature = new AtomicDouble(jsonObject.getDouble("EF00/0267") / 10);
+        if (jsonObject.has("TuyaTempTarget")) {
+            this.currentTemperature = new AtomicDouble(jsonObject.getDouble("TuyaTempTarget"));
             STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getConfigName() + " DeviceHardAddress: " + getDeviceHardAddress());
-            STEMSystemApp.LOGGER.INFO("DATA: [EF00/0267:" + this.currentTemperature + "]");
+            STEMSystemApp.LOGGER.INFO("DATA: [TuyaTempTarget:" + this.currentTemperature + "]");
         }
     }
 

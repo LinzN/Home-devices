@@ -1,0 +1,30 @@
+#Z2Tv1
+# Hama Thermostat TS0601
+:_TZE200_h4cgnbzg,
+:_TZE200_yw7cahqs,
+:_TZE200_c88teujp,
+:_TZE200_azqp6ssj,
+:_TZE200_9gvruqf5,
+:_TZE200_zuhszj9s,
+:_TZE200_zr9c0day,
+:_TZE200_0dvm9mva,
+:_TZE200_exfrnlow,
+:_TZE200_9m4kmbfu,
+:_TZE200_3yp57tby,
+:_TZE200_mz5y07w2,
+:TS0601
+
+EF00/0267=EF00/0267,div:10
+EF00/0266=EF00/0266,div:10
+
+EF00/0267,TuyaTempTarget			                # uint32 - target temp 615
+EF00/0266,LocalTemperature                 			# uint32 - current room temp 614
+EF00/0569,BatteryAlarmState                 		# [0/1] on/off - battery low 1385
+EF00/0128,CHILD_LOCK                  				# [0/1] on/off 296
+EF00/010A,ANTI_FREEZE                 				# [0/1] on/off 266
+EF00/0108,WINDOW_DETECT                 			# [0/1] on/off 264
+EF00/0182,LIMESCALE_PROTECT                			# [0/1] on/off 386
+EF00/021B,TEMP_CORRECTION                 			# uint32 - temp correction 539
+EF00/016A,AWAY_MODE                  	 			# [0/1] on/off 362
+EF00/016C,SCHEDULE_MODE                				# [0/1] on/off 364
+EF00/0165,OnOff                 	 				# [0/1] on/off 357
