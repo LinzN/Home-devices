@@ -11,11 +11,9 @@ import de.linzn.homeDevices.devices.sensors.DoorSensor;
 import de.linzn.homeDevices.devices.sensors.ZigbeeEnvironmentSensor;
 import de.linzn.homeDevices.devices.switches.TasmotaSwitchDevice;
 import de.linzn.homeDevices.devices.switches.ZigbeeSwitchDevice;
-import de.linzn.homeDevices.listener.RequestRestartListener;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.linzn.homeDevices.profiles.DoorSensorProfile;
 import de.linzn.homeDevices.profiles.EnvironmentSensorProfile;
-import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 
 import java.io.File;
@@ -33,7 +31,6 @@ public class DeviceManager {
         this.stemPlugin = stemPlugin;
         this.mqttDevices = new HashMap<>();
         this.loadMqttDevices();
-        STEMSystemApp.getInstance().getEventModule().getStemEventBus().register(new RequestRestartListener());
     }
 
     private void loadMqttDevices() {

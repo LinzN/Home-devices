@@ -70,14 +70,14 @@ public abstract class MqttSwitch extends MqttDevice {
     @Override
     public void requestHealthCheck() {
         this.healthSwitchDateRequest = new Date();
-        if(this.deviceStatus != null) {
+        if (this.deviceStatus != null) {
             this.switchDevice(this.deviceStatus.get());
         }
     }
 
     @Override
     public boolean healthCheckStatus() {
-        if(this.lastSwitch != null){
+        if (this.lastSwitch != null) {
             return this.lastSwitch.getTime() >= this.healthSwitchDateRequest.getTime();
         } else {
             return false;

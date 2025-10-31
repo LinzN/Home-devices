@@ -6,6 +6,7 @@ import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.homeDevices.events.cancelable.SwitchDeviceEvent;
 import de.linzn.homeDevices.events.cancelable.ToggleDeviceDeviceEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
+import de.linzn.openJL.converter.BooleanAdapter;
 import de.stem.stemSystem.STEMSystemApp;
 import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -13,11 +14,9 @@ import org.json.JSONObject;
 
 public class ZigbeeSwitchDevice extends MqttSwitch {
 
-    private final String zigbeeGatewayMqttName;
 
     public ZigbeeSwitchDevice(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
-        super(stemPlugin, deviceProfile, SwitchCategory.valueOf(deviceProfile.getSubDeviceCategory()), deviceProfile.getZigbeeGateway() + "/" + deviceProfile.getDeviceHardAddress());
-        this.zigbeeGatewayMqttName = deviceProfile.getZigbeeGateway();
+        super(stemPlugin, deviceProfile, SwitchCategory.valueOf(deviceProfile.getSubDeviceCategory()), "tele/" + deviceProfile.getZigbeeGateway() + "/" + deviceProfile.getDeviceHardAddress() + "/SENSOR");
     }
 
 
@@ -29,14 +28,17 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
         if (!deviceSwitchEvent.isCanceled()) {
             MqttMessage mqttMessage = new MqttMessage();
             mqttMessage.setQos(2);
-            JSONObject state = new JSONObject();
+            JSONObject messagePayload = new JSONObject();
+            messagePayload.put("device", deviceProfile.getDeviceHardAddress());
+            JSONObject zbCommand = new JSONObject();
             if (status) {
-                state.put("state", "ON");
+                zbCommand.put("power", "true");
             } else {
-                state.put("state", "OFF");
+                zbCommand.put("power", "false");
             }
-            mqttMessage.setPayload(state.toString().getBytes());
-            this.mqttModule.publish(zigbeeGatewayMqttName + "/" + this.getDeviceHardAddress() + "/set", mqttMessage);
+            messagePayload.put("send", zbCommand);
+            mqttMessage.setPayload(messagePayload.toString().getBytes());
+            this.mqttModule.publish("cmnd/" + deviceProfile.getZigbeeGateway() + "/" + this.getDeviceHardAddress() + "/zbsend", mqttMessage);
         }
     }
 
@@ -48,10 +50,13 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
         if (!toggleDeviceEvent.isCanceled()) {
             MqttMessage mqttMessage = new MqttMessage();
             mqttMessage.setQos(2);
-            JSONObject state = new JSONObject();
-            state.put("state", "TOGGLE");
-            mqttMessage.setPayload(state.toString().getBytes());
-            this.mqttModule.publish(zigbeeGatewayMqttName + "/" + this.getDeviceHardAddress() + "/set", mqttMessage);
+            JSONObject messagePayload = new JSONObject();
+            messagePayload.put("device", deviceProfile.getDeviceHardAddress());
+            JSONObject zbCommand = new JSONObject();
+            zbCommand.put("power", "TOGGLE");
+            messagePayload.put("send", zbCommand);
+            mqttMessage.setPayload(messagePayload.toString().getBytes());
+            this.mqttModule.publish("cmnd/" + deviceProfile.getZigbeeGateway() + "/" + this.getDeviceHardAddress() + "/zbsend", mqttMessage);
         }
     }
 
@@ -64,13 +69,10 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
     protected void request_initial_status() {
         int counter = 0;
         while (!this.hasData() && counter <= 30) {
-            JSONObject state = new JSONObject();
-            state.put("state", "");
-            state.put("brightness", "");
             MqttMessage mqttMessage = new MqttMessage();
-            mqttMessage.setPayload(state.toString().getBytes());
+            mqttMessage.setPayload(this.getDeviceHardAddress().getBytes());
             mqttMessage.setQos(2);
-            this.mqttModule.publish(zigbeeGatewayMqttName + "/" + this.getDeviceHardAddress() + "/get", mqttMessage);
+            this.mqttModule.publish("cmnd/" + deviceProfile.getZigbeeGateway() + "/" + this.getDeviceHardAddress() + "/zblight", mqttMessage);
             STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.SWITCH.name() + ", " + this.getDeviceTechnology().name() + ")");
             try {
                 Thread.sleep(1000);
@@ -78,7 +80,7 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
             }
             counter++;
         }
-        if(counter > 30){
+        if (counter > 30) {
             STEMSystemApp.LOGGER.WARNING("Seems device " + this.getDeviceHardAddress() + " is disconnected!");
         }
     }
@@ -87,12 +89,13 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
     public void setBrightness(int brightness) {
         MqttMessage mqttMessage = new MqttMessage();
         mqttMessage.setQos(2);
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("brightness", brightness);
-        jsonObject.put("transition", 1);
-        mqttMessage.setPayload(jsonObject.toString().getBytes());
-        this.mqttModule.publish(zigbeeGatewayMqttName + "/" + this.getDeviceHardAddress() + "/set", mqttMessage);
-
+        JSONObject messagePayload = new JSONObject();
+        messagePayload.put("device", deviceProfile.getDeviceHardAddress());
+        JSONObject zbCommand = new JSONObject();
+        zbCommand.put("dimmer", brightness);
+        messagePayload.put("send", zbCommand);
+        mqttMessage.setPayload(messagePayload.toString().getBytes());
+        this.mqttModule.publish("cmnd/" + deviceProfile.getZigbeeGateway() + "/" + this.getDeviceHardAddress() + "/zbsend", mqttMessage);
     }
 
 
@@ -101,11 +104,38 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
         String payload = new String(mqttMessage.getPayload());
         JSONObject jsonPayload = new JSONObject(payload);
 
-        if (jsonPayload.has("state")) {
-            this.update_status(jsonPayload.getString("state").equalsIgnoreCase("ON"));
+        if (jsonPayload.has("ZbReceived")) {
+            if (jsonPayload.getJSONObject("ZbReceived").has(deviceProfile.getDeviceHardAddress())) {
+                JSONObject data = jsonPayload.getJSONObject("ZbReceived").getJSONObject(deviceProfile.getDeviceHardAddress());
+                if (data.has("Power")) {
+                    this.update_status(BooleanAdapter.adapt(data.getInt("Power")));
+                }
+                if (data.has("Dimmer")) {
+                    this.update_brightness(data.getInt("Dimmer"));
+                }
+            }
         }
-        if (jsonPayload.has("brightness")) {
-            this.update_brightness(jsonPayload.getInt("brightness"));
+        if (jsonPayload.has("ZbLight")) {
+            if (jsonPayload.getJSONObject("ZbLight").has(deviceProfile.getDeviceHardAddress())) {
+                JSONObject data = jsonPayload.getJSONObject("ZbLight").getJSONObject(deviceProfile.getDeviceHardAddress());
+                if (data.has("Power")) {
+                    this.update_status(BooleanAdapter.adapt(data.getInt("Power")));
+                }
+                if (data.has("Dimmer")) {
+                    this.update_brightness(data.getInt("Dimmer"));
+                }
+            }
+        }
+        if (jsonPayload.has("ZbInfo")) {
+            if (jsonPayload.getJSONObject("ZbInfo").has(deviceProfile.getDeviceHardAddress())) {
+                JSONObject data = jsonPayload.getJSONObject("ZbInfo").getJSONObject(deviceProfile.getDeviceHardAddress());
+                if (data.has("Power")) {
+                    this.update_status(BooleanAdapter.adapt(data.getInt("Power")));
+                }
+                if (data.has("Dimmer")) {
+                    this.update_brightness(data.getInt("Dimmer"));
+                }
+            }
         }
     }
 }

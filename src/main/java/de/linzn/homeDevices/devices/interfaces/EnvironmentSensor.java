@@ -31,9 +31,15 @@ public abstract class EnvironmentSensor extends MqttSensor {
     protected void update_data(JSONObject jsonObject) {
         this.lastCollection = new Date();
         STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getConfigName() + " DeviceHardAddress: " + getDeviceHardAddress());
-        this.temperature = new AtomicDouble(jsonObject.getDouble("temperature"));
-        this.humidity = new AtomicDouble(jsonObject.getDouble("humidity"));
-        this.battery = new AtomicDouble(jsonObject.getDouble("battery"));
+        if (jsonObject.has("Temperature")) {
+            this.temperature = new AtomicDouble(jsonObject.getDouble("Temperature"));
+        }
+        if (jsonObject.has("Humidity")) {
+            this.humidity = new AtomicDouble(jsonObject.getDouble("Humidity"));
+        }
+        if (jsonObject.has("BatteryPercentage")) {
+            this.battery = new AtomicDouble(jsonObject.getDouble("BatteryPercentage"));
+        }
         STEMSystemApp.LOGGER.DEBUG("DATA: [temperature:" + this.temperature + "], [humidity:" + this.humidity + "], [battery:" + battery + "]");
 
         EnvironmentSensorUpdateDataEvent deviceUpdateEvent = new EnvironmentSensorUpdateDataEvent(this, this.lastCollection);

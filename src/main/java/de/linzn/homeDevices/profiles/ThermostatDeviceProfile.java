@@ -117,4 +117,12 @@ public class ThermostatDeviceProfile extends DeviceProfile {
         }
     }
 
+    public double getCurrentConfigTemperature() {
+        double vaule = 15;
+        if (!this.thermostatTimerList.isEmpty()) {
+            vaule = this.thermostatTimerList.getLast().getValue();
+        }
+        return vaule;
+    }
+
 }

@@ -74,7 +74,7 @@ public class TasmotaSwitchDevice extends MqttSwitch {
             }
             counter++;
         }
-        if(counter > 30){
+        if (counter > 30) {
             STEMSystemApp.LOGGER.WARNING("Seems device " + this.getDeviceHardAddress() + " is disconnected!");
         }
     }
