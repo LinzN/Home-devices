@@ -14,7 +14,7 @@ import de.linzn.homeDevices.devices.switches.ZigbeeSwitchDevice;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.linzn.homeDevices.profiles.DoorSensorProfile;
 import de.linzn.homeDevices.profiles.EnvironmentSensorProfile;
-import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import de.linzn.stem.modules.pluginModule.STEMPlugin;
 
 import java.io.File;
 import java.util.Collection;

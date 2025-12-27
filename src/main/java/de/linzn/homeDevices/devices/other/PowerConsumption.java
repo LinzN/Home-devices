@@ -16,8 +16,8 @@ import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.events.records.PowerConsumptionUpdateDataEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
-import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import de.linzn.stem.STEMApp;
+import de.linzn.stem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
@@ -40,7 +40,7 @@ public class PowerConsumption extends MqttDevice {
 
     @Override
     protected void request_initial_status() {
-        STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.DOORRING.name() + ") is not supported!");
+        STEMApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.DOORRING.name() + ") is not supported!");
     }
 
     @Override
@@ -54,9 +54,9 @@ public class PowerConsumption extends MqttDevice {
         final PowerConsumptionUpdateDataEvent powerConsumptionUpdateDataEvent;
         try {
             powerConsumptionUpdateDataEvent = new PowerConsumptionUpdateDataEvent(this, new SimpleDateFormat("yyyy-MM-dd").parse(jsonPayload.getString("Time")));
-            STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(powerConsumptionUpdateDataEvent);
+            STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(powerConsumptionUpdateDataEvent);
         } catch (ParseException e) {
-            STEMSystemApp.LOGGER.ERROR(e);
+            STEMApp.LOGGER.ERROR(e);
         }
     }
 

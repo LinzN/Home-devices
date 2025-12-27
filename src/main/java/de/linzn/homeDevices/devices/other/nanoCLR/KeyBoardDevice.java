@@ -16,8 +16,8 @@ import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.enums.SmartHomeProfile;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.profiles.DeviceProfile;
-import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import de.linzn.stem.STEMApp;
+import de.linzn.stem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
@@ -36,12 +36,12 @@ public class KeyBoardDevice extends MqttDevice implements Runnable {
     public KeyBoardDevice(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
         super(stemPlugin, deviceProfile, "stat/nanoCLR/" + deviceProfile.getDeviceHardAddress() + "/data");
         this.hasPendingStandbyRequest = false;
-        STEMSystemApp.getInstance().getScheduler().runRepeatScheduler(stemPlugin, this, 30, 3, TimeUnit.SECONDS);
+        STEMApp.getInstance().getScheduler().runRepeatScheduler(stemPlugin, this, 30, 3, TimeUnit.SECONDS);
     }
 
     @Override
     protected void request_initial_status() {
-        STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.LED.name() + ") is not supported!");
+        STEMApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.LED.name() + ") is not supported!");
         this.sendMqttModeUpdate("startUp");
     }
 

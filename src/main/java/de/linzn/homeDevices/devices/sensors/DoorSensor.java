@@ -6,10 +6,10 @@ import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.linzn.openJL.converter.BooleanAdapter;
 import de.linzn.openJL.converter.TimeAdapter;
-import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.informationModule.InformationBlock;
-import de.stem.stemSystem.modules.informationModule.InformationIntent;
-import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import de.linzn.stem.STEMApp;
+import de.linzn.stem.modules.informationModule.InformationBlock;
+import de.linzn.stem.modules.informationModule.InformationIntent;
+import de.linzn.stem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
@@ -31,7 +31,7 @@ public class DoorSensor extends MqttDevice {
 
     @Override
     public void request_initial_status() {
-        STEMSystemApp.LOGGER.WARNING("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.THERMOSTAT.name() + ") is not supported!");
+        STEMApp.LOGGER.WARNING("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.THERMOSTAT.name() + ") is not supported!");
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("Contact", 0);
         this.update_data(jsonObject);
@@ -41,8 +41,8 @@ public class DoorSensor extends MqttDevice {
         this.lastCollection = new Date();
         this.doorClosed = new AtomicBoolean(!BooleanAdapter.adapt(jsonObject.getInt("Contact")));
 
-        STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getConfigName() + " DeviceHardAddress: " + getDeviceHardAddress());
-        STEMSystemApp.LOGGER.INFO("DATA: [door_closed:" + this.doorClosed.get() + "]");
+        STEMApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getConfigName() + " DeviceHardAddress: " + getDeviceHardAddress());
+        STEMApp.LOGGER.INFO("DATA: [door_closed:" + this.doorClosed.get() + "]");
 
         if (!this.doorClosed.get()) {
             if (informationBlock == null || !informationBlock.isActive()) {
@@ -50,7 +50,7 @@ public class DoorSensor extends MqttDevice {
                 informationBlock.setIcon("DOOR");
                 informationBlock.setExpireTime(-1L);
                 informationBlock.addIntent(InformationIntent.SHOW_DISPLAY);
-                STEMSystemApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
+                STEMApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
             } else {
                 informationBlock.setDescription("Door is open!");
                 informationBlock.setExpireTime(-1L);

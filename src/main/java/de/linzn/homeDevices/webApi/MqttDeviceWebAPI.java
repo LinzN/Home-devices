@@ -3,10 +3,10 @@ package de.linzn.homeDevices.webApi;
 import com.sun.net.httpserver.HttpExchange;
 import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
+import de.linzn.stem.STEMApp;
 import de.linzn.webapi.core.ApiResponse;
 import de.linzn.webapi.core.HttpRequestClientPayload;
 import de.linzn.webapi.modules.RequestInterface;
-import de.stem.stemSystem.STEMSystemApp;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -17,8 +17,8 @@ public class MqttDeviceWebAPI extends RequestInterface {
         ApiResponse apiResponse = new ApiResponse();
 
         JSONObject postData = (JSONObject) httpRequestClientPayload.getPostData();
-        STEMSystemApp.LOGGER.DEBUG("MQTTData HomeDevices WEBAPI:");
-        STEMSystemApp.LOGGER.DEBUG(postData);
+        STEMApp.LOGGER.DEBUG("MQTTData HomeDevices WEBAPI:");
+        STEMApp.LOGGER.DEBUG(postData);
 
         String mqttDeviceName = postData.get("deviceName").toString();
         String requestAction = postData.get("requestAction").toString();

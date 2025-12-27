@@ -5,8 +5,8 @@ import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.linzn.homeDevices.profiles.ThermostatDeviceProfile;
-import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import de.linzn.stem.STEMApp;
+import de.linzn.stem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
@@ -25,7 +25,7 @@ public class ZigbeeThermostatDevice extends MqttDevice {
 
     @Override
     public void request_initial_status() {
-        STEMSystemApp.LOGGER.WARNING("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.THERMOSTAT.name() + ") is not supported!");
+        STEMApp.LOGGER.WARNING("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.THERMOSTAT.name() + ") is not supported!");
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("TuyaTempTarget", ((ThermostatDeviceProfile) this.getDeviceProfile()).getCurrentConfigTemperature());
         this.update_data(jsonObject);
@@ -47,8 +47,8 @@ public class ZigbeeThermostatDevice extends MqttDevice {
         this.lastCollection = new Date();
         if (jsonObject.has("TuyaTempTarget")) {
             this.currentTemperature = new AtomicDouble(jsonObject.getDouble("TuyaTempTarget"));
-            STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getConfigName() + " DeviceHardAddress: " + getDeviceHardAddress());
-            STEMSystemApp.LOGGER.INFO("DATA: [TuyaTempTarget:" + this.currentTemperature + "]");
+            STEMApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getConfigName() + " DeviceHardAddress: " + getDeviceHardAddress());
+            STEMApp.LOGGER.INFO("DATA: [TuyaTempTarget:" + this.currentTemperature + "]");
         }
     }
 

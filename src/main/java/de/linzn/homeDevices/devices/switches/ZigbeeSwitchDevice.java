@@ -7,8 +7,8 @@ import de.linzn.homeDevices.events.cancelable.SwitchDeviceEvent;
 import de.linzn.homeDevices.events.cancelable.ToggleDeviceDeviceEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.linzn.openJL.converter.BooleanAdapter;
-import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import de.linzn.stem.STEMApp;
+import de.linzn.stem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
@@ -23,7 +23,7 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
     @Override
     public void switchDevice(boolean status) {
         SwitchDeviceEvent deviceSwitchEvent = new SwitchDeviceEvent(this);
-        STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(deviceSwitchEvent);
+        STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(deviceSwitchEvent);
 
         if (!deviceSwitchEvent.isCanceled()) {
             MqttMessage mqttMessage = new MqttMessage();
@@ -45,7 +45,7 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
     @Override
     public void toggleDevice() {
         ToggleDeviceDeviceEvent toggleDeviceEvent = new ToggleDeviceDeviceEvent(this);
-        STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(toggleDeviceEvent);
+        STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(toggleDeviceEvent);
 
         if (!toggleDeviceEvent.isCanceled()) {
             MqttMessage mqttMessage = new MqttMessage();
@@ -73,7 +73,7 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
             mqttMessage.setPayload(this.getDeviceHardAddress().getBytes());
             mqttMessage.setQos(2);
             this.mqttModule.publish("cmnd/" + deviceProfile.getZigbeeGateway() + "/" + this.getDeviceHardAddress() + "/zblight", mqttMessage);
-            STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.SWITCH.name() + ", " + this.getDeviceTechnology().name() + ")");
+            STEMApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.SWITCH.name() + ", " + this.getDeviceTechnology().name() + ")");
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ignored) {
@@ -81,7 +81,7 @@ public class ZigbeeSwitchDevice extends MqttSwitch {
             counter++;
         }
         if (counter > 30) {
-            STEMSystemApp.LOGGER.WARNING("Seems device " + this.getDeviceHardAddress() + " is disconnected!");
+            STEMApp.LOGGER.WARNING("Seems device " + this.getDeviceHardAddress() + " is disconnected!");
         }
     }
 

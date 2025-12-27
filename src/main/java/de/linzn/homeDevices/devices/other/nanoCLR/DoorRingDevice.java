@@ -17,10 +17,10 @@ import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.events.records.MQTTDoorRingEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.linzn.openJL.converter.TimeAdapter;
-import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.informationModule.InformationBlock;
-import de.stem.stemSystem.modules.informationModule.InformationIntent;
-import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import de.linzn.stem.STEMApp;
+import de.linzn.stem.modules.informationModule.InformationBlock;
+import de.linzn.stem.modules.informationModule.InformationIntent;
+import de.linzn.stem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
@@ -60,7 +60,7 @@ public class DoorRingDevice extends MqttDevice {
 
     @Override
     protected void request_initial_status() {
-        STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.DOORRING.name() + ") is not supported!");
+        STEMApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.DOORRING.name() + ") is not supported!");
     }
 
     @Override
@@ -76,9 +76,9 @@ public class DoorRingDevice extends MqttDevice {
         /* Trigger if event fired */
         if (jsonPayload.has("event")) {
             this.lastEvent = new Date();
-            STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getDeviceProfile().getName() + " DeviceHardAddress: " + getDeviceProfile().getDeviceHardAddress());
+            STEMApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getDeviceProfile().getName() + " DeviceHardAddress: " + getDeviceProfile().getDeviceHardAddress());
             final MQTTDoorRingEvent mqttDoorRingEvent = new MQTTDoorRingEvent(this);
-            STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(mqttDoorRingEvent);
+            STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(mqttDoorRingEvent);
 
             this.sendRF433MQTT();
 
@@ -88,7 +88,7 @@ public class DoorRingDevice extends MqttDevice {
             informationBlock.setIcon("DOOR");
             informationBlock.addIntent(InformationIntent.NOTIFY_USER);
             informationBlock.addIntent(InformationIntent.SHOW_DISPLAY);
-            STEMSystemApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
+            STEMApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
         }
     }
 

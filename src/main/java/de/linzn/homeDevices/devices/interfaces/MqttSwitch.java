@@ -5,8 +5,8 @@ import de.linzn.homeDevices.devices.exceptions.DeviceNotInitializedException;
 import de.linzn.homeDevices.events.records.DeviceUpdateEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.linzn.homeDevices.stemLink.DeviceWrapperListener;
-import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import de.linzn.stem.STEMApp;
+import de.linzn.stem.modules.pluginModule.STEMPlugin;
 import org.json.JSONObject;
 
 import java.util.Date;
@@ -25,22 +25,22 @@ public abstract class MqttSwitch extends MqttDevice {
     protected MqttSwitch(STEMPlugin stemPlugin, DeviceProfile deviceProfile, SwitchCategory switchCategory, String mqttTopic) {
         super(stemPlugin, deviceProfile, mqttTopic);
         this.switchCategory = switchCategory;
-        STEMSystemApp.LOGGER.CONFIG("SwitchCategory: " + switchCategory.name());
+        STEMApp.LOGGER.CONFIG("SwitchCategory: " + switchCategory.name());
     }
 
     protected void update_status(boolean newStatus) {
-        STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + this.getConfigName() + " DeviceHardAddress: " + this.getDeviceHardAddress());
+        STEMApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + this.getConfigName() + " DeviceHardAddress: " + this.getDeviceHardAddress());
         this.deviceStatus = new AtomicBoolean(newStatus);
         this.lastSwitch = new Date();
         DeviceUpdateEvent deviceUpdateEvent = new DeviceUpdateEvent(this, newStatus);
-        STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(deviceUpdateEvent);
-        STEMSystemApp.LOGGER.INFO("DATA: [status:" + newStatus + "]");
+        STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(deviceUpdateEvent);
+        STEMApp.LOGGER.INFO("DATA: [status:" + newStatus + "]");
         DeviceWrapperListener.updateStatus(this.getConfigName(), this.deviceStatus.get());
     }
 
     protected void update_brightness(int brightness) {
         this.brightness = new AtomicInteger(brightness);
-        STEMSystemApp.LOGGER.INFO("DATA: [brightness:" + brightness + "]");
+        STEMApp.LOGGER.INFO("DATA: [brightness:" + brightness + "]");
     }
 
     public boolean getDeviceStatus() throws DeviceNotInitializedException {
@@ -106,7 +106,7 @@ public abstract class MqttSwitch extends MqttDevice {
             if (this.isDimmable()) {
                 jsonObject.put("brightness", "error");
             }
-            //STEMSystemApp.LOGGER.WARNING(e.getMessage());
+            //STEMApp.LOGGER.WARNING(e.getMessage());
         }
 
         return jsonObject;

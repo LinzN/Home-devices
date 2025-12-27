@@ -7,8 +7,8 @@ import de.linzn.homeDevices.events.cancelable.SwitchDeviceEvent;
 import de.linzn.homeDevices.events.cancelable.ToggleDeviceDeviceEvent;
 import de.linzn.homeDevices.events.records.MQTTUpdateDeviceEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
-import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import de.linzn.stem.STEMApp;
+import de.linzn.stem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
@@ -23,7 +23,7 @@ public class TasmotaSwitchDevice extends MqttSwitch {
     @Override
     public void switchDevice(boolean status) {
         SwitchDeviceEvent tasmotaSwitchEvent = new SwitchDeviceEvent(this);
-        STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(tasmotaSwitchEvent);
+        STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(tasmotaSwitchEvent);
 
         if (!tasmotaSwitchEvent.isCanceled()) {
             MqttMessage mqttMessage = new MqttMessage();
@@ -40,7 +40,7 @@ public class TasmotaSwitchDevice extends MqttSwitch {
     @Override
     public void toggleDevice() {
         ToggleDeviceDeviceEvent toggleDeviceEvent = new ToggleDeviceDeviceEvent(this);
-        STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(toggleDeviceEvent);
+        STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(toggleDeviceEvent);
 
         if (!toggleDeviceEvent.isCanceled()) {
             MqttMessage mqttMessage = new MqttMessage();
@@ -67,7 +67,7 @@ public class TasmotaSwitchDevice extends MqttSwitch {
             MqttMessage mqttMessage = new MqttMessage();
             mqttMessage.setQos(2);
             this.mqttModule.publish("cmnd/" + this.getDeviceHardAddress() + "/Power", mqttMessage);
-            STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.SWITCH.name() + ", " + this.getDeviceTechnology().name() + ")");
+            STEMApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.SWITCH.name() + ", " + this.getDeviceTechnology().name() + ")");
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ignored) {
@@ -75,7 +75,7 @@ public class TasmotaSwitchDevice extends MqttSwitch {
             counter++;
         }
         if (counter > 30) {
-            STEMSystemApp.LOGGER.WARNING("Seems device " + this.getDeviceHardAddress() + " is disconnected!");
+            STEMApp.LOGGER.WARNING("Seems device " + this.getDeviceHardAddress() + " is disconnected!");
         }
     }
 
@@ -85,7 +85,7 @@ public class TasmotaSwitchDevice extends MqttSwitch {
         JSONObject jsonPayload = new JSONObject(payload);
         boolean status = jsonPayload.getString("POWER").equalsIgnoreCase("ON");
         final MQTTUpdateDeviceEvent mqttUpdateDeviceEvent = new MQTTUpdateDeviceEvent(this, status);
-        STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(mqttUpdateDeviceEvent);
+        STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(mqttUpdateDeviceEvent);
         this.update_status(status);
     }
 }

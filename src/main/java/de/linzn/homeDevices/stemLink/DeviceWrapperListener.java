@@ -14,9 +14,10 @@ package de.linzn.homeDevices.stemLink;
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
+import de.linzn.stem.STEMApp;
 import de.linzn.stemLink.components.events.ReceiveDataEvent;
 import de.linzn.stemLink.components.events.handler.EventHandler;
-import de.stem.stemSystem.STEMSystemApp;
+
 
 import java.io.*;
 
@@ -37,10 +38,10 @@ public class DeviceWrapperListener {
             dataOutputStream.writeUTF("update_status");
             dataOutputStream.writeBoolean(value);
         } catch (IOException e) {
-            STEMSystemApp.LOGGER.ERROR(e);
+            STEMApp.LOGGER.ERROR(e);
         }
-        STEMSystemApp.getInstance().getStemLinkModule().getStemLinkServer().getClients().values().forEach(serverConnection -> serverConnection.writeOutput(headerChannel, byteArrayOutputStream.toByteArray()));
-        STEMSystemApp.LOGGER.INFO("Publish device update [" + configName + "] to STEMLINK network");
+        STEMApp.getInstance().getStemLinkModule().getStemLinkServer().getClients().values().forEach(serverConnection -> serverConnection.writeOutput(headerChannel, byteArrayOutputStream.toByteArray()));
+        STEMApp.LOGGER.INFO("Publish device update [" + configName + "] to STEMLINK network");
     }
 
     @EventHandler(channel = "switchable_device")
@@ -60,7 +61,7 @@ public class DeviceWrapperListener {
             }
 
         } catch (IOException e) {
-            STEMSystemApp.LOGGER.ERROR(e);
+            STEMApp.LOGGER.ERROR(e);
         }
 
     }

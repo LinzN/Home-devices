@@ -7,7 +7,7 @@ import de.linzn.homeDevices.devices.enums.SmartHomeProfile;
 import de.linzn.homeDevices.devices.other.ZigbeeThermostatDevice;
 import de.linzn.openJL.pairs.Pair;
 import de.linzn.simplyConfiguration.FileConfiguration;
-import de.stem.stemSystem.STEMSystemApp;
+import de.linzn.stem.STEMApp;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -34,7 +34,7 @@ public class ThermostatDeviceProfile extends DeviceProfile {
 
     @Override
     public void runProfile() {
-        STEMSystemApp.getInstance().getScheduler().runTaskLater(HomeDevicesPlugin.homeDevicesPlugin, this::run, 2, TimeUnit.SECONDS);
+        STEMApp.getInstance().getScheduler().runTaskLater(HomeDevicesPlugin.homeDevicesPlugin, this::run, 2, TimeUnit.SECONDS);
     }
 
     @Override
@@ -55,19 +55,19 @@ public class ThermostatDeviceProfile extends DeviceProfile {
         if (this.getLoadedConfig().contains("thermostat." + smartHomeProfile.name())) {
             settingsPath = "thermostat." + smartHomeProfile.name();
             config = this.getLoadedConfig();
-            STEMSystemApp.LOGGER.CONFIG("Load custom thermostat settings CUSTOM:" + smartHomeProfile.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
+            STEMApp.LOGGER.CONFIG("Load custom thermostat settings CUSTOM:" + smartHomeProfile.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
         } else if (getDefaultConfig().contains("thermostat." + smartHomeProfile.name())) {
             settingsPath = "thermostat." + smartHomeProfile.name();
             config = getDefaultConfig();
-            STEMSystemApp.LOGGER.CONFIG("Load default thermostat settings DEFAULT:" + smartHomeProfile.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
+            STEMApp.LOGGER.CONFIG("Load default thermostat settings DEFAULT:" + smartHomeProfile.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
         } else if (this.getLoadedConfig().contains("thermostat." + SmartHomeProfile.DEFAULT.name())) {
             settingsPath = "thermostat." + SmartHomeProfile.DEFAULT.name();
             config = getLoadedConfig();
-            STEMSystemApp.LOGGER.WARNING("Load custom default thermostat settings CUSTOM:" + SmartHomeProfile.DEFAULT.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
+            STEMApp.LOGGER.WARNING("Load custom default thermostat settings CUSTOM:" + SmartHomeProfile.DEFAULT.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
         } else {
             config = getDefaultConfig();
             settingsPath = "thermostat." + SmartHomeProfile.DEFAULT.name();
-            STEMSystemApp.LOGGER.WARNING("Load default fallback thermostat settings DEFAULT:" + SmartHomeProfile.DEFAULT.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
+            STEMApp.LOGGER.WARNING("Load default fallback thermostat settings DEFAULT:" + SmartHomeProfile.DEFAULT.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
         }
 
         Map<String, Map> objectMap = (LinkedHashMap<String, Map>) config.get(settingsPath);
@@ -75,7 +75,7 @@ public class ThermostatDeviceProfile extends DeviceProfile {
         for (String key : objectMap.keySet()) {
             LocalTime localTime = LocalTime.parse(config.getString(settingsPath + "." + key + ".time"), dateTimeFormatter);
             double value = config.getDouble(settingsPath + "." + key + ".value");
-            STEMSystemApp.LOGGER.CONFIG("Add thermostat timer for hardId: " + this.getDeviceHardAddress() + " configName: " + this.getName() + " time: " + localTime.toString() + " value: " + value);
+            STEMApp.LOGGER.CONFIG("Add thermostat timer for hardId: " + this.getDeviceHardAddress() + " configName: " + this.getName() + " time: " + localTime.toString() + " value: " + value);
             this.thermostatTimerList.add(new Pair<>(localTime, value));
         }
 
@@ -86,13 +86,13 @@ public class ThermostatDeviceProfile extends DeviceProfile {
             if (offSetTime.isBefore(LocalTime.now())) {
                 first = this.thermostatTimerList.removeFirst();
                 this.thermostatTimerList.addLast(first);
-                STEMSystemApp.LOGGER.CONFIG("Add thermostat timer to tail in timer list:  " + first.getKey().toString() + " value: " + first.getValue());
+                STEMApp.LOGGER.CONFIG("Add thermostat timer to tail in timer list:  " + first.getKey().toString() + " value: " + first.getValue());
                 moveCounter++;
                 continue;
             }
             break;
         }
-        STEMSystemApp.LOGGER.CONFIG("Resort timer list done. Remaining timers for today: " + (this.thermostatTimerList.size() - moveCounter));
+        STEMApp.LOGGER.CONFIG("Resort timer list done. Remaining timers for today: " + (this.thermostatTimerList.size() - moveCounter));
     }
 
     private void run() {
@@ -105,14 +105,14 @@ public class ThermostatDeviceProfile extends DeviceProfile {
 
                     if (first.getKey().isBefore(LocalTime.now()) && offSetTime.isAfter(LocalTime.now())) {
                         first = this.thermostatTimerList.removeFirst();
-                        STEMSystemApp.LOGGER.INFO("Set thermostat " + this.getName() + " value to:  " + first.getKey().toString() + " value: " + first.getValue());
+                        STEMApp.LOGGER.INFO("Set thermostat " + this.getName() + " value to:  " + first.getKey().toString() + " value: " + first.getValue());
                         zigbeeThermostatDevice.setTemperature(first.getValue());
                         this.thermostatTimerList.addLast(first);
                     }
                 }
                 Thread.sleep(50);
             } catch (Exception e) {
-                STEMSystemApp.LOGGER.ERROR(e);
+                STEMApp.LOGGER.ERROR(e);
             }
         }
     }

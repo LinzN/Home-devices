@@ -17,10 +17,10 @@ import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.linzn.openJL.converter.TimeAdapter;
 import de.linzn.openJL.math.FloatingPoint;
-import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.informationModule.InformationBlock;
-import de.stem.stemSystem.modules.informationModule.InformationIntent;
-import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import de.linzn.stem.STEMApp;
+import de.linzn.stem.modules.informationModule.InformationBlock;
+import de.linzn.stem.modules.informationModule.InformationIntent;
+import de.linzn.stem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
@@ -47,7 +47,7 @@ public class USVDevice extends MqttDevice {
 
     @Override
     protected void request_initial_status() {
-        STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.USV.name() + ") is not supported!");
+        STEMApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.USV.name() + ") is not supported!");
     }
 
     @Override
@@ -55,7 +55,7 @@ public class USVDevice extends MqttDevice {
         String payload = new String(mqttMessage.getPayload());
         JSONObject jsonPayload = new JSONObject(payload);
         boolean acMode = jsonPayload.getBoolean("isACMode");
-        STEMSystemApp.LOGGER.DEBUG("USV DATA: [acMode:" + acMode + "]");
+        STEMApp.LOGGER.DEBUG("USV DATA: [acMode:" + acMode + "]");
         this.lastData = new Date();
         this.isACMode = new AtomicBoolean(acMode);
 
@@ -66,7 +66,7 @@ public class USVDevice extends MqttDevice {
                 informationBlock.setExpireTime(-1L);
                 informationBlock.addIntent(InformationIntent.NOTIFY_USER);
                 informationBlock.addIntent(InformationIntent.SHOW_DISPLAY);
-                STEMSystemApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
+                STEMApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
             } else {
                 informationBlock.setDescription("USV is running in battery mode!");
                 informationBlock.setExpireTime(-1L);

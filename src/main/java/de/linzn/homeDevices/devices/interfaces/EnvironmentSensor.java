@@ -4,8 +4,8 @@ import com.google.common.util.concurrent.AtomicDouble;
 import de.linzn.homeDevices.devices.enums.SensorCategory;
 import de.linzn.homeDevices.events.records.EnvironmentSensorUpdateDataEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
-import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import de.linzn.stem.STEMApp;
+import de.linzn.stem.modules.pluginModule.STEMPlugin;
 import org.json.JSONObject;
 
 import java.time.temporal.ChronoUnit;
@@ -30,7 +30,7 @@ public abstract class EnvironmentSensor extends MqttSensor {
 
     protected void update_data(JSONObject jsonObject) {
         this.lastCollection = new Date();
-        STEMSystemApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getConfigName() + " DeviceHardAddress: " + getDeviceHardAddress());
+        STEMApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getConfigName() + " DeviceHardAddress: " + getDeviceHardAddress());
         if (jsonObject.has("Temperature")) {
             this.temperature = new AtomicDouble(jsonObject.getDouble("Temperature"));
         }
@@ -40,10 +40,10 @@ public abstract class EnvironmentSensor extends MqttSensor {
         if (jsonObject.has("BatteryPercentage")) {
             this.battery = new AtomicDouble(jsonObject.getDouble("BatteryPercentage"));
         }
-        STEMSystemApp.LOGGER.DEBUG("DATA: [temperature:" + this.temperature + "], [humidity:" + this.humidity + "], [battery:" + battery + "]");
+        STEMApp.LOGGER.DEBUG("DATA: [temperature:" + this.temperature + "], [humidity:" + this.humidity + "], [battery:" + battery + "]");
 
         EnvironmentSensorUpdateDataEvent deviceUpdateEvent = new EnvironmentSensorUpdateDataEvent(this, this.lastCollection);
-        STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(deviceUpdateEvent);
+        STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(deviceUpdateEvent);
     }
 
     public AtomicDouble getTemperature() {

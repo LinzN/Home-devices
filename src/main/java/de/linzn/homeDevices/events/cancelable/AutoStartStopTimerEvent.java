@@ -13,7 +13,7 @@ package de.linzn.homeDevices.events.cancelable;
 
 import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
 import de.linzn.openJL.pairs.Pair;
-import de.stem.stemSystem.modules.eventModule.CancelableEvent;
+import de.linzn.stem.modules.eventModule.CancelableEvent;
 
 import java.time.LocalTime;
 

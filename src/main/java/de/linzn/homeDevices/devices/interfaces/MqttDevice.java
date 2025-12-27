@@ -3,9 +3,9 @@ package de.linzn.homeDevices.devices.interfaces;
 import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.linzn.homeDevices.profiles.DeviceProfile;
-import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.mqttModule.MqttModule;
-import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import de.linzn.stem.STEMApp;
+import de.linzn.stem.modules.mqttModule.MqttModule;
+import de.linzn.stem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
@@ -20,14 +20,14 @@ public abstract class MqttDevice implements IMqttMessageListener {
         this.stemPlugin = stemPlugin;
         this.deviceProfile = deviceProfile;
         this.topic = mqttTopic;
-        this.mqttModule = STEMSystemApp.getInstance().getMqttModule();
+        this.mqttModule = STEMApp.getInstance().getMqttModule();
         this.mqttModule.subscribe(topic, this);
-        STEMSystemApp.getInstance().getScheduler().runTask(HomeDevicesPlugin.homeDevicesPlugin, this::request_initial_status);
-        STEMSystemApp.LOGGER.CONFIG("Register mqttDevice:" + deviceProfile.getName());
-        STEMSystemApp.LOGGER.CONFIG("Description: " + deviceProfile.getDescription());
-        STEMSystemApp.LOGGER.CONFIG("DeviceTechnology: " + deviceProfile.getDeviceTechnology().name());
-        STEMSystemApp.LOGGER.CONFIG("SubDeviceCategory: " + deviceProfile.getSubDeviceCategory());
-        STEMSystemApp.LOGGER.CONFIG("DeviceHardAddress: " + deviceProfile.getDeviceHardAddress());
+        STEMApp.getInstance().getScheduler().runTask(HomeDevicesPlugin.homeDevicesPlugin, this::request_initial_status);
+        STEMApp.LOGGER.CONFIG("Register mqttDevice:" + deviceProfile.getName());
+        STEMApp.LOGGER.CONFIG("Description: " + deviceProfile.getDescription());
+        STEMApp.LOGGER.CONFIG("DeviceTechnology: " + deviceProfile.getDeviceTechnology().name());
+        STEMApp.LOGGER.CONFIG("SubDeviceCategory: " + deviceProfile.getSubDeviceCategory());
+        STEMApp.LOGGER.CONFIG("DeviceHardAddress: " + deviceProfile.getDeviceHardAddress());
     }
 
     public String getConfigName() {
@@ -61,8 +61,8 @@ public abstract class MqttDevice implements IMqttMessageListener {
         try {
             this.mqttMessageEvent(mqttMessage);
         } catch (Exception e) {
-            STEMSystemApp.LOGGER.ERROR("Catch error in mqtt data call! Prevent thread freeze");
-            STEMSystemApp.LOGGER.ERROR(e);
+            STEMApp.LOGGER.ERROR("Catch error in mqtt data call! Prevent thread freeze");
+            STEMApp.LOGGER.ERROR(e);
         }
     }
 

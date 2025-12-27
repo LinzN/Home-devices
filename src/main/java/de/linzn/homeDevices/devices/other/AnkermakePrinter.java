@@ -17,10 +17,10 @@ import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.events.records.MQTTPrintEndEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.linzn.openJL.converter.TimeAdapter;
-import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.informationModule.InformationBlock;
-import de.stem.stemSystem.modules.informationModule.InformationIntent;
-import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import de.linzn.stem.STEMApp;
+import de.linzn.stem.modules.informationModule.InformationBlock;
+import de.linzn.stem.modules.informationModule.InformationIntent;
+import de.linzn.stem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -41,7 +41,7 @@ public class AnkermakePrinter extends MqttDevice {
 
     @Override
     protected void request_initial_status() {
-        STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.ANKERMAKE_PRINTER.name() + ") is not supported!");
+        STEMApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.ANKERMAKE_PRINTER.name() + ") is not supported!");
     }
 
 
@@ -141,14 +141,14 @@ public class AnkermakePrinter extends MqttDevice {
         }
         this.printData = printData;
         if (this.printData.has("1000")) {
-            //STEMSystemApp.LOGGER.CORE("EVENT_TYPE: " + this.printData.getInt("event_type") + " EVENT_VALUE: " + this.printData.getInt("event_value"));
+            //STEMApp.LOGGER.CORE("EVENT_TYPE: " + this.printData.getInt("event_type") + " EVENT_VALUE: " + this.printData.getInt("event_value"));
             if (this.printData.getInt("event_type") == 1 && this.printData.getInt("event_value") == 4) {
                 if (this.last_success_task_id == null || !this.last_success_task_id.equalsIgnoreCase(this.printData.getString("task_id"))) {
 
                     this.last_success_task_id = this.printData.getString("task_id");
 
                     final MQTTPrintEndEvent mqttPrintEndEvent = new MQTTPrintEndEvent(this, this.printData.getInt("event_value"), this.printData.getString("print_name"));
-                    STEMSystemApp.getInstance().getEventModule().getStemEventBus().fireEvent(mqttPrintEndEvent);
+                    STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(mqttPrintEndEvent);
 
                     if (this.informationBlock != null && this.informationBlock.isActive()) {
                         this.informationBlock.expire();
@@ -160,7 +160,7 @@ public class AnkermakePrinter extends MqttDevice {
                     this.informationBlock.setExpireTime(TimeAdapter.getTimeInstant().plus(20, ChronoUnit.MINUTES));
                     this.informationBlock.addIntent(InformationIntent.NOTIFY_USER);
                     this.informationBlock.addIntent(InformationIntent.SHOW_DISPLAY);
-                    STEMSystemApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
+                    STEMApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
                 }
             }
         }

@@ -13,7 +13,7 @@ package de.linzn.homeDevices.events.records;
 
 
 import de.linzn.homeDevices.devices.interfaces.MqttSwitch;
-import de.stem.stemSystem.modules.eventModule.StemEvent;
+import de.linzn.stem.modules.eventModule.StemEvent;
 
 public record DeviceUpdateEvent(MqttSwitch mqttSwitch, boolean newStatus) implements StemEvent {
 }

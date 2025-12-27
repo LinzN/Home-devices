@@ -15,8 +15,8 @@ import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.profiles.DeviceProfile;
-import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import de.linzn.stem.STEMApp;
+import de.linzn.stem.modules.pluginModule.STEMPlugin;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
@@ -48,7 +48,7 @@ public class RF433Device extends MqttDevice {
 
     @Override
     protected void request_initial_status() {
-        STEMSystemApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.DOORRING.name() + ") is not supported!");
+        STEMApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.DOORRING.name() + ") is not supported!");
     }
 
     @Override
@@ -66,12 +66,12 @@ public class RF433Device extends MqttDevice {
 
         if (jsonPayload.has("garageEvent")) {
             this.lastEventCallback = new Date();
-            STEMSystemApp.LOGGER.INFO("Garage callback event received!");
+            STEMApp.LOGGER.INFO("Garage callback event received!");
             this.isGarageTriggered.set(true);
-            STEMSystemApp.getInstance().getScheduler().runTaskLater(HomeDevicesPlugin.homeDevicesPlugin, () -> isGarageTriggered.set(false), 2, TimeUnit.SECONDS);
+            STEMApp.getInstance().getScheduler().runTaskLater(HomeDevicesPlugin.homeDevicesPlugin, () -> isGarageTriggered.set(false), 2, TimeUnit.SECONDS);
         }
 
-        STEMSystemApp.LOGGER.DEBUG("RF433 DATA: [heartbeat:" + this.hasHeartbeat.get() + ", garageModuleConnected:" + this.isGarageModuleConnected.get() + "]");
+        STEMApp.LOGGER.DEBUG("RF433 DATA: [heartbeat:" + this.hasHeartbeat.get() + ", garageModuleConnected:" + this.isGarageModuleConnected.get() + "]");
         this.lastData = new Date();
     }
 

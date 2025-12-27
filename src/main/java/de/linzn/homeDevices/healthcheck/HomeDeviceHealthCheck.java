@@ -2,11 +2,11 @@ package de.linzn.homeDevices.healthcheck;
 
 import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
-import de.stem.stemSystem.STEMSystemApp;
-import de.stem.stemSystem.modules.healthModule.HealthCheck;
-import de.stem.stemSystem.modules.healthModule.HealthCheckFeedback;
-import de.stem.stemSystem.modules.healthModule.HealthCheckLevel;
-import de.stem.stemSystem.modules.pluginModule.STEMPlugin;
+import de.linzn.stem.STEMApp;
+import de.linzn.stem.modules.healthModule.HealthCheck;
+import de.linzn.stem.modules.healthModule.HealthCheckFeedback;
+import de.linzn.stem.modules.healthModule.HealthCheckLevel;
+import de.linzn.stem.modules.pluginModule.STEMPlugin;
 
 import java.util.Collection;
 
@@ -21,7 +21,7 @@ public class HomeDeviceHealthCheck extends HealthCheck {
         Collection<MqttDevice> devices = HomeDevicesPlugin.homeDevicesPlugin.getDeviceManager().getAllDevices();
         for (MqttDevice device : devices) {
             device.requestHealthCheck();
-            STEMSystemApp.LOGGER.INFO("Request health check for device: " + device.getConfigName());
+            STEMApp.LOGGER.INFO("Request health check for device: " + device.getConfigName());
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ignored) {
@@ -37,7 +37,7 @@ public class HomeDeviceHealthCheck extends HealthCheck {
             if (device.hasData() && device.healthCheckStatus()) {
                 healthCheckFeedback = new HealthCheckFeedback(HealthCheckLevel.DONE, "Device status ok");
             } else {
-                STEMSystemApp.LOGGER.WARNING("Check failed for " + device.getConfigName());
+                STEMApp.LOGGER.WARNING("Check failed for " + device.getConfigName());
                 healthCheckFeedback = new HealthCheckFeedback(HealthCheckLevel.ERROR, "Device status unknown - " + device.getConfigName());
             }
             this.addHealthCheckFeedback(healthCheckFeedback);

@@ -13,7 +13,7 @@ package de.linzn.homeDevices.events.records;
 
 
 import de.linzn.homeDevices.devices.other.PowerConsumption;
-import de.stem.stemSystem.modules.eventModule.StemEvent;
+import de.linzn.stem.modules.eventModule.StemEvent;
 
 import java.util.Date;
 
