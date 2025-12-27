@@ -37,7 +37,7 @@ public class ZigbeeThermostatDevice extends MqttDevice {
         JSONObject messagePayload = new JSONObject();
         messagePayload.put("device", deviceProfile.getDeviceHardAddress());
         JSONObject zbCommand = new JSONObject();
-        zbCommand.put("TuyaTempTarget", value*10);
+        zbCommand.put("TuyaTempTarget", value * 10);
         messagePayload.put("write", zbCommand);
         mqttMessage.setPayload(messagePayload.toString().getBytes());
         this.mqttModule.publish("cmnd/" + deviceProfile.getZigbeeGateway() + "/" + this.getDeviceHardAddress() + "/zbsend", mqttMessage);

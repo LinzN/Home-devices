@@ -14,7 +14,6 @@ package de.linzn.homeDevices;
 
 import de.linzn.homeDevices.devices.DeviceManager;
 import de.linzn.homeDevices.healthcheck.HomeDeviceHealthCheck;
-
 import de.linzn.homeDevices.stemLink.DeviceWrapperListener;
 import de.linzn.homeDevices.webApi.WebApiHandler;
 import de.linzn.stem.STEMApp;

@@ -18,7 +18,6 @@ import de.linzn.stem.STEMApp;
 import de.linzn.stemLink.components.events.ReceiveDataEvent;
 import de.linzn.stemLink.components.events.handler.EventHandler;
 
-
 import java.io.*;
 
 public class DeviceWrapperListener {
