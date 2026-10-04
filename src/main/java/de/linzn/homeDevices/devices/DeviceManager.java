@@ -78,6 +78,8 @@ public class DeviceManager {
                     mqttDevice = new KeyBoardDevice(this.stemPlugin, deviceProfile);
                 } else if (deviceProfile.getMqttDeviceCategory() == MqttDeviceCategory.ANKERMAKE_PRINTER) {
                     mqttDevice = new AnkermakePrinter(this.stemPlugin, deviceProfile);
+                }else if (deviceProfile.getMqttDeviceCategory() == MqttDeviceCategory.MIDEA_AC) {
+                    mqttDevice = new MideaAC(this.stemPlugin, deviceProfile);
                 }
 
                 if (mqttDevice != null) {
