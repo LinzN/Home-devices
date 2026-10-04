@@ -46,7 +46,7 @@ public class KeyBoardDevice extends MqttDevice implements Runnable {
     }
 
     @Override
-    public void mqttMessageEvent(MqttMessage mqttMessage) {
+    public void mqttMessageEvent(String topic, MqttMessage mqttMessage) {
         this.lastData = new Date();
         String payload = new String(mqttMessage.getPayload());
         JSONObject jsonPayload = new JSONObject(payload);

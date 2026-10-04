@@ -44,7 +44,7 @@ public class PowerConsumption extends MqttDevice {
     }
 
     @Override
-    public void mqttMessageEvent(MqttMessage mqttMessage) {
+    public void mqttMessageEvent(String topic, MqttMessage mqttMessage) {
         this.lastCollection = new Date();
         String payload = new String(mqttMessage.getPayload());
         JSONObject jsonPayload = new JSONObject(payload);

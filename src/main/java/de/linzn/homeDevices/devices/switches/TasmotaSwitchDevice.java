@@ -80,7 +80,7 @@ public class TasmotaSwitchDevice extends MqttSwitch {
     }
 
     @Override
-    public void mqttMessageEvent(MqttMessage mqttMessage) {
+    public void mqttMessageEvent(String topic, MqttMessage mqttMessage) {
         String payload = new String(mqttMessage.getPayload());
         JSONObject jsonPayload = new JSONObject(payload);
         boolean status = jsonPayload.getString("POWER").equalsIgnoreCase("ON");
