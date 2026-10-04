@@ -99,7 +99,7 @@ public class MideaAC extends MqttDevice {
     public JSONObject setJSONData(JSONObject jsonInput) {
         JSONObject jsonObject = new JSONObject();
         if(jsonInput.has("power")) {
-            this.writeData(jsonObject);
+            this.writeData(jsonInput);
             jsonObject.put("status", "OK");
         } else {
             jsonObject.put("status", "ERROR");
