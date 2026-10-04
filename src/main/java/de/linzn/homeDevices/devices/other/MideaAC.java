@@ -109,11 +109,13 @@ public class MideaAC extends MqttDevice {
 
     @Override
     public void mqttMessageEvent(String topic, MqttMessage mqttMessage) {
-
         String payload = new String(mqttMessage.getPayload());
         JSONObject jsonPayload = new JSONObject(payload);
         if(topic.endsWith("/state")){
             this.lastACData = new Date();
+            if(this.acData != null && this.acData.getBoolean("power") != jsonPayload.getBoolean("power")){
+                STEMApp.LOGGER.INFO("DeviceSwitchUpdate - ConfigName: " + this.getConfigName() + " DeviceHardAddress: " + this.getDeviceHardAddress());
+            }
             this.acData = jsonPayload;
         } else if(topic.endsWith("/capabilities")){
 
