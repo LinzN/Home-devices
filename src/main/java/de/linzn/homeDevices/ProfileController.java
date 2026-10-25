@@ -2,12 +2,13 @@ package de.linzn.homeDevices;
 
 import de.linzn.homeDevices.devices.enums.SmartHomeProfile;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
-import de.linzn.stem.STEMApp;
+
+import java.util.Objects;
 
 public class ProfileController {
 
-    public HomeDevicesPlugin plugin;
-    private SmartHomeProfile currentSmartHomeProfile;
+    public final HomeDevicesPlugin plugin;
+    private volatile SmartHomeProfile currentSmartHomeProfile;
 
     public ProfileController(HomeDevicesPlugin homeDevicesPlugin) {
         this.plugin = homeDevicesPlugin;
@@ -18,18 +19,25 @@ public class ProfileController {
         return currentSmartHomeProfile;
     }
 
-    private boolean changeSmartHomeProfile(SmartHomeProfile smartHomeProfile) {
+    /* synchronized: the keyboard device, the web api and StemLink can request a change at the same time */
+    private synchronized boolean changeSmartHomeProfile(SmartHomeProfile smartHomeProfile) {
         boolean success = true;
         if (this.currentSmartHomeProfile != smartHomeProfile) {
             this.currentSmartHomeProfile = smartHomeProfile;
-            STEMApp.LOGGER.CONFIG("Changing SmartHomeProfile to " + smartHomeProfile.name());
-
+            this.plugin.getPluginLogger().info("Changing SmartHomeProfile to " + smartHomeProfile.name());
             for (MqttDevice mqttDevice : this.plugin.getDeviceManager().getAllDevices()) {
-                if (!mqttDevice.deviceProfile.changeSmartProfile()) {
+                boolean changed;
+                try {
+                    changed = mqttDevice.getDeviceProfile().changeSmartProfile();
+                } catch (Exception e) {
+                    this.plugin.getPluginLogger().error("Error while changing SmartHomeProfile of " + mqttDevice.getConfigName(), e);
+                    changed = false;
+                }
+                if (!changed) {
                     success = false;
-                    STEMApp.LOGGER.ERROR("Error while changing SmartHomeProfile to " + smartHomeProfile.name());
+                    this.plugin.getPluginLogger().error("Error while changing SmartHomeProfile to " + smartHomeProfile.name() + " for " + mqttDevice.getConfigName());
                 } else {
-                    STEMApp.LOGGER.CONFIG("Success changing SmartHomeProfile to " + smartHomeProfile.name());
+                    this.plugin.getPluginLogger().debug("Success changing SmartHomeProfile to " + smartHomeProfile.name() + " for " + mqttDevice.getConfigName());
                 }
             }
         }
@@ -37,7 +45,6 @@ public class ProfileController {
     }
 
     public boolean requestProfileChange(SmartHomeProfile profile) {
-        return changeSmartHomeProfile(profile);
+        return changeSmartHomeProfile(Objects.requireNonNull(profile, "profile"));
     }
-
 }

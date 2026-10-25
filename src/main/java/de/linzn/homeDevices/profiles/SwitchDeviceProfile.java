@@ -1,6 +1,5 @@
 package de.linzn.homeDevices.profiles;
 
-import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.enums.SmartHomeProfile;
@@ -9,31 +8,30 @@ import de.linzn.homeDevices.events.cancelable.AutoStartStopTimerEvent;
 import de.linzn.homeDevices.events.cancelable.AutoSwitchOffTimerEvent;
 import de.linzn.openJL.pairs.Pair;
 import de.linzn.simplyConfiguration.FileConfiguration;
-import de.linzn.stem.STEMApp;
+import de.linzn.stem.api.scheduler.ScheduledTask;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class SwitchDeviceProfile extends DeviceProfile {
-    private final long autoStartStopTimerOffSet = 200;
-    MqttSwitch mqttSwitch;
-    private boolean autoSwitchOffEnabled;
-    private long autoSwitchOffTimer;
-    private LocalTime autoSwitchOffStartTime;
-    private LocalTime autoSwitchOffStopTime;
-    private boolean autoStartStopEnabled;
-    private LinkedList<Pair<LocalTime, Boolean>> autoStartStopTimerList;
 
+    private static final DateTimeFormatter SWITCH_OFF_FORMAT = DateTimeFormatter.ofPattern("HH-mm");
+    private static final DateTimeFormatter TIMER_FORMAT = DateTimeFormatter.ofPattern("HH-mm-ss.SSS");
+
+    private final DailyTimer<Boolean> autoStartStopTimer;
+    private volatile MqttSwitch mqttSwitch;
+    /* replaced as a whole on profile change, read by the scheduler thread */
+    private volatile AutoSwitchOffSettings autoSwitchOffSettings = AutoSwitchOffSettings.DISABLED;
+    private ScheduledTask autoSwitchOffTask;
 
     public SwitchDeviceProfile(FileConfiguration profileConfig, String name, String deviceHardAddress, String description, DeviceTechnology deviceTechnology, MqttDeviceCategory mqttDeviceCategory, String subDeviceCategory) {
         super(profileConfig, name, deviceHardAddress, description, deviceTechnology, mqttDeviceCategory, subDeviceCategory);
-
+        this.autoStartStopTimer = new DailyTimer<>(this.getPlugin(), "switch " + name, this::runAutoStartStopTimer);
     }
 
     @Override
@@ -44,172 +42,145 @@ public class SwitchDeviceProfile extends DeviceProfile {
     }
 
     @Override
-    public void runProfile() {
-        STEMApp.getInstance().getScheduler().runRepeatScheduler(HomeDevicesPlugin.homeDevicesPlugin, this::runAutoSwitchOffTimer, 10, 3, TimeUnit.SECONDS);
-        STEMApp.getInstance().getScheduler().runTaskLater(HomeDevicesPlugin.homeDevicesPlugin, this::runAutoStartStopTimer, 2, TimeUnit.SECONDS);
+    public synchronized void runProfile() {
+        if (this.autoSwitchOffTask == null) {
+            this.autoSwitchOffTask = this.getPlugin().getStemApi().scheduler().runRepeating(this::runAutoSwitchOffTimer, 10, 3, TimeUnit.SECONDS);
+        }
+        this.autoStartStopTimer.start();
+    }
+
+    @Override
+    public synchronized void stopProfile() {
+        if (this.autoSwitchOffTask != null) {
+            this.autoSwitchOffTask.cancel();
+            this.autoSwitchOffTask = null;
+        }
+        this.autoStartStopTimer.stop();
     }
 
     @Override
     public boolean changeSmartProfile() {
-        this.loadAutoSwitchOffTimer();
-        this.loadAutoStartStopTimer();
-        return true;
-    }
-
-    /* AutoSwitchOffTimer */
-
-    private void loadAutoSwitchOffTimer() {
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH-mm");
-        SmartHomeProfile smartHomeProfile = HomeDevicesPlugin.homeDevicesPlugin.getProfileController().getCurrentProfile();
-
-        String settingsPath;
-        FileConfiguration config;
-
-        if (this.getLoadedConfig().contains("autoModeSwitchOffSettings." + smartHomeProfile.name())) {
-            config = this.getLoadedConfig();
-            settingsPath = "autoModeSwitchOffSettings." + smartHomeProfile.name();
-            STEMApp.LOGGER.CONFIG("Load custom autoSwitchOff settings " + smartHomeProfile.name() + " for hardId " + mqttSwitch.getDeviceHardAddress() + " configName " + mqttSwitch.getConfigName());
-        } else if (getDefaultConfig().contains("category." + mqttSwitch.getSwitchCategory().name() + "." + smartHomeProfile.name())) {
-            config = getDefaultConfig();
-            settingsPath = "category." + mqttSwitch.getSwitchCategory().name() + "." + smartHomeProfile.name();
-            STEMApp.LOGGER.CONFIG("Load default autoSwitchOff settings " + mqttSwitch.getSwitchCategory().name() + ":" + smartHomeProfile.name() + " for hardId " + mqttSwitch.getDeviceHardAddress() + " configName " + mqttSwitch.getConfigName());
-        } else if (this.getLoadedConfig().contains("autoModeSwitchOffSettings." + SmartHomeProfile.DEFAULT.name())) {
-            config = this.getLoadedConfig();
-            settingsPath = "autoModeSwitchOffSettings." + SmartHomeProfile.DEFAULT.name();
-            STEMApp.LOGGER.WARNING("Load custom default autoSwitchOff settings " + SmartHomeProfile.DEFAULT.name() + " for hardId " + mqttSwitch.getDeviceHardAddress() + " configName " + mqttSwitch.getConfigName());
-        } else {
-            config = getDefaultConfig();
-            settingsPath = "category." + mqttSwitch.getSwitchCategory().name() + "." + SmartHomeProfile.DEFAULT.name();
-            STEMApp.LOGGER.WARNING("Load default fallback autoSwitchOff settings " + mqttSwitch.getSwitchCategory().name() + ":" + SmartHomeProfile.DEFAULT.name() + " for hardId " + mqttSwitch.getDeviceHardAddress() + " configName " + mqttSwitch.getConfigName());
-        }
-
-        this.autoSwitchOffEnabled = config.getBoolean(settingsPath + ".autoSwitchOffEnabled");
-        this.autoSwitchOffTimer = config.getInt(settingsPath + ".autoSwitchOffAfterSeconds") * 1000L;
-        this.autoSwitchOffStartTime = LocalTime.parse(config.getString(settingsPath + ".startTime"), dateTimeFormatter);
-        this.autoSwitchOffStopTime = LocalTime.parse(config.getString(settingsPath + ".stopTime"), dateTimeFormatter);
-
-        if (this.autoSwitchOffEnabled && this.autoSwitchOffStartTime.equals(this.autoSwitchOffStopTime)) {
-            STEMApp.LOGGER.ERROR("Start and stop are the same LocalTime! This is useless!");
-        }
-    }
-
-
-    private boolean canBeAutoSwitchOff(long lastSwitch) {
-        if (this.autoSwitchOffEnabled) {
-            return isInAutoSwitchOffTimerRange() && (lastSwitch + autoSwitchOffTimer < new Date().getTime());
-        } else {
+        try {
+            this.loadAutoSwitchOffTimer();
+            this.loadAutoStartStopTimer();
+            return true;
+        } catch (Exception e) {
+            this.getPlugin().getPluginLogger().error("Invalid switch settings for " + this.getName(), e);
             return false;
         }
     }
 
-    private boolean isInAutoSwitchOffTimerRange() {
-        if (this.autoSwitchOffStopTime.isBefore(this.autoSwitchOffStartTime)) {
-            return this.autoSwitchOffStartTime.isBefore(LocalTime.now()) || this.autoSwitchOffStopTime.isAfter(LocalTime.now());
+    /* AutoSwitchOffTimer */
+    private void loadAutoSwitchOffTimer() {
+        SmartHomeProfile smartHomeProfile = this.getPlugin().getProfileController().getCurrentProfile();
+        String category = mqttSwitch.getSwitchCategory().name();
+        String settingsPath;
+        FileConfiguration config;
+        if (this.getLoadedConfig().contains("autoModeSwitchOffSettings." + smartHomeProfile.name())) {
+            config = this.getLoadedConfig();
+            settingsPath = "autoModeSwitchOffSettings." + smartHomeProfile.name();
+            this.getPlugin().getPluginLogger().debug("Load custom autoSwitchOff settings " + smartHomeProfile.name() + " for hardId " + mqttSwitch.getDeviceHardAddress() + " configName " + mqttSwitch.getConfigName());
+        } else if (getDefaultConfig().contains("category." + category + "." + smartHomeProfile.name())) {
+            config = getDefaultConfig();
+            settingsPath = "category." + category + "." + smartHomeProfile.name();
+            this.getPlugin().getPluginLogger().debug("Load default autoSwitchOff settings " + category + ":" + smartHomeProfile.name() + " for hardId " + mqttSwitch.getDeviceHardAddress() + " configName " + mqttSwitch.getConfigName());
+        } else if (this.getLoadedConfig().contains("autoModeSwitchOffSettings." + SmartHomeProfile.DEFAULT.name())) {
+            config = this.getLoadedConfig();
+            settingsPath = "autoModeSwitchOffSettings." + SmartHomeProfile.DEFAULT.name();
+            this.getPlugin().getPluginLogger().warning("Load custom default autoSwitchOff settings " + SmartHomeProfile.DEFAULT.name() + " for hardId " + mqttSwitch.getDeviceHardAddress() + " configName " + mqttSwitch.getConfigName());
         } else {
-            return this.autoSwitchOffStartTime.isBefore(LocalTime.now()) && this.autoSwitchOffStopTime.isAfter(LocalTime.now());
+            config = getDefaultConfig();
+            settingsPath = "category." + category + "." + SmartHomeProfile.DEFAULT.name();
+            this.getPlugin().getPluginLogger().warning("Load default fallback autoSwitchOff settings " + category + ":" + SmartHomeProfile.DEFAULT.name() + " for hardId " + mqttSwitch.getDeviceHardAddress() + " configName " + mqttSwitch.getConfigName());
         }
+        if (!config.contains(settingsPath)) {
+            this.getPlugin().getPluginLogger().warning("No autoSwitchOff settings found for " + this.getName() + ", auto switch off disabled");
+            this.autoSwitchOffSettings = AutoSwitchOffSettings.DISABLED;
+            return;
+        }
+
+        boolean enabled = config.getBoolean(settingsPath + ".autoSwitchOffEnabled");
+        long timer = config.getInt(settingsPath + ".autoSwitchOffAfterSeconds") * 1000L;
+        LocalTime startTime = LocalTime.parse(config.getString(settingsPath + ".startTime"), SWITCH_OFF_FORMAT);
+        LocalTime stopTime = LocalTime.parse(config.getString(settingsPath + ".stopTime"), SWITCH_OFF_FORMAT);
+        if (enabled && startTime.equals(stopTime)) {
+            this.getPlugin().getPluginLogger().error("Start and stop are the same LocalTime for " + this.getName() + "! This is useless!");
+        }
+        this.autoSwitchOffSettings = new AutoSwitchOffSettings(enabled, timer, startTime, stopTime);
     }
 
     private boolean isCategoryInAutoSwitchOffMode() {
+        SmartHomeProfile smartHomeProfile = this.getPlugin().getProfileController().getCurrentProfile();
+        String category = mqttSwitch.getSwitchCategory().name();
         String settingsPath;
-        FileConfiguration config;
-
-        SmartHomeProfile smartHomeProfile = HomeDevicesPlugin.homeDevicesPlugin.getProfileController().getCurrentProfile();
-        if (getDefaultConfig().contains("category." + mqttSwitch.getSwitchCategory().name() + "." + smartHomeProfile.name())) {
-            config = getDefaultConfig();
-            settingsPath = "category." + mqttSwitch.getSwitchCategory().name() + "." + smartHomeProfile.name();
+        if (getDefaultConfig().contains("category." + category + "." + smartHomeProfile.name())) {
+            settingsPath = "category." + category + "." + smartHomeProfile.name();
         } else {
-            config = getDefaultConfig();
-            settingsPath = "category." + mqttSwitch.getSwitchCategory().name() + "." + SmartHomeProfile.DEFAULT.name();
+            settingsPath = "category." + category + "." + SmartHomeProfile.DEFAULT.name();
         }
-
-        return config.getBoolean(settingsPath + ".autoSwitchOffEnabled");
+        return getDefaultConfig().getBoolean(settingsPath + ".autoSwitchOffEnabled");
     }
 
     private void runAutoSwitchOffTimer() {
-        if (isCategoryInAutoSwitchOffMode()) {
-            if (this.mqttSwitch.deviceStatus != null && this.mqttSwitch.deviceStatus.get()) {
-                if (this.canBeAutoSwitchOff(this.mqttSwitch.lastSwitch.getTime())) {
-                    AutoSwitchOffTimerEvent autoSwitchOffTimerEvent = new AutoSwitchOffTimerEvent(this.mqttSwitch, autoSwitchOffStartTime, autoSwitchOffStopTime, this.mqttSwitch.lastSwitch);
-                    STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(autoSwitchOffTimerEvent);
-                    if (!autoSwitchOffTimerEvent.isCanceled()) {
-                        STEMApp.LOGGER.INFO("Auto-switch off hardId: " + this.getDeviceHardAddress() + " configName: " + this.getName() + " after: " + ((int) (autoSwitchOffTimer / 1000)) + " seconds!");
-                        this.mqttSwitch.switchDevice(false);
-                    }
-                }
-            }
+        MqttSwitch device = this.mqttSwitch;
+        if (device == null || !device.isSwitchedOn() || !isCategoryInAutoSwitchOffMode()) {
+            return;
+        }
+        AutoSwitchOffSettings settings = this.autoSwitchOffSettings;
+        Date lastSwitch = device.getLastSwitch();
+        if (lastSwitch == null || !settings.canBeSwitchedOff(lastSwitch.getTime())) {
+            return;
+        }
+        AutoSwitchOffTimerEvent autoSwitchOffTimerEvent = new AutoSwitchOffTimerEvent(device, settings.startTime(), settings.stopTime(), lastSwitch);
+        this.getPlugin().getStemApi().events().fire(autoSwitchOffTimerEvent);
+        if (!autoSwitchOffTimerEvent.isCanceled()) {
+            this.getPlugin().getPluginLogger().info("Auto-switch off hardId: " + this.getDeviceHardAddress() + " configName: " + this.getName() + " after: " + (settings.timerMillis() / 1000) + " seconds!");
+            device.switchDevice(false);
         }
     }
 
-
+    /* AutoStartStopTimer */
     private void loadAutoStartStopTimer() {
-        this.autoStartStopTimerList = new LinkedList<>();
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH-mm-ss.SSS");
-
-        SmartHomeProfile smartHomeProfile = HomeDevicesPlugin.homeDevicesPlugin.getProfileController().getCurrentProfile();
-
+        SmartHomeProfile smartHomeProfile = this.getPlugin().getProfileController().getCurrentProfile();
         String optionPath = "autoStartStopTimer." + smartHomeProfile.name();
-
-        if (this.getLoadedConfig().contains(optionPath)) {
-            autoStartStopEnabled = true;
-            Map<String, Map> objectMap = (LinkedHashMap<String, Map>) this.getLoadedConfig().get(optionPath);
-
-            for (String key : objectMap.keySet()) {
-                LocalTime localTime = LocalTime.parse(this.getLoadedConfig().getString(optionPath + "." + key + ".time"), dateTimeFormatter);
+        List<Map.Entry<LocalTime, Boolean>> entries = new ArrayList<>();
+        if (this.getLoadedConfig().get(optionPath) instanceof Map<?, ?> objectMap) {
+            for (Object key : objectMap.keySet()) {
+                LocalTime localTime = LocalTime.parse(this.getLoadedConfig().getString(optionPath + "." + key + ".time"), TIMER_FORMAT);
                 boolean value = this.getLoadedConfig().getBoolean(optionPath + "." + key + ".value");
-                STEMApp.LOGGER.CONFIG("Add timer for " + smartHomeProfile.name() + " hardId: " + this.getDeviceHardAddress() + " configName: " + this.getName() + " time: " + localTime.toString() + " value: " + value);
-                this.autoStartStopTimerList.add(new Pair<>(localTime, value));
+                this.getPlugin().getPluginLogger().debug("Add timer for " + smartHomeProfile.name() + " hardId: " + this.getDeviceHardAddress() + " configName: " + this.getName() + " time: " + localTime + " value: " + value);
+                entries.add(Map.entry(localTime, value));
             }
-
-        } else {
-            autoStartStopEnabled = false;
         }
+        this.autoStartStopTimer.setEntries(entries);
+    }
 
-        if (autoStartStopEnabled) {
-            int moveCounter = 0;
-            for (int i = 0; i < this.autoStartStopTimerList.size(); i++) {
-                Pair<LocalTime, Boolean> first = this.autoStartStopTimerList.getFirst();
-                LocalTime offSetTime = first.getKey().plus(autoStartStopTimerOffSet, ChronoUnit.MILLIS);
-                if (offSetTime.isBefore(LocalTime.now())) {
-                    first = this.autoStartStopTimerList.removeFirst();
-                    this.autoStartStopTimerList.addLast(first);
-                    STEMApp.LOGGER.CONFIG("Add timer to tail in timer list:  " + first.getKey().toString() + " value: " + first.getValue());
-                    moveCounter++;
-                    continue;
-                }
-                break;
-            }
-            STEMApp.LOGGER.CONFIG("Resort timer list done. Remaining timers for today: " + (this.autoStartStopTimerList.size() - moveCounter));
+    private void runAutoStartStopTimer(LocalTime time, Boolean value) {
+        MqttSwitch device = this.mqttSwitch;
+        if (device == null || !device.hasData()) {
+            return;
+        }
+        AutoStartStopTimerEvent autoStartStopTimerEvent = new AutoStartStopTimerEvent(device, new Pair<>(time, value));
+        this.getPlugin().getStemApi().events().fire(autoStartStopTimerEvent);
+        if (!autoStartStopTimerEvent.isCanceled()) {
+            this.getPlugin().getPluginLogger().info("Timer switch hardId: " + this.getDeviceHardAddress() + " configName: " + this.getName() + " status: " + value);
+            device.switchDevice(value);
         }
     }
 
-    private void runAutoStartStopTimer() {
-        while (true) {
-            try {
-                if (this.autoStartStopEnabled && this.mqttSwitch.deviceStatus != null) {
-                    Pair<LocalTime, Boolean> first = this.autoStartStopTimerList.getFirst();
-                    LocalTime offSetTime = first.getKey().plus(this.autoStartStopTimerOffSet, ChronoUnit.MILLIS);
-                    if (first.getKey().isBefore(LocalTime.now()) && offSetTime.isAfter(LocalTime.now())) {
-                        AutoStartStopTimerEvent autoStartStopTimerEvent = new AutoStartStopTimerEvent(this.mqttSwitch, first);
-                        STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(autoStartStopTimerEvent);
-                        first = this.autoStartStopTimerList.removeFirst();
-                        if (!autoStartStopTimerEvent.isCanceled()) {
-                            /* switch device */
-                            STEMApp.LOGGER.INFO("Timer switch hardId: " + this.getDeviceHardAddress() + " configName: " + this.getName() + " status: " + first.getValue());
-                            this.mqttSwitch.switchDevice(first.getValue());
-                            /* switch device */
-                        }
-                        this.autoStartStopTimerList.addLast(first);
-                    }
-                }
-                Thread.sleep(50);
-            } catch (Exception e) {
-                STEMApp.LOGGER.ERROR(e);
+    private record AutoSwitchOffSettings(boolean enabled, long timerMillis, LocalTime startTime, LocalTime stopTime) {
+
+        static final AutoSwitchOffSettings DISABLED = new AutoSwitchOffSettings(false, 0, LocalTime.MIDNIGHT, LocalTime.MIDNIGHT);
+
+        boolean canBeSwitchedOff(long lastSwitch) {
+            return this.enabled && this.isInRange(LocalTime.now()) && (lastSwitch + this.timerMillis < System.currentTimeMillis());
+        }
+
+        private boolean isInRange(LocalTime now) {
+            if (this.stopTime.isBefore(this.startTime)) {
+                return this.startTime.isBefore(now) || this.stopTime.isAfter(now);
             }
+            return this.startTime.isBefore(now) && this.stopTime.isAfter(now);
         }
     }
-
 }
-
-
-

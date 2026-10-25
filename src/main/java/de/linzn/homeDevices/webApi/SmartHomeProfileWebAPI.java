@@ -12,13 +12,12 @@ import org.json.JSONObject;
 import java.io.IOException;
 
 public class SmartHomeProfileWebAPI extends RequestInterface {
+
     @Override
     public Object callHttpEvent(HttpExchange httpExchange, HttpRequestClientPayload httpRequestClientPayload) throws IOException {
         ApiResponse apiResponse = new ApiResponse();
-
-        JSONObject postData = (JSONObject) httpRequestClientPayload.getPostData();
-
-        String requestAction = postData.get("requestAction").toString();
+        JSONObject postData = httpRequestClientPayload.getPostJson();
+        String requestAction = postData.optString("requestAction", "");
 
         if (requestAction.equalsIgnoreCase("READ")) {
             if (postData.has("current")) {
@@ -28,24 +27,21 @@ public class SmartHomeProfileWebAPI extends RequestInterface {
                 values.putAll(SmartHomeProfile.valuesToString());
                 apiResponse.getJSONObject().put("availableProfiles", values);
             }
-
         } else if (requestAction.equalsIgnoreCase("WRITE")) {
-            if (postData.has("profile")) {
-                if (SmartHomeProfile.has(postData.getString("profile"))) {
-                    SmartHomeProfile smartHomeProfile = SmartHomeProfile.valueOf(postData.getString("profile"));
-                    if (!HomeDevicesPlugin.homeDevicesPlugin.getProfileController().requestProfileChange(smartHomeProfile)) {
-                        apiResponse.setError("Changing of smartHomeProfile failed!");
-                    }
-                } else {
-                    apiResponse.setError("This smartHomeProfile is not defined!");
+            String profile = postData.optString("profile", null);
+            if (profile == null) {
+                apiResponse.setError("No profile defined!");
+            } else if (SmartHomeProfile.has(profile)) {
+                SmartHomeProfile smartHomeProfile = SmartHomeProfile.valueOf(profile.toUpperCase());
+                if (!HomeDevicesPlugin.homeDevicesPlugin.getProfileController().requestProfileChange(smartHomeProfile)) {
+                    apiResponse.setError("Changing of smartHomeProfile failed!");
                 }
             } else {
-                apiResponse.setError("No profile defined!");
+                apiResponse.setError("This smartHomeProfile is not defined!");
             }
         } else {
             apiResponse.setError("No restAction defined. Use 'READ' or 'WRITE'");
         }
-
         return apiResponse.buildResponse();
     }
 }

@@ -11,28 +11,26 @@
 
 package de.linzn.homeDevices.devices.other;
 
-import com.google.common.util.concurrent.AtomicDouble;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.events.records.PowerConsumptionUpdateDataEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
-import de.linzn.stem.STEMApp;
 import de.linzn.stem.modules.pluginModule.STEMPlugin;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.temporal.ChronoUnit;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class PowerConsumption extends MqttDevice {
 
-    public AtomicInteger power = new AtomicInteger(0);
-    public AtomicDouble today = new AtomicDouble(0);
-    private Date lastCollection;
-    private Date healthSwitchDateRequest;
+    /* current power in W and today's energy in kWh, as reported by tasmota */
+    private volatile int power = 0;
+    private volatile double today = 0;
+    private volatile Date lastCollection;
+    private volatile Date healthSwitchDateRequest;
 
     public PowerConsumption(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
         super(stemPlugin, deviceProfile, "tele/" + deviceProfile.getDeviceHardAddress() + "/SENSOR");
@@ -40,24 +38,38 @@ public class PowerConsumption extends MqttDevice {
 
     @Override
     protected void request_initial_status() {
-        STEMApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.DOORRING.name() + ") is not supported!");
+        this.getLogger().debug("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.POWERCONSUMPTION.name() + ") is not supported!");
     }
 
     @Override
-    public void mqttMessageEvent(String topic, MqttMessage mqttMessage) {
-        this.lastCollection = new Date();
-        String payload = new String(mqttMessage.getPayload());
+    public void mqttMessageEvent(String topic, String payload) {
         JSONObject jsonPayload = new JSONObject(payload);
-        JSONObject energy = jsonPayload.getJSONObject("ENERGY");
-        this.power = new AtomicInteger(energy.getInt("Power"));
-        this.today = new AtomicDouble(energy.getDouble("Today"));
-        final PowerConsumptionUpdateDataEvent powerConsumptionUpdateDataEvent;
-        try {
-            powerConsumptionUpdateDataEvent = new PowerConsumptionUpdateDataEvent(this, new SimpleDateFormat("yyyy-MM-dd").parse(jsonPayload.getString("Time")));
-            STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(powerConsumptionUpdateDataEvent);
-        } catch (ParseException e) {
-            STEMApp.LOGGER.ERROR(e);
+        JSONObject energy = jsonPayload.optJSONObject("ENERGY");
+        if (energy == null) {
+            return;
         }
+        this.power = energy.getInt("Power");
+        this.today = energy.getDouble("Today");
+        this.lastCollection = new Date();
+        Date date = this.lastCollection;
+        String time = jsonPayload.optString("Time", null);
+        if (time != null && time.length() >= 10) {
+            try {
+                /* tasmota sends ISO local date time, only the date is relevant */
+                date = Date.from(LocalDate.parse(time.substring(0, 10)).atStartOfDay(ZoneId.systemDefault()).toInstant());
+            } catch (DateTimeParseException e) {
+                this.getLogger().warning("Invalid time " + time + " from power consumption device " + this.getConfigName());
+            }
+        }
+        this.fireEvent(new PowerConsumptionUpdateDataEvent(this, date));
+    }
+
+    public int getPower() {
+        return this.power;
+    }
+
+    public double getToday() {
+        return this.today;
     }
 
     @Override
@@ -67,7 +79,7 @@ public class PowerConsumption extends MqttDevice {
 
     @Override
     public boolean healthCheckStatus() {
-        return this.healthSwitchDateRequest.toInstant().minus(5, ChronoUnit.MINUTES).toEpochMilli() <= this.lastCollection.getTime();
+        return receivedSince(this.lastCollection, this.healthSwitchDateRequest, Duration.ofMinutes(5));
     }
 
     @Override
@@ -86,9 +98,6 @@ public class PowerConsumption extends MqttDevice {
 
     @Override
     public JSONObject setJSONData(JSONObject jsonInput) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("status", "Not supported");
-        return jsonObject;
+        return notSupported();
     }
-
 }

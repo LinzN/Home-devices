@@ -1,61 +1,69 @@
 package de.linzn.homeDevices.devices.interfaces;
 
-import com.google.common.util.concurrent.AtomicDouble;
 import de.linzn.homeDevices.devices.enums.SensorCategory;
 import de.linzn.homeDevices.events.records.EnvironmentSensorUpdateDataEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
-import de.linzn.stem.STEMApp;
 import de.linzn.stem.modules.pluginModule.STEMPlugin;
 import org.json.JSONObject;
 
-import java.time.temporal.ChronoUnit;
+import java.time.Duration;
 import java.util.Date;
 
 public abstract class EnvironmentSensor extends MqttSensor {
 
-    private AtomicDouble temperature;
-    private AtomicDouble humidity;
-    private AtomicDouble battery;
-
-    private Date lastCollection;
-
-    private Date healthSwitchDateRequest;
-
-    private double offsetTemperature = 0D;
-    private double offsetHumidity = 0D;
+    /* raw values as reported by the device, NaN until the first value arrived */
+    private volatile double temperature = Double.NaN;
+    private volatile double humidity = Double.NaN;
+    private volatile double battery = Double.NaN;
+    private volatile Date lastCollection;
+    private volatile Date healthSwitchDateRequest;
+    private volatile double offsetTemperature = 0D;
+    private volatile double offsetHumidity = 0D;
 
     public EnvironmentSensor(STEMPlugin stemPlugin, DeviceProfile deviceProfile, String mqttTopic) {
         super(stemPlugin, deviceProfile, SensorCategory.ENVIRONMENT, mqttTopic);
     }
 
     protected void update_data(JSONObject jsonObject) {
-        this.lastCollection = new Date();
-        STEMApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getConfigName() + " DeviceHardAddress: " + getDeviceHardAddress());
         if (jsonObject.has("Temperature")) {
-            this.temperature = new AtomicDouble(jsonObject.getDouble("Temperature"));
+            this.temperature = jsonObject.getDouble("Temperature");
         }
         if (jsonObject.has("Humidity")) {
-            this.humidity = new AtomicDouble(jsonObject.getDouble("Humidity"));
+            this.humidity = jsonObject.getDouble("Humidity");
         }
         if (jsonObject.has("BatteryPercentage")) {
-            this.battery = new AtomicDouble(jsonObject.getDouble("BatteryPercentage"));
+            this.battery = jsonObject.getDouble("BatteryPercentage");
         }
-        STEMApp.LOGGER.DEBUG("DATA: [temperature:" + this.temperature + "], [humidity:" + this.humidity + "], [battery:" + battery + "]");
-
-        EnvironmentSensorUpdateDataEvent deviceUpdateEvent = new EnvironmentSensorUpdateDataEvent(this, this.lastCollection);
-        STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(deviceUpdateEvent);
+        Date collection = new Date();
+        this.lastCollection = collection;
+        this.getLogger().debug("DeviceUpdate - ConfigName: " + getConfigName() + " DeviceHardAddress: " + getDeviceHardAddress()
+                + " DATA: [temperature:" + this.temperature + "], [humidity:" + this.humidity + "], [battery:" + this.battery + "]");
+        this.fireEvent(new EnvironmentSensorUpdateDataEvent(this, collection));
     }
 
-    public AtomicDouble getTemperature() {
-        return new AtomicDouble(this.temperature.doubleValue() + this.offsetTemperature);
+    /**
+     * @return temperature including the configured offset, NaN if no value has arrived yet
+     */
+    public double getTemperature() {
+        return this.temperature + this.offsetTemperature;
     }
 
-    public AtomicDouble getHumidity() {
-        return new AtomicDouble(this.humidity.doubleValue() + this.offsetHumidity);
+    /**
+     * @return humidity including the configured offset, NaN if no value has arrived yet
+     */
+    public double getHumidity() {
+        return this.humidity + this.offsetHumidity;
     }
 
-    public AtomicDouble getBattery() {
+    /**
+     * @return battery in percent, NaN if no value has arrived yet
+     */
+    public double getBattery() {
         return battery;
+    }
+
+    public Date getLastCollection() {
+        return this.lastCollection;
     }
 
     public void setOffsetTemperature(double offsetTemperature) {
@@ -73,17 +81,21 @@ public abstract class EnvironmentSensor extends MqttSensor {
 
     @Override
     public boolean healthCheckStatus() {
-        return this.healthSwitchDateRequest.toInstant().minus(1, ChronoUnit.HOURS).toEpochMilli() <= this.lastCollection.getTime();
+        return receivedSince(this.lastCollection, this.healthSwitchDateRequest, Duration.ofHours(1));
     }
 
     @Override
     public boolean hasData() {
-        return this.temperature != null & this.humidity != null & this.battery != null;
+        return !Double.isNaN(this.temperature) && !Double.isNaN(this.humidity) && !Double.isNaN(this.battery);
     }
 
     @Override
     public JSONObject getJSONData() {
         JSONObject jsonObject = new JSONObject();
+        if (!this.hasData()) {
+            jsonObject.put("status", "error");
+            return jsonObject;
+        }
         jsonObject.put("temperature", this.getTemperature());
         jsonObject.put("humidity", this.getHumidity());
         jsonObject.put("battery", this.getBattery());
@@ -92,8 +104,6 @@ public abstract class EnvironmentSensor extends MqttSensor {
 
     @Override
     public JSONObject setJSONData(JSONObject jsonInput) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("status", "Not supported");
-        return null;
+        return notSupported();
     }
 }

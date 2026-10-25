@@ -11,8 +11,10 @@ import de.linzn.simplyConfiguration.provider.YamlConfiguration;
 import java.io.File;
 
 public abstract class DeviceProfile {
+
     private static final File defaultFile = new File(HomeDevicesPlugin.homeDevicesPlugin.getDataFolder(), "profiles/default.yml");
     private static final FileConfiguration defaultProfileConfig = YamlConfiguration.loadConfiguration(defaultFile);
+
     private final FileConfiguration profileConfig;
     private final String name;
     private final String deviceHardAddress;
@@ -20,7 +22,7 @@ public abstract class DeviceProfile {
     private final DeviceTechnology deviceTechnology;
     private final MqttDeviceCategory mqttDeviceCategory;
     private final String subDeviceCategory;
-    protected MqttDevice mqttDevice;
+    protected volatile MqttDevice mqttDevice;
     private String zigbeeGateway;
 
     protected DeviceProfile(FileConfiguration profileConfig, String name, String deviceHardAddress, String description, DeviceTechnology deviceTechnology, MqttDeviceCategory mqttDeviceCategory, String subDeviceCategory) {
@@ -38,26 +40,30 @@ public abstract class DeviceProfile {
             } else {
                 this.zigbeeGateway = defaultProfileConfig.getString("options.zigbeeGateway");
             }
+            if (this.zigbeeGateway == null || this.zigbeeGateway.isBlank()) {
+                throw new IllegalArgumentException("No zigbeeGateway configured for zigbee device " + name);
+            }
         }
-
     }
 
     public static DeviceProfile getDeviceProfile(File configFile) {
         FileConfiguration profileConfig = YamlConfiguration.loadConfiguration(configFile);
-        String name = profileConfig.getString("deviceInfo.name");
-        String deviceHardAddress = profileConfig.getString("deviceInfo.hardwareAddress");
-        String description = profileConfig.getString("deviceInfo.description");
-        DeviceTechnology deviceTechnology = DeviceTechnology.valueOf(profileConfig.getString("deviceInfo.deviceTechnology"));
-        MqttDeviceCategory mqttDeviceCategory = MqttDeviceCategory.valueOf(profileConfig.getString("deviceInfo.deviceCategory"));
+        String name = requireValue(profileConfig, "deviceInfo.name", configFile);
+        String deviceHardAddress = requireValue(profileConfig, "deviceInfo.hardwareAddress", configFile);
+        String description = profileConfig.getString("deviceInfo.description", "");
+        DeviceTechnology deviceTechnology = DeviceTechnology.valueOf(requireValue(profileConfig, "deviceInfo.deviceTechnology", configFile).toUpperCase());
+        MqttDeviceCategory mqttDeviceCategory = MqttDeviceCategory.valueOf(requireValue(profileConfig, "deviceInfo.deviceCategory", configFile).toUpperCase());
         String subDeviceCategory = profileConfig.getString("deviceInfo.subDeviceCategory", "none").toUpperCase();
 
         DeviceProfile deviceProfile = null;
+
         if (mqttDeviceCategory == MqttDeviceCategory.SWITCH) {
             deviceProfile = new SwitchDeviceProfile(profileConfig, name, deviceHardAddress, description, deviceTechnology, mqttDeviceCategory, subDeviceCategory);
         } else if (mqttDeviceCategory == MqttDeviceCategory.SENSOR) {
-            if (SensorCategory.valueOf(subDeviceCategory) == SensorCategory.ENVIRONMENT) {
+            SensorCategory sensorCategory = SensorCategory.valueOf(subDeviceCategory);
+            if (sensorCategory == SensorCategory.ENVIRONMENT) {
                 deviceProfile = new EnvironmentSensorProfile(profileConfig, name, deviceHardAddress, description, deviceTechnology, mqttDeviceCategory, subDeviceCategory);
-            } else if (SensorCategory.valueOf(subDeviceCategory) == SensorCategory.DOOR) {
+            } else if (sensorCategory == SensorCategory.DOOR) {
                 deviceProfile = new DoorSensorProfile(profileConfig, name, deviceHardAddress, description, deviceTechnology, mqttDeviceCategory, subDeviceCategory);
             }
         } else if (mqttDeviceCategory == MqttDeviceCategory.THERMOSTAT) {
@@ -68,6 +74,14 @@ public abstract class DeviceProfile {
             deviceProfile = new DefaultDeviceProfile(profileConfig, name, deviceHardAddress, description, deviceTechnology, mqttDeviceCategory, subDeviceCategory);
         }
         return deviceProfile;
+    }
+
+    private static String requireValue(FileConfiguration config, String path, File file) {
+        String value = config.getString(path);
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("Missing " + path + " in " + file.getName());
+        }
+        return value;
     }
 
     public static FileConfiguration getDefaultConfig() {
@@ -89,6 +103,12 @@ public abstract class DeviceProfile {
     public abstract void loadProfile();
 
     public abstract void runProfile();
+
+    /**
+     * Stops all timers started by {@link #runProfile()}.
+     */
+    public void stopProfile() {
+    }
 
     public abstract boolean changeSmartProfile();
 
@@ -118,5 +138,9 @@ public abstract class DeviceProfile {
 
     public String getZigbeeGateway() {
         return zigbeeGateway;
+    }
+
+    protected HomeDevicesPlugin getPlugin() {
+        return HomeDevicesPlugin.homeDevicesPlugin;
     }
 }

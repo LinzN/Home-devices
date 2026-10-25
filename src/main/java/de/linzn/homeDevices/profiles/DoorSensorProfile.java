@@ -2,9 +2,7 @@ package de.linzn.homeDevices.profiles;
 
 import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
-import de.linzn.homeDevices.devices.sensors.DoorSensor;
 import de.linzn.simplyConfiguration.FileConfiguration;
-import de.linzn.stem.STEMApp;
 
 public class DoorSensorProfile extends DeviceProfile {
 
@@ -14,18 +12,16 @@ public class DoorSensorProfile extends DeviceProfile {
 
     @Override
     public void loadProfile() {
-        DoorSensor sensor = (DoorSensor) this.getMqttDevice();
-
     }
 
     @Override
     public void runProfile() {
-
     }
 
     @Override
     public boolean changeSmartProfile() {
-        STEMApp.LOGGER.WARNING("Change of smartHome profile for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.SENSOR.name() + ", " + this.getDeviceTechnology().name() + ") is not supported!");
+        /* nothing to change, a door sensor has no profile dependent settings */
+        this.getPlugin().getPluginLogger().debug("Change of smartHome profile for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.SENSOR.name() + ", " + this.getDeviceTechnology().name() + ") is not supported!");
         return true;
     }
 }

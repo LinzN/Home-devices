@@ -11,34 +11,32 @@
 
 package de.linzn.homeDevices.devices.other;
 
-import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.linzn.openJL.converter.TimeAdapter;
 import de.linzn.openJL.math.FloatingPoint;
-import de.linzn.stem.STEMApp;
 import de.linzn.stem.modules.informationModule.InformationBlock;
 import de.linzn.stem.modules.informationModule.InformationIntent;
 import de.linzn.stem.modules.pluginModule.STEMPlugin;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
-import java.time.Instant;
+import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class USVDevice extends MqttDevice {
 
     private static final int MAX_CAPACITY = 24000;
     private static final int CHARGE_TICK = 5;
     private static final int DISCHARGE_TICK = 100;
-    public Date lastData;
-    private AtomicBoolean isACMode;
-    private Date healthSwitchDateRequest;
+
+    public volatile Date lastData;
+    private volatile Boolean isACMode;
+    private volatile Date healthSwitchDateRequest;
+    /* guarded by this */
     private InformationBlock informationBlock;
-    /* only calculated based on how long ac is on */
+    /* only calculated based on how long ac is on, guarded by this */
     private long batteryCapacityTicks = 0;
 
     public USVDevice(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
@@ -47,49 +45,40 @@ public class USVDevice extends MqttDevice {
 
     @Override
     protected void request_initial_status() {
-        STEMApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.USV.name() + ") is not supported!");
+        this.getLogger().debug("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.USV.name() + ") is not supported!");
     }
 
     @Override
-    public void mqttMessageEvent(String topic, MqttMessage mqttMessage) {
-        String payload = new String(mqttMessage.getPayload());
+    public synchronized void mqttMessageEvent(String topic, String payload) {
         JSONObject jsonPayload = new JSONObject(payload);
         boolean acMode = jsonPayload.getBoolean("isACMode");
-        STEMApp.LOGGER.DEBUG("USV DATA: [acMode:" + acMode + "]");
+        this.getLogger().debug("USV DATA: [acMode:" + acMode + "]");
         this.lastData = new Date();
-        this.isACMode = new AtomicBoolean(acMode);
-
-        if (!this.isACMode.get()) {
+        this.isACMode = acMode;
+        if (!acMode) {
             if (informationBlock == null) {
-                informationBlock = new InformationBlock("USV", "USV is running in battery mode!", HomeDevicesPlugin.homeDevicesPlugin, "USV is running in battery mode!");
+                informationBlock = new InformationBlock("USV", "USV is running in battery mode!", this.getHomeDevicesPlugin(), "USV is running in battery mode!");
                 informationBlock.setIcon("USV");
                 informationBlock.setExpireTime(-1L);
                 informationBlock.addIntent(InformationIntent.NOTIFY_USER);
                 informationBlock.addIntent(InformationIntent.SHOW_DISPLAY);
-                STEMApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
+                this.getHomeDevicesPlugin().getStemApi().information().queue(informationBlock);
             } else {
                 informationBlock.setDescription("USV is running in battery mode!");
                 informationBlock.setExpireTime(-1L);
             }
-            if ((this.batteryCapacityTicks - DISCHARGE_TICK) >= 0) {
-                this.batteryCapacityTicks = this.batteryCapacityTicks - DISCHARGE_TICK;
-            } else {
-                this.batteryCapacityTicks = 0;
-            }
+            this.batteryCapacityTicks = Math.max(0, this.batteryCapacityTicks - DISCHARGE_TICK);
         } else {
             if (informationBlock != null) {
                 informationBlock.setDescription("USV was running in battery mode!");
-                Instant expireDate = TimeAdapter.getTimeInstant().plus(2, ChronoUnit.HOURS);
-                informationBlock.setExpireTime(expireDate);
+                informationBlock.setExpireTime(TimeAdapter.getTimeInstant().plus(2, ChronoUnit.HOURS));
                 this.informationBlock = null;
             }
-            if ((this.batteryCapacityTicks + CHARGE_TICK) <= MAX_CAPACITY) {
-                this.batteryCapacityTicks = this.batteryCapacityTicks + CHARGE_TICK;
-            }
+            this.batteryCapacityTicks = Math.min(MAX_CAPACITY, this.batteryCapacityTicks + CHARGE_TICK);
         }
     }
 
-    private float calculateCapacity() {
+    private synchronized float calculateCapacity() {
         return FloatingPoint.round((100F / MAX_CAPACITY) * this.batteryCapacityTicks, 1);
     }
 
@@ -100,7 +89,7 @@ public class USVDevice extends MqttDevice {
 
     @Override
     public boolean healthCheckStatus() {
-        return this.healthSwitchDateRequest.toInstant().minus(30, ChronoUnit.SECONDS).toEpochMilli() <= this.lastData.getTime();
+        return receivedSince(this.lastData, this.healthSwitchDateRequest, Duration.ofSeconds(30));
     }
 
     @Override
@@ -111,16 +100,14 @@ public class USVDevice extends MqttDevice {
     @Override
     public JSONObject getJSONData() {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("acMode", this.isACMode.get());
+        Boolean acMode = this.isACMode;
+        jsonObject.put("acMode", acMode != null ? acMode : "error");
         jsonObject.put("capacity", this.calculateCapacity());
         return jsonObject;
     }
 
     @Override
     public JSONObject setJSONData(JSONObject jsonInput) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("status", "Not supported");
-        return jsonObject;
+        return notSupported();
     }
-
 }

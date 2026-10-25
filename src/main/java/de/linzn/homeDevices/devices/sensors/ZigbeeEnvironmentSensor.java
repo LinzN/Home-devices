@@ -3,9 +3,7 @@ package de.linzn.homeDevices.devices.sensors;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.EnvironmentSensor;
 import de.linzn.homeDevices.profiles.DeviceProfile;
-import de.linzn.stem.STEMApp;
 import de.linzn.stem.modules.pluginModule.STEMPlugin;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
 public class ZigbeeEnvironmentSensor extends EnvironmentSensor {
@@ -16,22 +14,10 @@ public class ZigbeeEnvironmentSensor extends EnvironmentSensor {
 
     @Override
     public void request_initial_status() {
-
-        int counter = 0;
-        while (!this.hasData() && counter <= 30) {
-            MqttMessage mqttMessage = new MqttMessage();
-            mqttMessage.setQos(2);
-            mqttMessage.setPayload(this.getDeviceHardAddress().getBytes());
-            mqttModule.publish("cmnd/" + deviceProfile.getZigbeeGateway() + "/zbinfo", mqttMessage);
-            STEMApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.SENSOR.name() + ", " + this.getDeviceTechnology().name() + ")");
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ignored) {
-            }
-            counter++;
-        }
-        if (counter > 30) {
-            STEMApp.LOGGER.WARNING("Seems device " + this.getDeviceHardAddress() + " is disconnected!");
+        this.requestUntilData(() -> this.publish("cmnd/" + deviceProfile.getZigbeeGateway() + "/zbinfo", this.getDeviceHardAddress()),
+                MqttDeviceCategory.SENSOR.name());
+        if (this.isRunning() && !this.hasData()) {
+            /* placeholder values, so dependent displays keep working until the sensor reports */
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("Temperature", 0);
             jsonObject.put("Humidity", 0);
@@ -41,19 +27,13 @@ public class ZigbeeEnvironmentSensor extends EnvironmentSensor {
     }
 
     @Override
-    public void mqttMessageEvent(String topic, MqttMessage mqttMessage) {
-        String payload = new String(mqttMessage.getPayload());
+    public void mqttMessageEvent(String topic, String payload) {
         JSONObject jsonPayload = new JSONObject(payload);
-        if (jsonPayload.has("ZbReceived")) {
-            if (jsonPayload.getJSONObject("ZbReceived").has(deviceProfile.getDeviceHardAddress())) {
-                JSONObject data = jsonPayload.getJSONObject("ZbReceived").getJSONObject(deviceProfile.getDeviceHardAddress());
-                this.update_data(data);
-            }
-        }
-        if (jsonPayload.has("ZbInfo")) {
-            if (jsonPayload.getJSONObject("ZbInfo").has(deviceProfile.getDeviceHardAddress())) {
-                JSONObject data = jsonPayload.getJSONObject("ZbInfo").getJSONObject(deviceProfile.getDeviceHardAddress());
-                this.update_data(data);
+        String address = deviceProfile.getDeviceHardAddress();
+        for (String key : new String[]{"ZbReceived", "ZbInfo"}) {
+            JSONObject section = jsonPayload.optJSONObject(key);
+            if (section != null && section.optJSONObject(address) != null) {
+                this.update_data(section.getJSONObject(address));
             }
         }
     }

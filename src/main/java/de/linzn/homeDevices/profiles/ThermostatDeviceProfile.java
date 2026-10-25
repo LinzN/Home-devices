@@ -1,30 +1,27 @@
 package de.linzn.homeDevices.profiles;
 
-import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.enums.DeviceTechnology;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.enums.SmartHomeProfile;
 import de.linzn.homeDevices.devices.other.ZigbeeThermostatDevice;
-import de.linzn.openJL.pairs.Pair;
 import de.linzn.simplyConfiguration.FileConfiguration;
-import de.linzn.stem.STEMApp;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 public class ThermostatDeviceProfile extends DeviceProfile {
 
-    private final long thermostatOffSet = 200;
-    private LinkedList<Pair<LocalTime, Double>> thermostatTimerList;
+    private static final DateTimeFormatter TIMER_FORMAT = DateTimeFormatter.ofPattern("HH-mm-ss.SSS");
+    private static final double FALLBACK_TEMPERATURE = 15;
 
+    private final DailyTimer<Double> thermostatTimer;
 
     public ThermostatDeviceProfile(FileConfiguration profileConfig, String name, String deviceHardAddress, String description, DeviceTechnology deviceTechnology, MqttDeviceCategory mqttDeviceCategory, String subDeviceCategory) {
         super(profileConfig, name, deviceHardAddress, description, deviceTechnology, mqttDeviceCategory, subDeviceCategory);
+        this.thermostatTimer = new DailyTimer<>(this.getPlugin(), "thermostat " + name, this::applyTemperature);
     }
 
     @Override
@@ -34,95 +31,73 @@ public class ThermostatDeviceProfile extends DeviceProfile {
 
     @Override
     public void runProfile() {
-        STEMApp.getInstance().getScheduler().runTaskLater(HomeDevicesPlugin.homeDevicesPlugin, this::run, 2, TimeUnit.SECONDS);
+        this.thermostatTimer.start();
+    }
+
+    @Override
+    public void stopProfile() {
+        this.thermostatTimer.stop();
     }
 
     @Override
     public boolean changeSmartProfile() {
-        loadThermostatTimer();
-        return true;
+        try {
+            this.loadThermostatTimer();
+            return true;
+        } catch (Exception e) {
+            this.getPlugin().getPluginLogger().error("Invalid thermostat settings for " + this.getName(), e);
+            return false;
+        }
+    }
+
+    private void applyTemperature(LocalTime time, Double value) {
+        if (this.mqttDevice instanceof ZigbeeThermostatDevice zigbeeThermostatDevice) {
+            this.getPlugin().getPluginLogger().info("Set thermostat " + this.getName() + " value to: " + value);
+            zigbeeThermostatDevice.setTemperature(value);
+        }
     }
 
     private void loadThermostatTimer() {
-        this.thermostatTimerList = new LinkedList<>();
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH-mm-ss.SSS");
-
-        SmartHomeProfile smartHomeProfile = HomeDevicesPlugin.homeDevicesPlugin.getProfileController().getCurrentProfile();
-
+        SmartHomeProfile smartHomeProfile = this.getPlugin().getProfileController().getCurrentProfile();
         String settingsPath;
         FileConfiguration config;
-
         if (this.getLoadedConfig().contains("thermostat." + smartHomeProfile.name())) {
             settingsPath = "thermostat." + smartHomeProfile.name();
             config = this.getLoadedConfig();
-            STEMApp.LOGGER.CONFIG("Load custom thermostat settings CUSTOM:" + smartHomeProfile.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
+            this.getPlugin().getPluginLogger().debug("Load custom thermostat settings CUSTOM:" + smartHomeProfile.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
         } else if (getDefaultConfig().contains("thermostat." + smartHomeProfile.name())) {
             settingsPath = "thermostat." + smartHomeProfile.name();
             config = getDefaultConfig();
-            STEMApp.LOGGER.CONFIG("Load default thermostat settings DEFAULT:" + smartHomeProfile.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
+            this.getPlugin().getPluginLogger().debug("Load default thermostat settings DEFAULT:" + smartHomeProfile.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
         } else if (this.getLoadedConfig().contains("thermostat." + SmartHomeProfile.DEFAULT.name())) {
             settingsPath = "thermostat." + SmartHomeProfile.DEFAULT.name();
             config = getLoadedConfig();
-            STEMApp.LOGGER.WARNING("Load custom default thermostat settings CUSTOM:" + SmartHomeProfile.DEFAULT.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
+            this.getPlugin().getPluginLogger().warning("Load custom default thermostat settings CUSTOM:" + SmartHomeProfile.DEFAULT.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
         } else {
             config = getDefaultConfig();
             settingsPath = "thermostat." + SmartHomeProfile.DEFAULT.name();
-            STEMApp.LOGGER.WARNING("Load default fallback thermostat settings DEFAULT:" + SmartHomeProfile.DEFAULT.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
+            this.getPlugin().getPluginLogger().warning("Load default fallback thermostat settings DEFAULT:" + SmartHomeProfile.DEFAULT.name() + " for hardId " + this.getDeviceHardAddress() + " configName " + this.getName());
         }
 
-        Map<String, Map> objectMap = (LinkedHashMap<String, Map>) config.get(settingsPath);
-
-        for (String key : objectMap.keySet()) {
-            LocalTime localTime = LocalTime.parse(config.getString(settingsPath + "." + key + ".time"), dateTimeFormatter);
-            double value = config.getDouble(settingsPath + "." + key + ".value");
-            STEMApp.LOGGER.CONFIG("Add thermostat timer for hardId: " + this.getDeviceHardAddress() + " configName: " + this.getName() + " time: " + localTime.toString() + " value: " + value);
-            this.thermostatTimerList.add(new Pair<>(localTime, value));
-        }
-
-        int moveCounter = 0;
-        for (int i = 0; i < this.thermostatTimerList.size(); i++) {
-            Pair<LocalTime, Double> first = this.thermostatTimerList.getFirst();
-            LocalTime offSetTime = first.getKey().plus(thermostatOffSet, ChronoUnit.MILLIS);
-            if (offSetTime.isBefore(LocalTime.now())) {
-                first = this.thermostatTimerList.removeFirst();
-                this.thermostatTimerList.addLast(first);
-                STEMApp.LOGGER.CONFIG("Add thermostat timer to tail in timer list:  " + first.getKey().toString() + " value: " + first.getValue());
-                moveCounter++;
-                continue;
+        List<Map.Entry<LocalTime, Double>> entries = new ArrayList<>();
+        if (config.get(settingsPath) instanceof Map<?, ?> objectMap) {
+            for (Object key : objectMap.keySet()) {
+                LocalTime localTime = LocalTime.parse(config.getString(settingsPath + "." + key + ".time"), TIMER_FORMAT);
+                double value = config.getDouble(settingsPath + "." + key + ".value");
+                this.getPlugin().getPluginLogger().debug("Add thermostat timer for hardId: " + this.getDeviceHardAddress() + " configName: " + this.getName() + " time: " + localTime + " value: " + value);
+                entries.add(Map.entry(localTime, value));
             }
-            break;
+        } else {
+            this.getPlugin().getPluginLogger().warning("No thermostat timers configured for " + this.getName());
         }
-        STEMApp.LOGGER.CONFIG("Resort timer list done. Remaining timers for today: " + (this.thermostatTimerList.size() - moveCounter));
+        this.thermostatTimer.setEntries(entries);
     }
 
-    private void run() {
-        ZigbeeThermostatDevice zigbeeThermostatDevice = (ZigbeeThermostatDevice) this.mqttDevice;
-        while (true) {
-            try {
-                if (!this.thermostatTimerList.isEmpty()) {
-                    Pair<LocalTime, Double> first = this.thermostatTimerList.getFirst();
-                    LocalTime offSetTime = first.getKey().plus(this.thermostatOffSet, ChronoUnit.MILLIS);
-
-                    if (first.getKey().isBefore(LocalTime.now()) && offSetTime.isAfter(LocalTime.now())) {
-                        first = this.thermostatTimerList.removeFirst();
-                        STEMApp.LOGGER.INFO("Set thermostat " + this.getName() + " value to:  " + first.getKey().toString() + " value: " + first.getValue());
-                        zigbeeThermostatDevice.setTemperature(first.getValue());
-                        this.thermostatTimerList.addLast(first);
-                    }
-                }
-                Thread.sleep(50);
-            } catch (Exception e) {
-                STEMApp.LOGGER.ERROR(e);
-            }
-        }
-    }
-
+    /**
+     * @return the temperature that should currently be active according to the timer list
+     */
     public double getCurrentConfigTemperature() {
-        double vaule = 15;
-        if (!this.thermostatTimerList.isEmpty()) {
-            vaule = this.thermostatTimerList.getLast().getValue();
-        }
-        return vaule;
+        Double value = this.thermostatTimer.getCurrentValue();
+        return value != null ? value : FALLBACK_TEMPERATURE;
     }
-
 }

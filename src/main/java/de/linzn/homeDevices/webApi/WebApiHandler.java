@@ -4,7 +4,6 @@ import de.linzn.stem.modules.pluginModule.STEMPlugin;
 import de.linzn.webapi.WebApiPlugin;
 import de.linzn.webapi.modules.WebModule;
 
-
 public class WebApiHandler {
 
     private final STEMPlugin stemPlugin;
@@ -19,4 +18,10 @@ public class WebApiHandler {
         WebApiPlugin.webApiPlugin.getWebServer().enableCallModule(stemWebModule);
     }
 
+    /**
+     * Removes the web module again, so no request reaches this plugin after it was disabled.
+     */
+    public void disable() {
+        WebApiPlugin.webApiPlugin.getWebServer().disableCallModule(stemWebModule);
+    }
 }

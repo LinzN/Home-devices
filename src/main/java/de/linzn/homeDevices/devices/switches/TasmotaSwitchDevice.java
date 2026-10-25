@@ -7,46 +7,34 @@ import de.linzn.homeDevices.events.cancelable.SwitchDeviceEvent;
 import de.linzn.homeDevices.events.cancelable.ToggleDeviceDeviceEvent;
 import de.linzn.homeDevices.events.records.MQTTUpdateDeviceEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
-import de.linzn.stem.STEMApp;
 import de.linzn.stem.modules.pluginModule.STEMPlugin;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
 public class TasmotaSwitchDevice extends MqttSwitch {
-
 
     public TasmotaSwitchDevice(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
         super(stemPlugin, deviceProfile, SwitchCategory.valueOf(deviceProfile.getSubDeviceCategory()), "stat/" + deviceProfile.getDeviceHardAddress() + "/RESULT");
     }
 
+    private String powerTopic() {
+        return "cmnd/" + this.getDeviceHardAddress() + "/Power";
+    }
 
     @Override
     public void switchDevice(boolean status) {
         SwitchDeviceEvent tasmotaSwitchEvent = new SwitchDeviceEvent(this);
-        STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(tasmotaSwitchEvent);
-
+        this.fireEvent(tasmotaSwitchEvent);
         if (!tasmotaSwitchEvent.isCanceled()) {
-            MqttMessage mqttMessage = new MqttMessage();
-            mqttMessage.setQos(2);
-            if (status) {
-                mqttMessage.setPayload("ON".getBytes());
-            } else {
-                mqttMessage.setPayload("OFF".getBytes());
-            }
-            this.mqttModule.publish("cmnd/" + this.getDeviceHardAddress() + "/Power", mqttMessage);
+            this.publish(this.powerTopic(), status ? "ON" : "OFF");
         }
     }
 
     @Override
     public void toggleDevice() {
         ToggleDeviceDeviceEvent toggleDeviceEvent = new ToggleDeviceDeviceEvent(this);
-        STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(toggleDeviceEvent);
-
+        this.fireEvent(toggleDeviceEvent);
         if (!toggleDeviceEvent.isCanceled()) {
-            MqttMessage mqttMessage = new MqttMessage();
-            mqttMessage.setQos(2);
-            mqttMessage.setPayload("TOGGLE".getBytes());
-            this.mqttModule.publish("cmnd/" + this.getDeviceHardAddress() + "/Power", mqttMessage);
+            this.publish(this.powerTopic(), "TOGGLE");
         }
     }
 
@@ -62,30 +50,20 @@ public class TasmotaSwitchDevice extends MqttSwitch {
 
     @Override
     protected void request_initial_status() {
-        int counter = 0;
-        while (!this.hasData() && counter <= 30) {
-            MqttMessage mqttMessage = new MqttMessage();
-            mqttMessage.setQos(2);
-            this.mqttModule.publish("cmnd/" + this.getDeviceHardAddress() + "/Power", mqttMessage);
-            STEMApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.SWITCH.name() + ", " + this.getDeviceTechnology().name() + ")");
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ignored) {
-            }
-            counter++;
-        }
-        if (counter > 30) {
-            STEMApp.LOGGER.WARNING("Seems device " + this.getDeviceHardAddress() + " is disconnected!");
-        }
+        /* an empty Power command makes tasmota report the current state */
+        this.requestUntilData(() -> this.publish(this.powerTopic(), ""), MqttDeviceCategory.SWITCH.name());
     }
 
     @Override
-    public void mqttMessageEvent(String topic, MqttMessage mqttMessage) {
-        String payload = new String(mqttMessage.getPayload());
+    public void mqttMessageEvent(String topic, String payload) {
         JSONObject jsonPayload = new JSONObject(payload);
-        boolean status = jsonPayload.getString("POWER").equalsIgnoreCase("ON");
-        final MQTTUpdateDeviceEvent mqttUpdateDeviceEvent = new MQTTUpdateDeviceEvent(this, status);
-        STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(mqttUpdateDeviceEvent);
+        /* RESULT is also used for other commands, only power results are relevant */
+        String power = jsonPayload.optString("POWER", null);
+        if (power == null) {
+            return;
+        }
+        boolean status = power.equalsIgnoreCase("ON");
+        this.fireEvent(new MQTTUpdateDeviceEvent(this, status));
         this.update_status(status);
     }
 }

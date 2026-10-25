@@ -5,58 +5,67 @@ import de.linzn.homeDevices.devices.exceptions.DeviceNotInitializedException;
 import de.linzn.homeDevices.events.records.DeviceUpdateEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.linzn.homeDevices.stemLink.DeviceWrapperListener;
-import de.linzn.stem.STEMApp;
 import de.linzn.stem.modules.pluginModule.STEMPlugin;
 import org.json.JSONObject;
 
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class MqttSwitch extends MqttDevice {
 
     public final SwitchCategory switchCategory;
-    public AtomicBoolean deviceStatus;
-    public Date lastSwitch;
-    protected AtomicInteger brightness;
-
-    private Date healthSwitchDateRequest;
+    /* written by the MQTT thread, read by timers, web api and other plugins */
+    private volatile Boolean deviceStatus;
+    private volatile Date lastSwitch;
+    private volatile Integer brightness;
+    private volatile Date healthSwitchDateRequest;
 
     protected MqttSwitch(STEMPlugin stemPlugin, DeviceProfile deviceProfile, SwitchCategory switchCategory, String mqttTopic) {
         super(stemPlugin, deviceProfile, mqttTopic);
         this.switchCategory = switchCategory;
-        STEMApp.LOGGER.CONFIG("SwitchCategory: " + switchCategory.name());
+        this.getLogger().debug("SwitchCategory: " + switchCategory.name());
     }
 
     protected void update_status(boolean newStatus) {
-        STEMApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + this.getConfigName() + " DeviceHardAddress: " + this.getDeviceHardAddress());
-        this.deviceStatus = new AtomicBoolean(newStatus);
+        this.getLogger().info("DeviceUpdate - ConfigName: " + this.getConfigName() + " DeviceHardAddress: " + this.getDeviceHardAddress() + " DATA: [status:" + newStatus + "]");
+        this.deviceStatus = newStatus;
         this.lastSwitch = new Date();
-        DeviceUpdateEvent deviceUpdateEvent = new DeviceUpdateEvent(this, newStatus);
-        STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(deviceUpdateEvent);
-        STEMApp.LOGGER.INFO("DATA: [status:" + newStatus + "]");
-        DeviceWrapperListener.updateStatus(this.getConfigName(), this.deviceStatus.get());
+        this.fireEvent(new DeviceUpdateEvent(this, newStatus));
+        DeviceWrapperListener.updateStatus(this.getHomeDevicesPlugin(), this.getConfigName(), newStatus);
     }
 
     protected void update_brightness(int brightness) {
-        this.brightness = new AtomicInteger(brightness);
-        STEMApp.LOGGER.INFO("DATA: [brightness:" + brightness + "]");
+        this.brightness = brightness;
+        this.getLogger().debug("DATA: [" + this.getConfigName() + " brightness:" + brightness + "]");
     }
 
     public boolean getDeviceStatus() throws DeviceNotInitializedException {
-        if (this.deviceStatus != null) {
-            return this.deviceStatus.get();
-        } else {
+        Boolean status = this.deviceStatus;
+        if (status == null) {
             throw new DeviceNotInitializedException();
         }
+        return status;
+    }
+
+    /**
+     * @return true if the device is known to be switched on, false if it is off or has no data yet
+     */
+    public boolean isSwitchedOn() {
+        return Boolean.TRUE.equals(this.deviceStatus);
+    }
+
+    /**
+     * @return time of the last status update from the device, null if no data has arrived yet
+     */
+    public Date getLastSwitch() {
+        return this.lastSwitch;
     }
 
     public int getBrightness() throws DeviceNotInitializedException {
-        if (this.brightness != null) {
-            return this.brightness.get();
-        } else {
+        Integer value = this.brightness;
+        if (value == null) {
             throw new DeviceNotInitializedException();
         }
+        return value;
     }
 
     public abstract void setBrightness(int brightness);
@@ -70,18 +79,18 @@ public abstract class MqttSwitch extends MqttDevice {
     @Override
     public void requestHealthCheck() {
         this.healthSwitchDateRequest = new Date();
-        if (this.deviceStatus != null) {
-            this.switchDevice(this.deviceStatus.get());
+        Boolean status = this.deviceStatus;
+        if (status != null) {
+            /* re-send the current status, the device answers with a status update */
+            this.switchDevice(status);
         }
     }
 
     @Override
     public boolean healthCheckStatus() {
-        if (this.lastSwitch != null) {
-            return this.lastSwitch.getTime() >= this.healthSwitchDateRequest.getTime();
-        } else {
-            return false;
-        }
+        Date last = this.lastSwitch;
+        Date request = this.healthSwitchDateRequest;
+        return last != null && request != null && last.getTime() >= request.getTime();
     }
 
     @Override
@@ -96,32 +105,32 @@ public abstract class MqttSwitch extends MqttDevice {
     @Override
     public JSONObject getJSONData() {
         JSONObject jsonObject = new JSONObject();
-        try {
-            jsonObject.put("status", this.getDeviceStatus());
-            if (this.isDimmable()) {
-                jsonObject.put("brightness", this.getBrightness());
-            }
-        } catch (DeviceNotInitializedException e) {
-            jsonObject.put("status", "error");
-            if (this.isDimmable()) {
-                jsonObject.put("brightness", "error");
-            }
-            //STEMApp.LOGGER.WARNING(e.getMessage());
+        Boolean status = this.deviceStatus;
+        Integer currentBrightness = this.brightness;
+        jsonObject.put("status", status != null ? status : "error");
+        if (this.isDimmable()) {
+            jsonObject.put("brightness", currentBrightness != null ? currentBrightness : "error");
         }
-
         return jsonObject;
     }
 
     @Override
     public JSONObject setJSONData(JSONObject jsonInput) {
         JSONObject jsonObject = new JSONObject();
+        jsonObject.put("status", "ERROR");
         if (jsonInput.has("status")) {
             boolean requestStatus = jsonInput.getBoolean("status");
             this.switchDevice(requestStatus);
             jsonObject.put("status", "OK");
         }
         if (jsonInput.has("brightness")) {
-            this.setBrightness(jsonInput.getInt("brightness"));
+            int value = jsonInput.getInt("brightness");
+            if (value < 0 || value > 255) {
+                jsonObject.put("status", "ERROR");
+                jsonObject.put("error", "brightness must be between 0 and 255");
+                return jsonObject;
+            }
+            this.setBrightness(value);
             jsonObject.put("status", "OK");
         }
         return jsonObject;

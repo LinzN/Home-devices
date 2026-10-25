@@ -14,55 +14,35 @@ package de.linzn.homeDevices.devices.other;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.profiles.DeviceProfile;
-import de.linzn.stem.STEMApp;
 import de.linzn.stem.modules.pluginModule.STEMPlugin;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Date;
 
 public class MideaAC extends MqttDevice {
 
-    public Date lastACData;
-    private Date healthSwitchDateRequest;
-    private JSONObject acData;
+    public volatile Date lastACData;
+    private volatile Date healthSwitchDateRequest;
+    private volatile JSONObject acData;
+    private volatile JSONObject capabilities;
 
     public MideaAC(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
         super(stemPlugin, deviceProfile, "midea2mqtt/" + deviceProfile.getDeviceHardAddress() + "/state");
-        this.mqttModule.subscribe("midea2mqtt/" + deviceProfile.getDeviceHardAddress() + "/capabilities", this);
+        this.addTopic("midea2mqtt/" + deviceProfile.getDeviceHardAddress() + "/capabilities");
     }
 
-    private void requestData(){
-        MqttMessage mqttMessage = new MqttMessage();
-        mqttMessage.setQos(2);
-        this.mqttModule.publish("midea2mqtt/" + this.getDeviceHardAddress() + "/get", mqttMessage);
+    private void requestData() {
+        this.publish("midea2mqtt/" + this.getDeviceHardAddress() + "/get", "");
     }
 
-    private void writeData(JSONObject data){
-        MqttMessage mqttMessage = new MqttMessage();
-        mqttMessage.setQos(2);
-        mqttMessage.setPayload(data.toString().getBytes());
-        this.mqttModule.publish("midea2mqtt/" + this.getDeviceHardAddress() + "/set", mqttMessage);
+    private void writeData(JSONObject data) {
+        this.publish("midea2mqtt/" + this.getDeviceHardAddress() + "/set", data.toString());
     }
 
     @Override
     protected void request_initial_status() {
-        int counter = 0;
-        while (!this.hasData() && counter <= 30) {
-            this.requestData();
-            STEMApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.MIDEA_AC.name() + ", " + this.getDeviceTechnology().name() + ")");
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ignored) {
-            }
-            counter++;
-        }
-        if (counter > 30) {
-            STEMApp.LOGGER.WARNING("Seems device " + this.getDeviceHardAddress() + " is disconnected!");
-        }
+        this.requestUntilData(this::requestData, MqttDeviceCategory.MIDEA_AC.name());
     }
-
 
     @Override
     public void requestHealthCheck() {
@@ -74,11 +54,9 @@ public class MideaAC extends MqttDevice {
 
     @Override
     public boolean healthCheckStatus() {
-        if (this.lastACData != null) {
-            return this.lastACData.getTime() >= this.healthSwitchDateRequest.getTime();
-        } else {
-            return false;
-        }
+        Date last = this.lastACData;
+        Date request = this.healthSwitchDateRequest;
+        return last != null && request != null && last.getTime() >= request.getTime();
     }
 
     @Override
@@ -86,40 +64,42 @@ public class MideaAC extends MqttDevice {
         return this.acData != null;
     }
 
-
     @Override
     public JSONObject getJSONData() {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("lastACData", this.lastACData);
         jsonObject.put("acData", this.acData);
+        if (this.capabilities != null) {
+            jsonObject.put("capabilities", this.capabilities);
+        }
         return jsonObject;
     }
 
     @Override
     public JSONObject setJSONData(JSONObject jsonInput) {
         JSONObject jsonObject = new JSONObject();
-        if(jsonInput.has("commands")) {
-            this.writeData(jsonInput.getJSONObject("commands"));
+        JSONObject commands = jsonInput.optJSONObject("commands");
+        if (commands != null) {
+            this.writeData(commands);
             jsonObject.put("status", "OK");
         } else {
             jsonObject.put("status", "ERROR");
         }
-
         return jsonObject;
     }
 
     @Override
-    public void mqttMessageEvent(String topic, MqttMessage mqttMessage) {
-        String payload = new String(mqttMessage.getPayload());
+    public void mqttMessageEvent(String topic, String payload) {
         JSONObject jsonPayload = new JSONObject(payload);
-        if(topic.endsWith("/state")){
+        if (topic.endsWith("/state")) {
             this.lastACData = new Date();
-            if(this.acData != null && this.acData.getBoolean("power") != jsonPayload.getBoolean("power")){
-                STEMApp.LOGGER.INFO("DeviceSwitchUpdate - ConfigName: " + this.getConfigName() + " DeviceHardAddress: " + this.getDeviceHardAddress());
+            JSONObject previous = this.acData;
+            if (previous != null && previous.optBoolean("power") != jsonPayload.optBoolean("power")) {
+                this.getLogger().info("DeviceSwitchUpdate - ConfigName: " + this.getConfigName() + " DeviceHardAddress: " + this.getDeviceHardAddress());
             }
             this.acData = jsonPayload;
-        } else if(topic.endsWith("/capabilities")){
-
+        } else if (topic.endsWith("/capabilities")) {
+            this.capabilities = jsonPayload;
         }
     }
 }

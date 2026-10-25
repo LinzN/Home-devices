@@ -16,64 +16,85 @@ import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.enums.SmartHomeProfile;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.profiles.DeviceProfile;
-import de.linzn.stem.STEMApp;
+import de.linzn.stem.api.scheduler.ScheduledTask;
 import de.linzn.stem.modules.pluginModule.STEMPlugin;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
+import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 public class KeyBoardDevice extends MqttDevice implements Runnable {
-    public Date lastData;
 
+    public volatile Date lastData;
+    /* guarded by this */
     public Date lastModeSwitch;
-    private Date healthSwitchDateRequest;
-    private int mode = -1;
+    private volatile Date healthSwitchDateRequest;
+    private volatile int mode = -1;
     private boolean hasPendingStandbyRequest;
+    private ScheduledTask standbyTask;
 
     public KeyBoardDevice(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
         super(stemPlugin, deviceProfile, "stat/nanoCLR/" + deviceProfile.getDeviceHardAddress() + "/data");
         this.hasPendingStandbyRequest = false;
-        STEMApp.getInstance().getScheduler().runRepeatScheduler(stemPlugin, this, 30, 3, TimeUnit.SECONDS);
+    }
+
+    @Override
+    public synchronized void start() {
+        super.start();
+        if (this.standbyTask == null) {
+            this.standbyTask = this.getHomeDevicesPlugin().getStemApi().scheduler().runRepeating(this, 30, 3, TimeUnit.SECONDS);
+        }
+    }
+
+    @Override
+    public synchronized void stop() {
+        if (this.standbyTask != null) {
+            this.standbyTask.cancel();
+            this.standbyTask = null;
+        }
+        super.stop();
     }
 
     @Override
     protected void request_initial_status() {
-        STEMApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.LED.name() + ") is not supported!");
+        this.getLogger().debug("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.NANOCLR_KEYBOARD.name() + ") is not supported!");
         this.sendMqttModeUpdate("startUp");
     }
 
     @Override
-    public void mqttMessageEvent(String topic, MqttMessage mqttMessage) {
+    public void mqttMessageEvent(String topic, String payload) {
         this.lastData = new Date();
-        String payload = new String(mqttMessage.getPayload());
         JSONObject jsonPayload = new JSONObject(payload);
+        if (!jsonPayload.has("value")) {
+            return;
+        }
         int value = jsonPayload.getBoolean("value") ? 1 : 0;
-
-        if (this.mode != value) {
+        boolean loggedIn;
+        synchronized (this) {
+            if (this.mode == value) {
+                return;
+            }
             this.lastModeSwitch = new Date();
             this.mode = value;
-            if (this.mode == 0) {
-                this.hasPendingStandbyRequest = true;
-                this.sendMqttModeUpdate("penningLogout");
-            } else {
-                this.hasPendingStandbyRequest = false;
-                HomeDevicesPlugin.homeDevicesPlugin.getProfileController().requestProfileChange(SmartHomeProfile.DEFAULT);
-                this.sendMqttModeUpdate("loggedIn");
-            }
+            loggedIn = this.mode != 0;
+            this.hasPendingStandbyRequest = !loggedIn;
+        }
+        if (!loggedIn) {
+            this.sendMqttModeUpdate("penningLogout");
+        } else {
+            /* outside the lock: a profile change touches every device */
+            HomeDevicesPlugin.homeDevicesPlugin.getProfileController().requestProfileChange(SmartHomeProfile.DEFAULT);
+            this.sendMqttModeUpdate("loggedIn");
         }
     }
 
     private void sendMqttModeUpdate(String modeName) {
-        MqttMessage mqttMessage = new MqttMessage();
-        mqttMessage.setQos(2);
         JSONObject data = new JSONObject();
         data.put("command", "led");
         data.put("mode", modeName);
-        mqttMessage.setPayload(data.toString().getBytes());
-        this.mqttModule.publish("cmnd/nanoCLR/" + getDeviceHardAddress() + "/data", mqttMessage);
+        this.publish("cmnd/nanoCLR/" + getDeviceHardAddress() + "/data", data.toString());
     }
 
     @Override
@@ -83,7 +104,7 @@ public class KeyBoardDevice extends MqttDevice implements Runnable {
 
     @Override
     public boolean healthCheckStatus() {
-        return this.healthSwitchDateRequest.toInstant().minus(1, ChronoUnit.MINUTES).toEpochMilli() <= this.lastData.getTime();
+        return receivedSince(this.lastData, this.healthSwitchDateRequest, Duration.ofMinutes(1));
     }
 
     @Override
@@ -100,21 +121,21 @@ public class KeyBoardDevice extends MqttDevice implements Runnable {
 
     @Override
     public JSONObject setJSONData(JSONObject jsonInput) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("status", "Not supported");
-        return jsonObject;
+        return notSupported();
     }
 
     @Override
     public void run() {
-        if (this.hasPendingStandbyRequest) {
-            if (this.lastModeSwitch != null) {
-                if (this.lastModeSwitch.toInstant().plus(5, ChronoUnit.MINUTES).toEpochMilli() <= new Date().getTime()) {
-                    this.hasPendingStandbyRequest = false;
-                    HomeDevicesPlugin.homeDevicesPlugin.getProfileController().requestProfileChange(SmartHomeProfile.STANDBY);
-                    sendMqttModeUpdate("loggedOut");
-                }
+        synchronized (this) {
+            if (!this.hasPendingStandbyRequest || this.lastModeSwitch == null) {
+                return;
             }
+            if (this.lastModeSwitch.toInstant().plus(5, ChronoUnit.MINUTES).toEpochMilli() > System.currentTimeMillis()) {
+                return;
+            }
+            this.hasPendingStandbyRequest = false;
         }
+        HomeDevicesPlugin.homeDevicesPlugin.getProfileController().requestProfileChange(SmartHomeProfile.STANDBY);
+        sendMqttModeUpdate("loggedOut");
     }
 }

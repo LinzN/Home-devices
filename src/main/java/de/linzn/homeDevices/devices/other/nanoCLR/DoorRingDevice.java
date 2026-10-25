@@ -11,84 +11,66 @@
 
 package de.linzn.homeDevices.devices.other.nanoCLR;
 
-import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.events.records.MQTTDoorRingEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.linzn.openJL.converter.TimeAdapter;
-import de.linzn.stem.STEMApp;
 import de.linzn.stem.modules.informationModule.InformationBlock;
 import de.linzn.stem.modules.informationModule.InformationIntent;
 import de.linzn.stem.modules.pluginModule.STEMPlugin;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
-import java.time.Instant;
+import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 public class DoorRingDevice extends MqttDevice {
 
-    public Date lastData;
-    private Date lastEvent;
-    private Date healthSwitchDateRequest;
-    private String rf433MQTT;
-    private String rf433CodeWord;
+    private final String rf433MQTT;
+    private final String rf433CodeWord;
+    public volatile Date lastData;
+    private volatile Date lastEvent;
+    private volatile Date healthSwitchDateRequest;
 
     public DoorRingDevice(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
         super(stemPlugin, deviceProfile, "stat/nanoCLR/" + deviceProfile.getDeviceHardAddress() + "/data");
-        if (this.deviceProfile.getLoadedConfig().contains("custom.rf433MQTT")) {
-            this.rf433MQTT = this.deviceProfile.getLoadedConfig().getString("custom.rf433MQTT");
-        }
-        if (this.deviceProfile.getLoadedConfig().contains("custom.codeWord")) {
-            this.rf433CodeWord = this.deviceProfile.getLoadedConfig().getString("custom.codeWord");
-        }
+        this.rf433MQTT = this.deviceProfile.getLoadedConfig().getString("custom.rf433MQTT", null);
+        this.rf433CodeWord = this.deviceProfile.getLoadedConfig().getString("custom.codeWord", null);
     }
 
     private void sendRF433MQTT() {
         if (this.rf433MQTT != null && this.rf433CodeWord != null) {
-            MqttMessage mqttMessage = new MqttMessage();
-            mqttMessage.setQos(2);
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("value", this.rf433CodeWord);
-
-            mqttMessage.setPayload(jsonObject.toString().getBytes());
-            this.mqttModule.publish(rf433MQTT, mqttMessage);
+            this.publish(this.rf433MQTT, jsonObject.toString());
         }
     }
 
     @Override
     protected void request_initial_status() {
-        STEMApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.DOORRING.name() + ") is not supported!");
+        this.getLogger().debug("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.DOORRING.name() + ") is not supported!");
     }
 
     @Override
-    public void mqttMessageEvent(String topic, MqttMessage mqttMessage) {
-        String payload = new String(mqttMessage.getPayload());
+    public void mqttMessageEvent(String topic, String payload) {
         JSONObject jsonPayload = new JSONObject(payload);
-
         /* Update heartbeat date */
         if (jsonPayload.has("device")) {
             this.lastData = new Date();
         }
-
         /* Trigger if event fired */
         if (jsonPayload.has("event")) {
             this.lastEvent = new Date();
-            STEMApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + getDeviceProfile().getName() + " DeviceHardAddress: " + getDeviceProfile().getDeviceHardAddress());
-            final MQTTDoorRingEvent mqttDoorRingEvent = new MQTTDoorRingEvent(this);
-            STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(mqttDoorRingEvent);
-
+            this.getLogger().info("DeviceUpdate - ConfigName: " + getDeviceProfile().getName() + " DeviceHardAddress: " + getDeviceProfile().getDeviceHardAddress());
+            this.fireEvent(new MQTTDoorRingEvent(this));
             this.sendRF433MQTT();
-
-            InformationBlock informationBlock = new InformationBlock("DOOR", "Door Ring sensor", HomeDevicesPlugin.homeDevicesPlugin, "Door Ring pushed");
-            Instant expireDate = TimeAdapter.getTimeInstant().plus(2, ChronoUnit.HOURS);
-            informationBlock.setExpireTime(expireDate);
+            InformationBlock informationBlock = new InformationBlock("DOOR", "Door Ring sensor", this.getHomeDevicesPlugin(), "Door Ring pushed");
+            informationBlock.setExpireTime(TimeAdapter.getTimeInstant().plus(2, ChronoUnit.HOURS));
             informationBlock.setIcon("DOOR");
             informationBlock.addIntent(InformationIntent.NOTIFY_USER);
             informationBlock.addIntent(InformationIntent.SHOW_DISPLAY);
-            STEMApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
+            this.getHomeDevicesPlugin().getStemApi().information().queue(informationBlock);
         }
     }
 
@@ -99,7 +81,7 @@ public class DoorRingDevice extends MqttDevice {
 
     @Override
     public boolean healthCheckStatus() {
-        return this.healthSwitchDateRequest.toInstant().minus(30, ChronoUnit.SECONDS).toEpochMilli() <= this.lastData.getTime();
+        return receivedSince(this.lastData, this.healthSwitchDateRequest, Duration.ofSeconds(30));
     }
 
     @Override
@@ -110,15 +92,13 @@ public class DoorRingDevice extends MqttDevice {
     @Override
     public JSONObject getJSONData() {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("lastEvent", lastEvent.getTime());
+        Date event = this.lastEvent;
+        jsonObject.put("lastEvent", event != null ? event.getTime() : -1);
         return jsonObject;
     }
 
     @Override
     public JSONObject setJSONData(JSONObject jsonInput) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("status", "Not supported");
-        return jsonObject;
+        return notSupported();
     }
-
 }

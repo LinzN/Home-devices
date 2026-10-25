@@ -12,17 +12,14 @@
 
 package de.linzn.homeDevices.devices.other;
 
-import de.linzn.homeDevices.HomeDevicesPlugin;
 import de.linzn.homeDevices.devices.enums.MqttDeviceCategory;
 import de.linzn.homeDevices.devices.interfaces.MqttDevice;
 import de.linzn.homeDevices.events.records.MQTTSnapmakerPrintEndEvent;
 import de.linzn.homeDevices.profiles.DeviceProfile;
 import de.linzn.openJL.converter.TimeAdapter;
-import de.linzn.stem.STEMApp;
 import de.linzn.stem.modules.informationModule.InformationBlock;
 import de.linzn.stem.modules.informationModule.InformationIntent;
 import de.linzn.stem.modules.pluginModule.STEMPlugin;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
 import java.time.temporal.ChronoUnit;
@@ -46,27 +43,34 @@ public class SnapmakerPrinter extends MqttDevice {
 
     private static final String BASE_TOPIC = "snapmaker2mqtt";
 
-    public Date lastPrinterData;
-    private JSONObject printData;
-    private boolean printerOnline;
-    private boolean bridgeOnline;
+    public volatile Date lastPrinterData;
+    private volatile JSONObject printData;
+    private volatile boolean printerOnline;
+    private volatile boolean bridgeOnline;
+    /* guarded by this */
     private InformationBlock informationBlock;
     private String lastEndEventTimestamp;
 
     public SnapmakerPrinter(STEMPlugin stemPlugin, DeviceProfile deviceProfile) {
         super(stemPlugin, deviceProfile, BASE_TOPIC + "/" + deviceProfile.getDeviceHardAddress() + "/state");
         String printerTopic = BASE_TOPIC + "/" + deviceProfile.getDeviceHardAddress();
-        this.mqttModule.subscribe(printerTopic + "/availability", this);
-        this.mqttModule.subscribe(printerTopic + "/event/print_finished", this);
-        this.mqttModule.subscribe(printerTopic + "/event/print_failed", this);
-        this.mqttModule.subscribe(printerTopic + "/event/print_cancelled", this);
-        this.mqttModule.subscribe(BASE_TOPIC + "/bridge/status", this);
+        this.addTopic(printerTopic + "/availability");
+        this.addTopic(printerTopic + "/event/print_finished");
+        this.addTopic(printerTopic + "/event/print_failed");
+        this.addTopic(printerTopic + "/event/print_cancelled");
+        this.addTopic(BASE_TOPIC + "/bridge/status");
+    }
+
+    private static String formatDuration(long seconds) {
+        long hours = seconds / 3600;
+        long minutes = (seconds % 3600) / 60;
+        return hours > 0 ? hours + " h " + minutes + " min" : minutes + " min";
     }
 
     @Override
     protected void request_initial_status() {
         // read only: state and availability are retained by the bridge and arrive with the subscription
-        STEMApp.LOGGER.INFO("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.SNAPMAKER_PRINTER.name() + ") is not supported, waiting for retained data");
+        this.getLogger().debug("Initial request for device " + this.getDeviceHardAddress() + " (" + MqttDeviceCategory.SNAPMAKER_PRINTER.name() + ") is not supported, waiting for retained data");
     }
 
     @Override
@@ -91,10 +95,11 @@ public class SnapmakerPrinter extends MqttDevice {
      * @return PRINTING, PAUSED, IDLE or OFFLINE
      */
     public String getPrinterStatus() {
-        if (!this.printerOnline || this.printData == null) {
+        JSONObject data = this.printData;
+        if (!this.printerOnline || data == null) {
             return "OFFLINE";
         }
-        return switch (this.printData.optString("printState", "standby")) {
+        return switch (data.optString("printState", "standby")) {
             case "printing" -> "PRINTING";
             case "paused" -> "PAUSED";
             default -> "IDLE";
@@ -105,11 +110,13 @@ public class SnapmakerPrinter extends MqttDevice {
      * @return progress of the current job in percent, -1 if unknown
      */
     public double getPrintProgress() {
-        return this.printData == null ? -1 : this.printData.optDouble("progress", -1);
+        JSONObject data = this.printData;
+        return data == null ? -1 : data.optDouble("progress", -1);
     }
 
     public String getPrintName() {
-        return this.printData == null ? "unknown" : this.printData.optString("filename", "unknown");
+        JSONObject data = this.printData;
+        return data == null ? "unknown" : data.optString("filename", "unknown");
     }
 
     @Override
@@ -125,21 +132,17 @@ public class SnapmakerPrinter extends MqttDevice {
 
     @Override
     public JSONObject setJSONData(JSONObject jsonInput) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("status", "Not supported");
-        return jsonObject;
+        return notSupported();
     }
 
     @Override
-    public void mqttMessageEvent(String topic, MqttMessage mqttMessage) {
-        String payload = new String(mqttMessage.getPayload());
-
+    public void mqttMessageEvent(String topic, String payload) {
         if (topic.endsWith("/bridge/status")) {
             this.bridgeOnline = payload.equalsIgnoreCase("online");
         } else if (topic.endsWith("/availability")) {
             boolean online = payload.equalsIgnoreCase("online");
             if (online != this.printerOnline) {
-                STEMApp.LOGGER.INFO("DeviceUpdate - ConfigName: " + this.getConfigName() + " DeviceHardAddress: " + this.getDeviceHardAddress() + " printer " + (online ? "online" : "offline"));
+                this.getLogger().info("DeviceUpdate - ConfigName: " + this.getConfigName() + " DeviceHardAddress: " + this.getDeviceHardAddress() + " printer " + (online ? "online" : "offline"));
             }
             this.printerOnline = online;
         } else if (topic.endsWith("/state")) {
@@ -152,21 +155,17 @@ public class SnapmakerPrinter extends MqttDevice {
         }
     }
 
-    private void onPrintEnd(JSONObject event) {
+    private synchronized void onPrintEnd(JSONObject event) {
         // events are not retained, but guard against the same event delivered twice
         String timestamp = event.optString("timestamp", null);
         if (timestamp != null && timestamp.equals(this.lastEndEventTimestamp)) {
             return;
         }
         this.lastEndEventTimestamp = timestamp;
-
         String eventType = event.optString("event");
         String printName = event.optString("filename", "unknown");
         long duration = event.optLong("printDuration", 0);
-
-        final MQTTSnapmakerPrintEndEvent printEndEvent = new MQTTSnapmakerPrintEndEvent(this, eventType, printName, duration);
-        STEMApp.getInstance().getEventModule().getStemEventBus().fireEvent(printEndEvent);
-
+        this.fireEvent(new MQTTSnapmakerPrintEndEvent(this, eventType, printName, duration));
         String title;
         String text;
         switch (eventType) {
@@ -184,23 +183,14 @@ public class SnapmakerPrinter extends MqttDevice {
                 return;
             }
         }
-
         if (this.informationBlock != null && this.informationBlock.isActive()) {
             this.informationBlock.expire();
-            this.informationBlock = null;
         }
-
-        this.informationBlock = new InformationBlock("3D Printer", title, HomeDevicesPlugin.homeDevicesPlugin, text);
+        this.informationBlock = new InformationBlock("3D Printer", title, this.getHomeDevicesPlugin(), text);
         this.informationBlock.setIcon("USV");
         this.informationBlock.setExpireTime(TimeAdapter.getTimeInstant().plus(20, ChronoUnit.MINUTES));
         this.informationBlock.addIntent(InformationIntent.NOTIFY_USER);
         this.informationBlock.addIntent(InformationIntent.SHOW_DISPLAY);
-        STEMApp.getInstance().getInformationModule().queueInformationBlock(informationBlock);
-    }
-
-    private static String formatDuration(long seconds) {
-        long hours = seconds / 3600;
-        long minutes = (seconds % 3600) / 60;
-        return hours > 0 ? hours + " h " + minutes + " min" : minutes + " min";
+        this.getHomeDevicesPlugin().getStemApi().information().queue(this.informationBlock);
     }
 }
