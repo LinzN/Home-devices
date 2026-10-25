@@ -80,6 +80,8 @@ public class DeviceManager {
                     mqttDevice = new AnkermakePrinter(this.stemPlugin, deviceProfile);
                 }else if (deviceProfile.getMqttDeviceCategory() == MqttDeviceCategory.MIDEA_AC) {
                     mqttDevice = new MideaAC(this.stemPlugin, deviceProfile);
+                } else if (deviceProfile.getMqttDeviceCategory() == MqttDeviceCategory.SNAPMAKER_PRINTER) {
+                    mqttDevice = new SnapmakerPrinter(this.stemPlugin, deviceProfile);
                 }
 
                 if (mqttDevice != null) {
